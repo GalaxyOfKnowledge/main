@@ -5,333 +5,682 @@
     <style>
         body {
             margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #111;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #000;
             color: white;
+            overflow: hidden;
         }
+        
         #game-container {
             position: relative;
             width: 800px;
             height: 600px;
+            margin: 0 auto;
+            background-color: #000;
+            overflow: hidden;
         }
-        #game-canvas {
-            background-color: black;
-            display: block;
-        }
-        #score-container {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            font-size: 18px;
-        }
-        #high-score {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 18px;
-        }
-        #game-over-screen {
+        
+        canvas {
             position: absolute;
             top: 0;
             left: 0;
+        }
+        
+        .screen {
+            position: absolute;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            display: none;
+            background-color: rgba(0, 0, 0, 0.85);
         }
-        #game-over-text {
-            font-size: 48px;
-            margin-bottom: 20px;
+        
+        /* Main Menu Screen */
+        #main-menu {
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><rect width="800" height="600" fill="%23000066"/><circle cx="400" cy="300" r="150" fill="%23ff9900"/><polygon points="400,100 425,200 525,200 450,275 475,375 400,300 325,375 350,275 275,200 375,200" fill="%23ffffff"/></svg>');
+            background-size: cover;
+        }
+        
+        .title {
+            font-size: 50px;
+            color: #FFD700;
+            margin-bottom: 40px;
+            text-align: center;
+            text-shadow: 0 0 10px #FF6600, 0 0 20px #FF6600;
+        }
+        
+        .menu-button {
+            width: 200px;
+            padding: 15px 0;
+            margin: 10px 0;
+            font-size: 20px;
+            color: white;
+            background-color: #FF6600;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
             text-align: center;
         }
-        #final-score {
+        
+        .menu-button:hover {
+            background-color: #FF9900;
+            transform: scale(1.05);
+        }
+        
+        /* High Score Screen */
+        #high-score-screen {
+            display: none;
+        }
+        
+        .high-score-table {
+            width: 80%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .high-score-table th, .high-score-table td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #444;
+        }
+        
+        .high-score-table th {
+            background-color: #FF6600;
+            color: white;
+        }
+        
+        /* Settings Screen */
+        #settings-screen {
+            display: none;
+        }
+        
+        .settings-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 80%;
+            margin: 15px 0;
+        }
+        
+        .settings-label {
+            font-size: 18px;
+        }
+        
+        .settings-value {
+            width: 120px;
+            padding: 8px;
+            font-size: 16px;
+            background-color: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 4px;
+        }
+        
+        /* Game Screen */
+        #game-screen {
+            display: none;
+        }
+        
+        #game-hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 18px;
+            z-index: 100;
+        }
+        
+        #lives-display, #score-display, #level-display {
+            margin-bottom: 5px;
+        }
+        
+        /* Trivia Screen */
+        #trivia-screen {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        #trivia-question {
             font-size: 24px;
             margin-bottom: 30px;
+            color: #FFD700;
         }
-        #restart-button {
-            padding: 12px 24px;
-            font-size: 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
+        
+        .trivia-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 90%;
+            max-width: 600px;
+        }
+        
+        .trivia-option {
+            padding: 15px;
+            font-size: 18px;
+            background-color: #444;
+            border: 2px solid #666;
+            border-radius: 8px;
             cursor: pointer;
+            transition: all 0.2s;
         }
-        #restart-button:hover {
-            background-color: #45a049;
+        
+        .trivia-option:hover {
+            background-color: #555;
+            transform: scale(1.03);
         }
-        #level-display {
-            position: absolute;
-            top: 40px;
-            left: 10px;
-            font-size: 18px;
-        }
-        #trivia-container {
-            position: absolute;
-            bottom: 20px;
-            left: 0;
-            width: 100%;
-            text-align: center;
-            font-size: 18px;
-        }
-        #trivia-question {
-            margin-bottom: 10px;
-        }
-        #win-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 50, 0.8);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+        
+        /* Game Over Screen */
+        #game-over {
             display: none;
         }
-        #win-text {
-            font-size: 48px;
+        
+        .game-over-title {
+            font-size: 60px;
+            color: #FF0000;
             margin-bottom: 20px;
-            color: #FFD700;
-            text-align: center;
+            text-shadow: 0 0 10px #FF0000;
         }
-        #continue-button {
-            padding: 12px 24px;
-            font-size: 20px;
-            background-color: #4CAF50;
-            color: white;
+        
+        .game-stats {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        /* Level Complete Screen */
+        #level-complete {
+            display: none;
+        }
+        
+        .level-complete-title {
+            font-size: 50px;
+            color: #00FF00;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #00FF00;
+        }
+        
+        /* Game Complete Screen */
+        #game-complete {
+            display: none;
+        }
+        
+        .game-complete-title {
+            font-size: 60px;
+            color: #FFD700;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px #FFD700;
+        }
+        
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #FF6600;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin-top: 20px;
         }
-        #continue-button:hover {
-            background-color: #45a049;
+        
+        .back-button:hover {
+            background-color: #FF9900;
         }
     </style>
 </head>
 <body>
     <div id="game-container">
+        <!-- Game Canvas -->
         <canvas id="game-canvas" width="800" height="600"></canvas>
         
-        <div id="score-container">Score: <span id="score">0</span></div>
-        <div id="high-score">High Score: <span id="high-score-value">0</span></div>
-        <div id="level-display">Level: <span id="level">1</span></div>
-        
-        <div id="trivia-container">
-            <div id="trivia-question"></div>
+        <!-- Main Menu Screen -->
+        <div id="main-menu" class="screen">
+            <h1 class="title">Pinoy Trivia<br>Space Invaders</h1>
+            <button id="play-button" class="menu-button">Play</button>
+            <button id="highscore-button" class="menu-button">High Scores</button>
+            <button id="settings-button" class="menu-button">Settings</button>
         </div>
         
-        <div id="game-over-screen">
-            <div id="game-over-text">Game Over!</div>
-            <div id="final-score">Your score: 0</div>
-            <button id="restart-button">Play Again</button>
+        <!-- High Score Screen -->
+        <div id="high-score-screen" class="screen">
+            <h2 class="title">High Scores</h2>
+            <table class="high-score-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Score</th>
+                        <th>Level</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="high-score-table-body">
+                    <!-- High scores will be inserted here -->
+                </tbody>
+            </table>
+            <button class="menu-button back-button">Back</button>
         </div>
         
-        <div id="win-screen">
-            <div id="win-text">You Won!</div>
-            <div id="win-score">Your score: 0</div>
-            <div id="trivia-result">You answered 0 trivia questions correctly!</div>
-            <button id="continue-button">Continue to Next Level</button>
+        <!-- Settings Screen -->
+        <div id="settings-screen" class="screen">
+            <h2 class="title">Settings</h2>
+            <div class="settings-option">
+                <span class="settings-label">Difficulty:</span>
+                <select id="difficulty-setting" class="settings-value">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+            <div class="settings-option">
+                <span class="settings-label">Sound:</span>
+                <select id="sound-setting" class="settings-value">
+                    <option value="on" selected>On</option>
+                    <option value="off">Off</option>
+                </select>
+            </div>
+            <div class="settings-option">
+                <span class="settings-label">Starting Lives:</span>
+                <select id="lives-setting" class="settings-value">
+                    <option value="3" selected>3</option>
+                    <option value="5">5</option>
+                    <option value="1">1</option>
+                </select>
+            </div>
+            <button class="menu-button" style="margin-top: 20px;">Save Settings</button>
+            <button class="menu-button back-button">Back</button>
+        </div>
+        
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen" style="background-color: transparent;">
+            <div id="game-hud">
+                <div id="score-display">Score: 0</div>
+                <div id="level-display">Level: 1</div>
+                <div id="lives-display">Lives: 3</div>
+            </div>
+        </div>
+        
+        <!-- Trivia Screen -->
+        <div id="trivia-screen" class="screen">
+            <h2 class="title">Pinoy Trivia</h2>
+            <div id="trivia-question">What is the national animal of the Philippines?</div>
+            <div class="trivia-options">
+                <div class="trivia-option" data-correct="false">Tarsier</div>
+                <div class="trivia-option" data-correct="true">Carabao</div>
+                <div class="trivia-option" data-correct="false">Philippine Eagle</div>
+                <div class="trivia-option" data-correct="false">Tamaraw</div>
+            </div>
+        </div>
+        
+        <!-- Game Over Screen -->
+        <div id="game-over" class="screen">
+            <h2 class="game-over-title">Game Over!</h2>
+            <div class="game-stats" id="final-score">Score: 0</div>
+            <div class="game-stats" id="final-level">Level: 1</div>
+            <div class="game-stats" id="trivia-stats">Trivia Correct: 0/0</div>
+            <button id="play-again-button" class="menu-button">Play Again</button>
+            <button id="main-menu-button" class="menu-button">Main Menu</button>
+        </div>
+        
+        <!-- Level Complete Screen -->
+        <div id="level-complete" class="screen">
+            <h2 class="level-complete-title">Level Complete!</h2>
+            <div class="game-stats">Get ready for the next level!</div>
+            <div class="game-stats">Bonus points: <span id="level-bonus">500</span></div>
+            <button id="continue-button" class="menu-button">Continue</button>
+        </div>
+        
+        <!-- Game Complete Screen -->
+        <div id="game-complete" class="screen">
+            <h2 class="game-complete-title">You Won!</h2>
+            <div class="game-stats" id="win-score">Final Score: 0</div>
+            <div class="game-stats" id="win-trivia">Trivia Correct: 0/0</div>
+            <button id="play-again-win-button" class="menu-button">Play Again</button>
+            <button id="main-menu-win-button" class="menu-button">Main Menu</button>
         </div>
     </div>
 
     <script>
-        // Game elements
+        // Game constants and variables
         const canvas = document.getElementById('game-canvas');
         const ctx = canvas.getContext('2d');
-        const scoreElement = document.getElementById('score');
-        const highScoreElement = document.getElementById('high-score-value');
-        const levelElement = document.getElementById('level');
-        const triviaQuestionElement = document.getElementById('trivia-question');
-        const gameOverScreen = document.getElementById('game-over-screen');
-        const finalScoreElement = document.getElementById('final-score');
-        const restartButton = document.getElementById('restart-button');
-        const winScreen = document.getElementById('win-screen');
-        const winScoreElement = document.getElementById('win-score');
-        const triviaResultElement = document.getElementById('trivia-result');
-        const continueButton = document.getElementById('continue-button');
+        const FPS = 60;
+        
+        // Game states
+        const GAME_STATE = {
+            MENU: 'menu',
+            GAME: 'game',
+            TRIVIA: 'trivia',
+            GAME_OVER: 'game_over',
+            LEVEL_COMPLETE: 'level_complete',
+            GAME_COMPLETE: 'game_complete',
+            HIGH_SCORE: 'high_score',
+            SETTINGS: 'settings'
+        };
+        
+        // Game settings
+        let settings = {
+            difficulty: 'medium',
+            sound: 'on',
+            startingLives: 3
+        };
         
         // Game variables
+        let currentState = GAME_STATE.MENU;
         let score = 0;
-        let highScore = localStorage.getItem('highScore') || 0;
         let level = 1;
-        let maxLevel = 5;
-        let correctTrivia = 0;
-        let totalTrivia = 0;
-        let gameOver = false;
-        let gameWon = false;
+        let lives = 3;
+        let triviaCorrect = 0;
+        let triviaTotal = 0;
+        let gameInterval;
+        let enemies = [];
+        let bullets = [];
+        let stars = [];
+        let powerUps = [];
+        let currentTrivia = null;
         
-        // Set initial high score
-        highScoreElement.textContent = highScore;
-        
-        // Player
+        // Player object
         const player = {
             x: canvas.width / 2 - 25,
             y: canvas.height - 80,
             width: 50,
             height: 40,
-            speed: 8,
-            lives: 3,
+            speed: 6,
             color: '#00FF00',
             isMovingLeft: false,
-            isMovingRight: false
+            isMovingRight: false,
+            shootCooldown: 0,
+            shootCooldownMax: 15,
+            bulletSpeed: 12,
+            bulletDamage: 1,
+            invincible: false,
+            invincibleTime: 0
         };
-        
-        // Bullets
-        const bullets = [];
-        const bulletWidth = 5;
-        const bulletHeight = 15;
-        const bulletSpeed = 10;
-        
-        // Enemies
-        const enemies = [];
-        const enemyWidth = 60;
-        const enemyHeight = 40;
-        let enemyBaseSpeed = 1;
-        let enemySpeed = enemyBaseSpeed;
-        let enemyDirection = 1;
         
         // Pinoy Trivia Questions
         const triviaQuestions = [
-            { question: "What is the national animal of the Philippines?", answer: "Carabao", options: ["Carabao", "Tamaraw", "Philippine Eagle", "Tarsier"] },
-            { question: "What is the national dance of the Philippines?", answer: "Tinikling", options: ["Tinikling", "Pandanggo", "Cariñosa", "Singkil"] },
-            { question: "Which Filipino boxer is known as 'Pacman'?", answer: "Manny Pacquiao", options: ["Manny Pacquiao", "Nonito Donaire", "Flash Elorde", "Pancho Villa"] },
-            { question: "What is the Filipino term for rice cake?", answer: "Kakanin", options: ["Kakanin", "Puto", "Bibingka", "Suman"] },
-            { question: "What is the longest river in the Philippines?", answer: "Cagayan River", options: ["Cagayan River", "Pasig River", "Rio Grande de Mindanao", "Pampanga River"] },
-            { question: "Which Philippine president implemented Martial Law in 1972?", answer: "Ferdinand Marcos", options: ["Ferdinand Marcos", "Corazon Aquino", "Joseph Estrada", "Rodrigo Duterte"] },
-            { question: "What is the Filipino Christmas tradition of a pre-dawn mass?", answer: "Simbang Gabi", options: ["Simbang Gabi", "Noche Buena", "Misa de Gallo", "Parol"] },
-            { question: "What is the main ingredient in the Filipino dessert 'halo-halo'?", answer: "Shaved ice", options: ["Shaved ice", "Sticky rice", "Tapioca pearls", "Red beans"] },
-            { question: "What is the popular Filipino fighting art?", answer: "Arnis/Kali/Eskrima", options: ["Arnis/Kali/Eskrima", "Muay Thai", "Karate", "Taekwondo"] },
-            { question: "What is the highest mountain in the Philippines?", answer: "Mount Apo", options: ["Mount Apo", "Mount Pulag", "Mount Pinatubo", "Mount Halcon"] },
-            { question: "What is the Filipino term for the Philippine flag?", answer: "Watawat", options: ["Watawat", "Bandila", "Bandera", "Sagisag"] },
-            { question: "Which Philippine island is known as the 'Chocolate Hills'?", answer: "Bohol", options: ["Bohol", "Boracay", "Palawan", "Cebu"] },
-            { question: "What color is NOT in the Philippine flag?", answer: "Green", options: ["Green", "Blue", "Red", "Yellow"] },
-            { question: "What is the name of the traditional Filipino see-through formal shirt?", answer: "Barong Tagalog", options: ["Barong Tagalog", "Terno", "Saya", "Kamisa de Chino"] },
-            { question: "What is the Filipino term for market?", answer: "Palengke", options: ["Palengke", "Tindahan", "Sari-Sari", "Pamilihan"] }
+            {
+                question: "What is the national animal of the Philippines?",
+                options: ["Tamaraw", "Carabao", "Philippine Eagle", "Tarsier"],
+                correctIndex: 1
+            },
+            {
+                question: "Which Filipino dish is made with pig's blood?",
+                options: ["Adobo", "Sinigang", "Dinuguan", "Kare-kare"],
+                correctIndex: 2
+            },
+            {
+                question: "What is the Filipino term for the traditional healing massage?",
+                options: ["Hilot", "Dagdagay", "Bentosa", "Lana"],
+                correctIndex: 0
+            },
+            {
+                question: "Which is the largest island in the Philippines?",
+                options: ["Cebu", "Mindanao", "Palawan", "Luzon"],
+                correctIndex: 3
+            },
+            {
+                question: "What is the name of the traditional Filipino martial art?",
+                options: ["Sikaran", "Arnis", "Mano Mano", "Yaw-Yan"],
+                correctIndex: 1
+            },
+            {
+                question: "Which Filipino festival is known as the 'Mother of All Philippine Festivals'?",
+                options: ["Panagbenga", "Sinulog", "Ati-Atihan", "MassKara"],
+                correctIndex: 2
+            },
+            {
+                question: "What is the Filipino term for 'neighborhood'?",
+                options: ["Barangay", "Purok", "Barrio", "Sitio"],
+                correctIndex: 0
+            },
+            {
+                question: "Which mountain is the highest peak in the Philippines?",
+                options: ["Mount Pulag", "Mount Apo", "Mount Mayon", "Mount Pinatubo"],
+                correctIndex: 1
+            },
+            {
+                question: "Which Filipino dessert consists of shaved ice with various toppings?",
+                options: ["Bibingka", "Puto", "Halo-halo", "Leche Flan"],
+                correctIndex: 2
+            },
+            {
+                question: "What is the national flower of the Philippines?",
+                options: ["Ylang-ylang", "Sampaguita", "Waling-waling", "Gumamela"],
+                correctIndex: 1
+            },
+            {
+                question: "Which Philippine president implemented Martial Law in 1972?",
+                options: ["Corazon Aquino", "Joseph Estrada", "Ferdinand Marcos", "Fidel Ramos"],
+                correctIndex: 2
+            },
+            {
+                question: "What is the traditional Filipino house made of bamboo and nipa palm?",
+                options: ["Torogan", "Bahay Kubo", "Bahay na Bato", "Ivatan House"],
+                correctIndex: 1
+            },
+            {
+                question: "Which Philippine revolutionary is known as the 'Sublime Paralytic'?",
+                options: ["Andres Bonifacio", "Apolinario Mabini", "Emilio Aguinaldo", "Jose Rizal"],
+                correctIndex: 1
+            },
+            {
+                question: "What is the Filipino term for Christmas Eve feast?",
+                options: ["Simbang Gabi", "Noche Buena", "Media Noche", "Parol"],
+                correctIndex: 1
+            },
+            {
+                question: "Which Philippine lake is the largest lake on Luzon Island?",
+                options: ["Taal Lake", "Laguna de Bay", "Lake Buhi", "Lake Naujan"],
+                correctIndex: 1
+            }
         ];
         
-        // Current trivia
-        let currentTrivia = null;
+        // Power-up types
+        const POWER_UP_TYPES = {
+            EXTRA_LIFE: { color: '#FF66FF', effect: 'Extra Life' },
+            TRIPLE_SHOT: { color: '#FFFF00', effect: 'Triple Shot' },
+            SPEED_BOOST: { color: '#00FFFF', effect: 'Speed Boost' },
+            SHIELD: { color: '#6666FF', effect: 'Shield' }
+        };
         
-        // Create enemies with trivia
-        function createEnemies() {
-            enemies.length = 0;
+        // High scores
+        let highScores = JSON.parse(localStorage.getItem('pinoySpaceInvadersHighScores')) || [];
+        
+        // DOM elements
+        const screens = {
+            mainMenu: document.getElementById('main-menu'),
+            game: document.getElementById('game-screen'),
+            trivia: document.getElementById('trivia-screen'),
+            gameOver: document.getElementById('game-over'),
+            levelComplete: document.getElementById('level-complete'),
+            gameComplete: document.getElementById('game-complete'),
+            highScore: document.getElementById('high-score-screen'),
+            settings: document.getElementById('settings-screen')
+        };
+        
+        // HUD elements
+        const hudElements = {
+            score: document.getElementById('score-display'),
+            level: document.getElementById('level-display'),
+            lives: document.getElementById('lives-display')
+        };
+        
+        // Initialize stars
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < 100; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2 + 1,
+                    speed: Math.random() * 0.5 + 0.1
+                });
+            }
+        }
+        
+        // Initialize game
+        function initGame() {
+            // Reset game variables
+            score = 0;
+            level = 1;
+            lives = parseInt(settings.startingLives);
+            triviaCorrect = 0;
+            triviaTotal = 0;
             
-            // Choose random trivia for this level
-            const levelTrivia = [];
-            const shuffledTrivia = [...triviaQuestions].sort(() => 0.5 - Math.random());
-            
-            for (let i = 0; i < Math.min(8, shuffledTrivia.length); i++) {
-                levelTrivia.push(shuffledTrivia[i]);
+            // Set difficulty based on settings
+            switch(settings.difficulty) {
+                case 'easy':
+                    player.speed = 8;
+                    player.shootCooldownMax = 12;
+                    break;
+                case 'medium':
+                    player.speed = 6;
+                    player.shootCooldownMax = 15;
+                    break;
+                case 'hard':
+                    player.speed = 5;
+                    player.shootCooldownMax = 18;
+                    break;
             }
             
-            for (let row = 0; row < 4; row++) {
-                for (let col = 0; col < 6; col++) {
-                    const index = row * 6 + col;
-                    const triviaIndex = index % levelTrivia.length;
+            // Reset player position
+            player.x = canvas.width / 2 - player.width / 2;
+            player.y = canvas.height - 80;
+            player.isMovingLeft = false;
+            player.isMovingRight = false;
+            player.shootCooldown = 0;
+            player.invincible = false;
+            player.invincibleTime = 0;
+            
+            // Clear arrays
+            enemies = [];
+            bullets = [];
+            powerUps = [];
+            
+            // Create stars
+            initStars();
+            
+            // Create enemies for level 1
+            createEnemiesForLevel();
+            
+            // Update HUD
+            updateHUD();
+            
+            // Start game loop
+            startGameLoop();
+        }
+        
+        // Create enemies for current level
+        function createEnemiesForLevel() {
+            const rows = Math.min(3 + Math.floor(level / 2), 6);
+            const cols = Math.min(6 + Math.floor(level / 3), 10);
+            const spacing = (canvas.width - 100) / cols;
+            
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const type = Math.floor(Math.random() * 3);
+                    let color, health, points;
+                    
+                    switch(type) {
+                        case 0: // Basic enemy
+                            color = '#FF0000';
+                            health = 1;
+                            points = 50;
+                            break;
+                        case 1: // Medium enemy
+                            color = '#FF6600';
+                            health = 2;
+                            points = 100;
+                            break;
+                        case 2: // Hard enemy
+                            color = '#FF9900';
+                            health = 3;
+                            points = 150;
+                            break;
+                    }
                     
                     enemies.push({
-                        x: col * 90 + 80,
+                        x: col * spacing + 50,
                         y: row * 60 + 80,
-                        width: enemyWidth,
-                        height: enemyHeight,
-                        color: '#FF0000',
-                        trivia: levelTrivia[triviaIndex],
-                        option: levelTrivia[triviaIndex].options[Math.floor(Math.random() * 4)],
-                        correct: levelTrivia[triviaIndex].options[Math.floor(Math.random() * 4)] === levelTrivia[triviaIndex].answer
+                        width: 50,
+                        height: 40,
+                        color: color,
+                        health: health,
+                        maxHealth: health,
+                        points: points,
+                        speed: 1 + (level * 0.2),
+                        direction: 1,
+                        shootChance: 0.001 + (level * 0.0005)
                     });
                 }
             }
-            
-            // Set a random trivia question
-            updateTriviaQuestion();
         }
         
-        // Update the trivia question displayed
-        function updateTriviaQuestion() {
-            if (enemies.length > 0) {
-                const randomIndex = Math.floor(Math.random() * enemies.length);
-                currentTrivia = enemies[randomIndex].trivia;
-                triviaQuestionElement.textContent = `Q: ${currentTrivia.question}`;
-                totalTrivia++;
+        // Update HUD elements
+        function updateHUD() {
+            hudElements.score.textContent = `Score: ${score}`;
+            hudElements.level.textContent = `Level: ${level}`;
+            hudElements.lives.textContent = `Lives: ${lives}`;
+        }
+        
+        // Start game loop
+        function startGameLoop() {
+            if (gameInterval) {
+                clearInterval(gameInterval);
             }
-        }
-        
-        // Draw player
-        function drawPlayer() {
-            // Draw player ship
-            ctx.fillStyle = player.color;
-            ctx.fillRect(player.x, player.y, player.width, player.height);
             
-            // Draw cockpit
-            ctx.fillStyle = '#00AAFF';
-            ctx.fillRect(player.x + player.width/2 - 10, player.y + 5, 20, 15);
-            
-            // Draw lives
-            ctx.fillStyle = '#FF5555';
-            for (let i = 0; i < player.lives; i++) {
-                ctx.fillRect(20 + i * 30, canvas.height - 30, 20, 20);
-            }
+            gameInterval = setInterval(() => {
+                update();
+                draw();
+            }, 1000 / FPS);
         }
         
-        // Draw bullets
-        function drawBullets() {
-            ctx.fillStyle = '#FFFF00';
-            for (const bullet of bullets) {
-                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
-            }
-        }
-        
-        // Draw enemies
-        function drawEnemies() {
-            for (const enemy of enemies) {
-                // Base color for enemy
-                ctx.fillStyle = enemy.correct ? '#FF5500' : '#FF0000';
-                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
-                
-                // Enemy cockpit
-                ctx.fillStyle = '#AAFFFF';
-                ctx.fillRect(enemy.x + enemy.width/2 - 10, enemy.y + enemy.height - 15, 20, 10);
-                
-                // Enemy text (trivia option)
-                ctx.fillStyle = '#FFFFFF';
-                ctx.font = '12px Arial';
-                ctx.textAlign = 'center';
-                
-                // Measure text width and adjust if needed
-                const text = enemy.option;
-                const maxWidth = enemy.width - 4;
-                let fontSize = 12;
-                ctx.font = `${fontSize}px Arial`;
-                let textWidth = ctx.measureText(text).width;
-                
-                // Reduce font size if text is too wide
-                while (textWidth > maxWidth && fontSize > 7) {
-                    fontSize--;
-                    ctx.font = `${fontSize}px Arial`;
-                    textWidth = ctx.measureText(text).width;
-                }
-                
-                ctx.fillText(text, enemy.x + enemy.width/2, enemy.y + enemy.height/2 + 4, maxWidth);
+        // Stop game loop
+        function stopGameLoop() {
+            if (gameInterval) {
+                clearInterval(gameInterval);
+                gameInterval = null;
             }
         }
         
         // Update game state
         function update() {
-            if (gameOver || gameWon) return;
+            // Update player
+            updatePlayer();
             
-            // Update player position
+            // Update bullets
+            updateBullets();
+            
+            // Update enemies
+            updateEnemies();
+            
+            // Update power-ups
+            updatePowerUps();
+            
+            // Update stars
+            updateStars();
+            
+            // Check if level is complete
+            if (enemies.length === 0) {
+                stopGameLoop();
+                showLevelComplete();
+            }
+            
+            // Check if game is over
+            if (lives <= 0) {
+                stopGameLoop();
+                showGameOver();
+            }
+        }
+        
+        // Update player
+        function updatePlayer() {
+            // Movement
             if (player.isMovingLeft && player.x > 0) {
                 player.x -= player.speed;
             }
@@ -339,247 +688,204 @@
                 player.x += player.speed;
             }
             
-            // Update bullets
-            for (let i = bullets.length - 1; i >= 0; i--) {
-                bullets[i].y -= bulletSpeed;
-                
-                // Remove bullets that go off screen
-                if (bullets[i].y < 0) {
-                    bullets.splice(i, 1);
-                }
+            // Shooting cooldown
+            if (player.shootCooldown > 0) {
+                player.shootCooldown--;
             }
             
-            // Update enemies
-            let moveDown = false;
-            
-            for (const enemy of enemies) {
-                enemy.x += enemySpeed * enemyDirection;
-                
-                // Check if any enemy hits the edge
-                if (enemy.x <= 0 || enemy.x + enemy.width >= canvas.width) {
-                    moveDown = true;
-                }
-            }
-            
-            if (moveDown) {
-                enemyDirection *= -1;
-                for (const enemy of enemies) {
-                    enemy.y += 20;
-                }
-            }
-            
-            // Check collisions
-            checkCollisions();
-            
-            // Check if player has lost all lives
-            if (player.lives <= 0) {
-                gameOver = true;
-                showGameOver();
-                return;
-            }
-            
-            // Check if enemies reach the bottom
-            for (const enemy of enemies) {
-                if (enemy.y + enemy.height >= player.y) {
-                    player.lives = 0;
-                    gameOver = true;
-                    showGameOver();
-                    return;
-                }
-            }
-            
-            // Check if all enemies are destroyed (level complete)
-            if (enemies.length === 0) {
-                if (level >= maxLevel) {
-                    gameWon = true;
-                    showWinScreen();
-                } else {
-                    showWinScreen();
+            // Invincibility frames
+            if (player.invincible) {
+                player.invincibleTime--;
+                if (player.invincibleTime <= 0) {
+                    player.invincible = false;
                 }
             }
         }
         
-        // Check collisions between bullets and enemies
-        function checkCollisions() {
+        // Update bullets
+        function updateBullets() {
             for (let i = bullets.length - 1; i >= 0; i--) {
-                for (let j = enemies.length - 1; j >= 0; j--) {
-                    if (isColliding(bullets[i], enemies[j])) {
-                        // Check if the hit enemy had the correct answer
-                        if (enemies[j].correct) {
-                            score += 100 * level;
-                            correctTrivia++;
-                        } else {
-                            score += 50;
+                const bullet = bullets[i];
+                
+                // Move bullet
+                bullet.y += bullet.speed;
+                
+                // Check if bullet is off-screen
+                if ((bullet.speed < 0 && bullet.y + bullet.height < 0) || 
+                    (bullet.speed > 0 && bullet.y > canvas.height)) {
+                    bullets.splice(i, 1);
+                    continue;
+                }
+                
+                // Check for collisions with player (enemy bullets)
+                if (bullet.speed > 0 && !player.invincible && 
+                    bullet.x < player.x + player.width && 
+                    bullet.x + bullet.width > player.x && 
+                    bullet.y < player.y + player.height && 
+                    bullet.y + bullet.height > player.y) {
+                    // Player hit by enemy bullet
+                    lives--;
+                    updateHUD();
+                    bullets.splice(i, 1);
+                    player.invincible = true;
+                    player.invincibleTime = 60; // 1 second invincibility
+                    continue;
+                }
+                
+                // Check for collisions with enemies (player bullets)
+                if (bullet.speed < 0) {
+                    for (let j = enemies.length - 1; j >= 0; j--) {
+                        const enemy = enemies[j];
+                        if (bullet.x < enemy.x + enemy.width && 
+                            bullet.x + bullet.width > enemy.x && 
+                            bullet.y < enemy.y + enemy.height && 
+                            bullet.y + bullet.height > enemy.y) {
+                            // Enemy hit by player bullet
+                            enemy.health -= bullet.damage;
+                            bullets.splice(i, 1);
+                            
+                            // Check if enemy is destroyed
+                            if (enemy.health <= 0) {
+                                score += enemy.points;
+                                updateHUD();
+                                
+                                // Chance to drop power-up
+                                if (Math.random() < 0.1) {
+                                    dropPowerUp(enemy.x + enemy.width/2, enemy.y + enemy.height/2);
+                                }
+                                
+                                enemies.splice(j, 1);
+                            }
+                            
+                            break;
                         }
-                        
-                        updateScore();
-                        bullets.splice(i, 1);
-                        enemies.splice(j, 1);
-                        
-                        // Update trivia if there are still enemies left
-                        if (enemies.length > 0) {
-                            updateTriviaQuestion();
-                        }
-                        
-                        break;
                     }
                 }
             }
         }
         
-        // Update score
-        function updateScore() {
-            scoreElement.textContent = score;
+        // Update enemies
+        function updateEnemies() {
+            let moveDown = false;
+            let leftEdge = canvas.width;
+            let rightEdge = 0;
             
-            // Update high score if needed
-            if (score > highScore) {
-                highScore = score;
-                highScoreElement.textContent = highScore;
-                localStorage.setItem('highScore', highScore);
+            // Find leftmost and rightmost enemies
+            for (const enemy of enemies) {
+                leftEdge = Math.min(leftEdge, enemy.x);
+                rightEdge = Math.max(rightEdge, enemy.x + enemy.width);
             }
-        }
-        
-        // Check collision between two objects
-        function isColliding(a, b) {
-            return a.x < b.x + b.width &&
-                   a.x + a.width > b.x &&
-                   a.y < b.y + b.height &&
-                   a.y + a.height > b.y;
-        }
-        
-        // Show game over screen
-        function showGameOver() {
-            finalScoreElement.textContent = `Your score: ${score}`;
-            gameOverScreen.style.display = 'flex';
-        }
-        
-        // Show win screen
-        function showWinScreen() {
-            winScoreElement.textContent = `Your score: ${score}`;
-            triviaResultElement.textContent = `You answered ${correctTrivia} out of ${totalTrivia} trivia questions correctly!`;
-            winScreen.style.display = 'flex';
-        }
-        
-        // Continue to next level
-        function continueToNextLevel() {
-            level++;
-            levelElement.textContent = level;
-            enemyBaseSpeed += 0.5;
-            enemySpeed = enemyBaseSpeed;
             
-            winScreen.style.display = 'none';
-            gameWon = false;
-            
-            createEnemies();
-        }
-        
-        // Draw everything
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw stars in background
-            drawStars();
-            
-            drawPlayer();
-            drawBullets();
-            drawEnemies();
-        }
-        
-        // Draw stars in background
-        function drawStars() {
-            ctx.fillStyle = 'white';
-            for (let i = 0; i < 100; i++) {
-                const x = Math.random() * canvas.width;
-                const y = Math.random() * canvas.height;
-                const size = Math.random() * 2 + 1;
-                ctx.fillRect(x, y, size, size);
+            // Check if need to move down and change direction
+            if (leftEdge <= 10 || rightEdge >= canvas.width - 10) {
+                moveDown = true;
             }
-        }
-        
-        // Game loop
-        function gameLoop() {
-            update();
-            draw();
-            requestAnimationFrame(gameLoop);
-        }
-        
-        // Keyboard controls
-        document.addEventListener('keydown', (event) => {
-            if (gameOver || gameWon) return;
             
-            if (event.key === 'ArrowLeft') {
-                player.isMovingLeft = true;
-            } else if (event.key === 'ArrowRight') {
-                player.isMovingRight = true;
-            } else if (event.key === ' ') { // Spacebar
-                // Create a bullet
-                if (bullets.length < 3) {
+            // Update all enemies
+            for (const enemy of enemies) {
+                // Move horizontally
+                enemy.x += enemy.speed * (moveDown ? 0 : enemy.direction);
+                
+                // Move down and change direction if needed
+                if (moveDown) {
+                    enemy.y += 20;
+                    enemy.direction *= -1;
+                }
+                
+                // Random shooting
+                if (Math.random() < enemy.shootChance) {
                     bullets.push({
-                        x: player.x + player.width / 2 - bulletWidth / 2,
-                        y: player.y,
-                        width: bulletWidth,
-                        height: bulletHeight
+                        x: enemy.x + enemy.width / 2 - 2,
+                        y: enemy.y + enemy.height,
+                        width: 4,
+                        height: 10,
+                        speed: 5,
+                        damage: 1,
+                        color: '#FF6666'
                     });
                 }
+                
+                // Check if enemy reached player level
+                if (enemy.y + enemy.height >= player.y) {
+                    lives = 0; // Game over if enemies reach the bottom
+                    updateHUD();
+                    return;
+                }
             }
-        });
-        
-        document.addEventListener('keyup', (event) => {
-            if (event.key === 'ArrowLeft') {
-                player.isMovingLeft = false;
-            } else if (event.key === 'ArrowRight') {
-                player.isMovingRight = false;
-            }
-        });
-        
-        // Restart button
-        restartButton.addEventListener('click', () => {
-            resetGame();
-        });
-        
-        // Continue button
-        continueButton.addEventListener('click', () => {
-            continueToNextLevel();
-        });
-        
-        // Reset game
-        function resetGame() {
-            score = 0;
-            updateScore();
-            level = 1;
-            levelElement.textContent = level;
-            correctTrivia = 0;
-            totalTrivia = 0;
-            gameOver = false;
-            gameWon = false;
-            
-            // Reset player
-            player.x = canvas.width / 2 - 25;
-            player.lives = 3;
-            
-            // Clear bullets
-            bullets.length = 0;
-            
-            // Reset enemy speed
-            enemyBaseSpeed = 1;
-            enemySpeed = enemyBaseSpeed;
-            
-            // Hide screens
-            gameOverScreen.style.display = 'none';
-            winScreen.style.display = 'none';
-            
-            // Create new enemies
-            createEnemies();
         }
         
-        // Initialize game
-        function init() {
-            createEnemies();
-            gameLoop();
+        // Drop power-up
+        function dropPowerUp(x, y) {
+            const types = Object.values(POWER_UP_TYPES);
+            const type = types[Math.floor(Math.random() * types.length)];
+            
+            powerUps.push({
+                x: x - 15,
+                y: y,
+                width: 30,
+                height: 30,
+                type: type,
+                speed: 2
+            });
         }
         
-        // Start the game
-        init();
-    </script>
-</body>
-</html>
+        // Update power-ups
+        function updatePowerUps() {
+            for (let i = powerUps.length - 1; i >= 0; i--) {
+                const powerUp = powerUps[i];
+                
+                // Move power-up
+                powerUp.y += powerUp.speed;
+                
+                // Check if power-up is off-screen
+                if (powerUp.y > canvas.height) {
+                    powerUps.splice(i, 1);
+                    continue;
+                }
+                
+                // Check for collision with player
+                if (powerUp.x < player.x + player.width && 
+                    powerUp.x + powerUp.width > player.x && 
+                    powerUp.y < player.y + player.height && 
+                    powerUp.y + powerUp.height > player.y) {
+                    // Apply power-up effect
+                    applyPowerUp(powerUp.type);
+                    powerUps.splice(i, 1);
+                }
+            }
+        }
+        
+        // Apply power-up effect
+        function applyPowerUp(type) {
+            switch(type) {
+                case POWER_UP_TYPES.EXTRA_LIFE:
+                    lives++;
+                    break;
+                case POWER_UP_TYPES.TRIPLE_SHOT:
+                    // Next 5 shots will be triple
+                    player.tripleShot = 5;
+                    break;
+                case POWER_UP_TYPES.SPEED_BOOST:
+                    // Temporary speed boost
+                    player.speed += 2;
+                    setTimeout(() => {
+                        player.speed -= 2;
+                    }, 10000);
+                    break;
+                case POWER_UP_TYPES.SHIELD:
+                    // Shield for 10 seconds
+                    player.invincible = true;
+                    player.invincibleTime = 600;
+                    break;
+            }
+            
+            updateHUD();
+        }
+        
+        // Update stars
+        function updateStars() {
+            for (const star of stars) {
+                star.y += star.speed;
+                if (star.y > canvas.height) {
+                    star.y = 0;
+                    star.x = Math.random() *
