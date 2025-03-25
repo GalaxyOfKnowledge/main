@@ -21,7 +21,7 @@
             margin: 0 auto;
         }
         
-        #menuScreen, #gameOverScreen, #highscoreScreen, #settingsScreen, #triviaScreen, #bossBattleScreen {
+        #menuScreen, #gameOverScreen, #highscoreScreen, #settingsScreen {
             position: absolute;
             top: 0;
             left: 0;
@@ -59,66 +59,25 @@
         #highscoreButton { background-color: #FFC107; color: black; }
         #settingsButton { background-color: #2196F3; color: white; }
         
-        .question {
-            font-size: 24px;
-            margin-bottom: 20px;
-            text-align: center;
-            max-width: 80%;
-        }
-        
-        .option {
-            width: 80%;
-            max-width: 500px;
-            padding: 10px;
-            margin: 5px;
-            background-color: #333;
-            border: 2px solid #555;
-            border-radius: 5px;
-            cursor: pointer;
-            text-align: center;
-        }
-        
-        .option:hover {
-            background-color: #444;
-        }
-        
-        .option.correct {
-            background-color: #4CAF50;
-            border-color: #2E7D32;
-        }
-        
-        .option.incorrect {
-            background-color: #F44336;
-            border-color: #C62828;
-        }
-        
         #hud {
             position: absolute;
             top: 10px;
             left: 10px;
             font-size: 18px;
-        }
-        
-        #powerupHud {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 14px;
-            text-align: right;
-        }
-        
-        .powerup-indicator {
-            margin: 5px;
-            padding: 5px;
-            border-radius: 3px;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
         }
         
         #bossHealthBar {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
             width: 300px;
             height: 20px;
             background-color: #F44336;
-            margin: 20px auto;
-            position: relative;
+            display: none;
         }
         
         #bossHealth {
@@ -127,10 +86,41 @@
             width: 100%;
         }
         
-        #bossTitle {
-            color: #F44336;
-            font-size: 32px;
+        #triviaContainer {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 600px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        #triviaQuestion {
+            font-size: 18px;
             margin-bottom: 10px;
+            color: #FFC107;
+        }
+        
+        .triviaOption {
+            padding: 8px;
+            margin: 5px 0;
+            background-color: #333;
+            border: 1px solid #555;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .triviaOption:hover {
+            background-color: #444;
+        }
+        
+        .triviaOption.selected {
+            background-color: #4CAF50;
+            border-color: #2E7D32;
         }
         
         #nameInput {
@@ -194,11 +184,37 @@
             #mobileControls {
                 display: flex;
             }
+            
+            #triviaContainer {
+                width: 90%;
+                bottom: 100px;
+            }
         }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas"></canvas>
+    
+    <!-- HUD Elements -->
+    <div id="hud">
+        <div>Lives: <span id="livesDisplay">3</span></div>
+        <div>Score: <span id="scoreDisplay">0</span></div>
+        <div>Level: <span id="levelDisplay">1</span></div>
+        <div>Barong Shield: <span id="barongIndicator">OFF</span></div>
+        <div>Jeepney Boost: <span id="jeepneyIndicator">OFF</span></div>
+        <div>Tinikling Mode: <span id="tiniklingIndicator">OFF</span></div>
+    </div>
+    
+    <!-- Boss Health Bar -->
+    <div id="bossHealthBar">
+        <div id="bossHealth"></div>
+    </div>
+    
+    <!-- Trivia Container (shown during boss battle) -->
+    <div id="triviaContainer">
+        <div id="triviaQuestion"></div>
+        <div id="triviaOptions"></div>
+    </div>
     
     <!-- Menu Screen -->
     <div id="menuScreen">
@@ -251,36 +267,6 @@
         <button id="settingsBackButton" class="menu-button" style="background-color: #F44336; margin-top: 30px;">Back to Menu</button>
     </div>
     
-    <!-- Trivia Screen -->
-    <div id="triviaScreen" style="display: none;">
-        <div id="triviaCategory" style="color: #FFC107; font-size: 20px; margin-bottom: 10px;"></div>
-        <div id="triviaQuestion" class="question"></div>
-        <div id="triviaOptions"></div>
-        <div id="triviaFeedback" style="margin-top: 20px; font-size: 18px; color: #FFC107;"></div>
-    </div>
-    
-    <!-- Boss Battle Screen -->
-    <div id="bossBattleScreen" style="display: none;">
-        <div id="bossTitle">BOSS BATTLE!</div>
-        <div id="bossHealthBar"><div id="bossHealth"></div></div>
-        <div id="bossQuestion" class="question"></div>
-        <div id="bossOptions"></div>
-        <div id="bossFeedback" style="margin-top: 20px; font-size: 18px; color: #FFC107;"></div>
-    </div>
-    
-    <!-- HUD -->
-    <div id="hud">
-        <div>Lives: <span id="livesDisplay">3</span></div>
-        <div>Score: <span id="scoreDisplay">0</span></div>
-        <div>Level: <span id="levelDisplay">1</span></div>
-    </div>
-    
-    <div id="powerupHud">
-        <div class="powerup-indicator" id="barongIndicator" style="background-color: #2196F3;">Barong Shield: OFF</div>
-        <div class="powerup-indicator" id="jeepneyIndicator" style="background-color: #F44336;">Jeepney Boost: OFF</div>
-        <div class="powerup-indicator" id="tiniklingIndicator" style="background-color: #4CAF50;">Tinikling Mode: OFF</div>
-    </div>
-    
     <!-- Mobile Controls -->
     <div id="mobileControls">
         <div class="mobile-btn" id="leftBtn">←</div>
@@ -292,15 +278,14 @@
         // Game constants
         const CANVAS_WIDTH = 800;
         const CANVAS_HEIGHT = 600;
+        const BOSS_SPAWN_SCORE = 1000;
         
         // Game states
         const STATE_MENU = 0;
         const STATE_PLAYING = 1;
-        const STATE_TRIVIA = 2;
-        const STATE_GAME_OVER = 3;
-        const STATE_HIGHSCORE = 4;
-        const STATE_SETTINGS = 5;
-        const STATE_BOSS_BATTLE = 6;
+        const STATE_GAME_OVER = 2;
+        const STATE_HIGHSCORE = 3;
+        const STATE_SETTINGS = 4;
         
         // Initialize canvas
         const canvas = document.getElementById('gameCanvas');
@@ -319,12 +304,12 @@
             lives: 3,
             score: 0,
             level: 1,
-            shipSkin: 'default',
             powerups: {
                 barongShield: false,
                 jeepneyBoost: false,
                 tiniklingMode: false
-            }
+            },
+            shipSkin: 'default'
         };
         
         let bullets = [];
@@ -333,20 +318,15 @@
         let bulletCooldown = 0;
         let enemySpawnRate = 60;
         let enemySpawnTimer = 0;
-        let levelTimer = 0;
-        let levelDuration = 1800; // 30 seconds at 60fps
-        let enemiesDefeated = 0;
-        let enemiesToDefeat = 10;
+        let enemySpeed = 1.0;
         
-        // Boss battle variables
+        // Boss variables
+        let boss = null;
+        let bossActive = false;
         let bossHealth = 0;
-        let bossQuestionsAnswered = 0;
-        let bossQuestionsNeeded = 3;
-        
-        // Trivia variables
+        let bossMaxHealth = 0;
         let currentQuestion = null;
         let selectedOption = null;
-        let triviaCorrect = false;
         
         // High scores
         let highScores = [];
@@ -365,7 +345,8 @@
             explosion: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-explosion-impact-1684.mp3'),
             powerup: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3'),
             correct: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3'),
-            wrong: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3')
+            wrong: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3'),
+            bossSpawn: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-monster-roar-1988.mp3')
         };
         
         // Set volume for all sounds
@@ -639,12 +620,12 @@
                 lives: 3,
                 score: 0,
                 level: 1,
-                shipSkin: 'default',
                 powerups: {
                     barongShield: false,
                     jeepneyBoost: false,
                     tiniklingMode: false
-                }
+                },
+                shipSkin: 'default'
             };
             
             // Reset game variables
@@ -654,12 +635,15 @@
             bulletCooldown = 0;
             enemySpawnRate = 60;
             enemySpawnTimer = 0;
-            levelTimer = 0;
-            enemiesDefeated = 0;
-            enemiesToDefeat = 10;
+            boss = null;
+            bossActive = false;
             
             // Update HUD
             updateHUD();
+            
+            // Hide boss health bar
+            document.getElementById('bossHealthBar').style.display = 'none';
+            document.getElementById('triviaContainer').style.display = 'none';
             
             // Start background music
             backgroundMusic.currentTime = 0;
@@ -723,221 +707,6 @@
             }
         }
         
-        // Show trivia question
-        function showTriviaQuestion() {
-            gameState = STATE_TRIVIA;
-            document.getElementById('triviaScreen').style.display = 'flex';
-            
-            // Select a random question
-            currentQuestion = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
-            selectedOption = null;
-            triviaCorrect = false;
-            
-            // Display question
-            document.getElementById('triviaCategory').textContent = currentQuestion.category;
-            document.getElementById('triviaQuestion').textContent = currentQuestion.question;
-            
-            // Display options
-            const optionsContainer = document.getElementById('triviaOptions');
-            optionsContainer.innerHTML = '';
-            
-            currentQuestion.options.forEach((option, index) => {
-                const optionElement = document.createElement('div');
-                optionElement.className = 'option';
-                optionElement.textContent = option;
-                optionElement.addEventListener('click', () => selectTriviaOption(index));
-                optionsContainer.appendChild(optionElement);
-            });
-            
-            // Clear feedback
-            document.getElementById('triviaFeedback').textContent = '';
-        }
-        
-        // Select trivia option
-        function selectTriviaOption(index) {
-            if (selectedOption !== null) return; // Prevent multiple selections
-            
-            selectedOption = index;
-            const options = document.querySelectorAll('#triviaOptions .option');
-            
-            if (index === currentQuestion.answer) {
-                // Correct answer
-                triviaCorrect = true;
-                options[index].classList.add('correct');
-                document.getElementById('triviaFeedback').textContent = 'Correct! ' + currentQuestion.funFact;
-                
-                // Play sound
-                sounds.correct.play();
-                
-                // Apply bonus based on category
-                switch (currentQuestion.category) {
-                    case 'National Symbols':
-                        player.lives++;
-                        break;
-                    case 'History':
-                        player.score += 500;
-                        break;
-                    case 'Food':
-                        // Spawn a power-up
-                        spawnPowerUp();
-                        break;
-                    case 'Geography':
-                        player.powerups.jeepneyBoost = true;
-                        powerupTimers.jeepneyBoost = powerupDuration;
-                        break;
-                    case 'Culture':
-                        // Unlock a random ship skin
-                        const skins = ['default', 'bangka', 'jeepney', 'kite_fighter'];
-                        player.shipSkin = skins[Math.floor(Math.random() * skins.length)];
-                        break;
-                    case 'Science':
-                        player.score += 1000;
-                        break;
-                    case 'Sports':
-                        player.powerups.tiniklingMode = true;
-                        powerupTimers.tiniklingMode = powerupDuration;
-                        break;
-                }
-                
-                updateHUD();
-            } else {
-                // Wrong answer
-                triviaCorrect = false;
-                options[index].classList.add('incorrect');
-                options[currentQuestion.answer].classList.add('correct');
-                document.getElementById('triviaFeedback').textContent = 'Wrong! The correct answer is: ' + currentQuestion.options[currentQuestion.answer];
-                
-                // Play sound
-                sounds.wrong.play();
-                
-                // Make game harder
-                enemySpeed += 0.2;
-                bulletCooldown += 10;
-            }
-            
-            // Return to game after delay
-            setTimeout(() => {
-                document.getElementById('triviaScreen').style.display = 'none';
-                gameState = STATE_PLAYING;
-                
-                // If correct, maybe spawn a power-up
-                if (triviaCorrect && Math.random() < 0.3) {
-                    spawnPowerUp();
-                }
-                
-                // Advance level
-                player.level++;
-                levelTimer = 0;
-                enemiesDefeated = 0;
-                enemiesToDefeat = 10 + player.level * 2;
-                
-                updateHUD();
-            }, 3000);
-        }
-        
-        // Show boss battle
-        function startBossBattle() {
-            gameState = STATE_BOSS_BATTLE;
-            document.getElementById('bossBattleScreen').style.display = 'flex';
-            
-            // Set boss stats
-            bossHealth = 5 + player.level;
-            bossQuestionsAnswered = 0;
-            bossQuestionsNeeded = 3;
-            
-            // Update boss health display
-            updateBossHealth();
-            
-            // Get first question
-            getNextBossQuestion();
-        }
-        
-        // Get next boss question
-        function getNextBossQuestion() {
-            currentQuestion = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
-            selectedOption = null;
-            
-            // Display question
-            document.getElementById('bossQuestion').textContent = currentQuestion.question;
-            
-            // Display options
-            const optionsContainer = document.getElementById('bossOptions');
-            optionsContainer.innerHTML = '';
-            
-            currentQuestion.options.forEach((option, index) => {
-                const optionElement = document.createElement('div');
-                optionElement.className = 'option';
-                optionElement.textContent = option;
-                optionElement.addEventListener('click', () => selectBossOption(index));
-                optionsContainer.appendChild(optionElement);
-            });
-            
-            // Clear feedback
-            document.getElementById('bossFeedback').textContent = '';
-        }
-        
-        // Select boss option
-        function selectBossOption(index) {
-            if (selectedOption !== null) return; // Prevent multiple selections
-            
-            selectedOption = index;
-            const options = document.querySelectorAll('#bossOptions .option');
-            
-            if (index === currentQuestion.answer) {
-                // Correct answer
-                options[index].classList.add('correct');
-                document.getElementById('bossFeedback').textContent = 'Correct! ' + currentQuestion.funFact;
-                sounds.correct.play();
-                
-                bossQuestionsAnswered++;
-                updateBossHealth();
-                
-                if (bossQuestionsAnswered >= bossQuestionsNeeded) {
-                    // Boss defeated
-                    player.score += 2000;
-                    setTimeout(() => {
-                        document.getElementById('bossBattleScreen').style.display = 'none';
-                        gameState = STATE_PLAYING;
-                        
-                        // Advance level
-                        player.level++;
-                        levelTimer = 0;
-                        enemiesDefeated = 0;
-                        enemiesToDefeat = 10 + player.level * 2;
-                        
-                        updateHUD();
-                    }, 2000);
-                } else {
-                    // Next question
-                    setTimeout(getNextBossQuestion, 2000);
-                }
-            } else {
-                // Wrong answer
-                options[index].classList.add('incorrect');
-                options[currentQuestion.answer].classList.add('correct');
-                document.getElementById('bossFeedback').textContent = 'Wrong! The correct answer is: ' + currentQuestion.options[currentQuestion.answer];
-                sounds.wrong.play();
-                
-                // Boss attacks
-                player.lives--;
-                updateHUD();
-                
-                if (player.lives <= 0) {
-                    gameOver();
-                    return;
-                }
-                
-                // Next question
-                setTimeout(getNextBossQuestion, 2000);
-            }
-        }
-        
-        // Update boss health display
-        function updateBossHealth() {
-            const healthPercent = (bossQuestionsNeeded - bossQuestionsAnswered) / bossQuestionsNeeded * 100;
-            document.getElementById('bossHealth').style.width = `${healthPercent}%`;
-        }
-        
         // Update HUD
         function updateHUD() {
             document.getElementById('livesDisplay').textContent = player.lives;
@@ -946,11 +715,121 @@
             
             // Update powerup indicators
             document.getElementById('barongIndicator').textContent = 
-                `Barong Shield: ${player.powerups.barongShield ? 'ACTIVE' : 'OFF'}`;
+                player.powerups.barongShield ? 'ACTIVE' : 'OFF';
             document.getElementById('jeepneyIndicator').textContent = 
-                `Jeepney Boost: ${player.powerups.jeepneyBoost ? 'ACTIVE' : 'OFF'}`;
+                player.powerups.jeepneyBoost ? 'ACTIVE' : 'OFF';
             document.getElementById('tiniklingIndicator').textContent = 
-                `Tinikling Mode: ${player.powerups.tiniklingMode ? 'ACTIVE' : 'OFF'}`;
+                player.powerups.tiniklingMode ? 'ACTIVE' : 'OFF';
+        }
+        
+        // Spawn boss
+        function spawnBoss() {
+            bossActive = true;
+            boss = {
+                x: CANVAS_WIDTH / 2 - 75,
+                y: 50,
+                width: 150,
+                height: 120,
+                speed: 1,
+                health: 10 + player.level * 2
+            };
+            bossMaxHealth = boss.health;
+            
+            // Show boss health bar
+            document.getElementById('bossHealthBar').style.display = 'block';
+            updateBossHealth();
+            
+            // Show trivia container
+            document.getElementById('triviaContainer').style.display = 'block';
+            showBossQuestion();
+            
+            // Play boss spawn sound
+            sounds.bossSpawn.play();
+        }
+        
+        // Update boss health display
+        function updateBossHealth() {
+            const healthPercent = (boss.health / bossMaxHealth) * 100;
+            document.getElementById('bossHealth').style.width = `${healthPercent}%`;
+        }
+        
+        // Show boss question
+        function showBossQuestion() {
+            currentQuestion = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
+            selectedOption = null;
+            
+            // Display question
+            document.getElementById('triviaQuestion').textContent = currentQuestion.question;
+            
+            // Display options
+            const optionsContainer = document.getElementById('triviaOptions');
+            optionsContainer.innerHTML = '';
+            
+            currentQuestion.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'triviaOption';
+                optionElement.textContent = option;
+                optionElement.dataset.index = index;
+                optionElement.addEventListener('click', () => selectBossOption(index));
+                optionsContainer.appendChild(optionElement);
+            });
+        }
+        
+        // Select boss option
+        function selectBossOption(index) {
+            if (selectedOption !== null) return; // Prevent multiple selections
+            
+            selectedOption = index;
+            const options = document.querySelectorAll('#triviaOptions .triviaOption');
+            
+            // Highlight selected option
+            options.forEach(opt => opt.classList.remove('selected'));
+            options[index].classList.add('selected');
+            
+            if (index === currentQuestion.answer) {
+                // Correct answer - damage boss
+                boss.health -= player.powerups.tiniklingMode ? 3 : 2;
+                updateBossHealth();
+                
+                // Play sound
+                sounds.correct.play();
+                
+                if (boss.health <= 0) {
+                    // Boss defeated
+                    player.score += 1000;
+                    bossActive = false;
+                    document.getElementById('bossHealthBar').style.display = 'none';
+                    document.getElementById('triviaContainer').style.display = 'none';
+                    
+                    // Advance level
+                    player.level++;
+                    updateHUD();
+                    
+                    // Play explosion sound
+                    sounds.explosion.play();
+                    
+                    // Clear any remaining enemies
+                    enemies = [];
+                } else {
+                    // Get next question after delay
+                    setTimeout(showBossQuestion, 1000);
+                }
+            } else {
+                // Wrong answer - boss attacks
+                player.lives--;
+                updateHUD();
+                
+                if (player.lives <= 0) {
+                    gameOver();
+                    return;
+                }
+                
+                // Play sound
+                sounds.wrong.play();
+                
+                // Get next question after delay
+                setTimeout(showBossQuestion, 1000);
+            }
         }
         
         // Enemy class
@@ -1175,6 +1054,31 @@
             }
         }
         
+        // Draw boss
+        function drawBoss() {
+            // Draw tikbalang boss (horse-like creature)
+            ctx.fillStyle = '#654321'; // dark brown body
+            ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
+            
+            // Head
+            ctx.fillStyle = '#8B4513'; // lighter brown
+            ctx.fillRect(boss.x + boss.width/2 - 20, boss.y - 30, 40, 30);
+            
+            // Eyes
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.arc(boss.x + boss.width/2 - 10, boss.y - 15, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(boss.x + boss.width/2 + 10, boss.y - 15, 5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Legs
+            ctx.fillStyle = '#654321';
+            ctx.fillRect(boss.x + 10, boss.y + boss.height, 15, 30);
+            ctx.fillRect(boss.x + boss.width - 25, boss.y + boss.height, 15, 30);
+        }
+        
         // Main game loop
         function gameLoop() {
             // Clear canvas
@@ -1202,20 +1106,55 @@
                     bulletCooldown--;
                 }
                 
-                // Spawn enemies
-                enemySpawnTimer++;
-                if (enemySpawnTimer >= enemySpawnRate) {
-                    enemySpawnTimer = 0;
-                    if (enemies.length < 5 + player.level) {
-                        enemies.push(new Enemy());
+                // Spawn enemies if boss is not active
+                if (!bossActive) {
+                    enemySpawnTimer++;
+                    if (enemySpawnTimer >= enemySpawnRate) {
+                        enemySpawnTimer = 0;
+                        if (enemies.length < 5 + player.level) {
+                            enemies.push(new Enemy());
+                        }
+                        // Decrease spawn rate over time
+                        enemySpawnRate = Math.max(20, enemySpawnRate - 0.1);
                     }
-                    // Decrease spawn rate over time
-                    enemySpawnRate = Math.max(20, enemySpawnRate - 0.1);
+                    
+                    // Check if should spawn boss
+                    if (player.score >= BOSS_SPAWN_SCORE * player.level) {
+                        spawnBoss();
+                    }
                 }
                 
                 // Update bullets
                 for (let i = bullets.length - 1; i >= 0; i--) {
                     bullets[i].update();
+                    
+                    // Check if bullet hits boss
+                    if (bossActive && bullets[i].x > boss.x && bullets[i].x < boss.x + boss.width &&
+                        bullets[i].y > boss.y && bullets[i].y < boss.y + boss.height) {
+                        boss.health--;
+                        updateBossHealth();
+                        bullets.splice(i, 1);
+                        
+                        if (boss.health <= 0) {
+                            // Boss defeated
+                            player.score += 1000;
+                            bossActive = false;
+                            document.getElementById('bossHealthBar').style.display = 'none';
+                            document.getElementById('triviaContainer').style.display = 'none';
+                            
+                            // Advance level
+                            player.level++;
+                            updateHUD();
+                            
+                            // Play explosion sound
+                            sounds.explosion.play();
+                            
+                            // Clear any remaining enemies
+                            enemies = [];
+                        }
+                        continue;
+                    }
+                    
                     if (bullets[i].isOffScreen()) {
                         bullets.splice(i, 1);
                     }
@@ -1245,7 +1184,6 @@
                             
                             if (enemy.hit()) {
                                 enemies.splice(j, 1);
-                                enemiesDefeated++;
                                 player.score += enemy.type === 'kapre' ? 100 : 
                                               enemy.type === 'sarimanok' ? 50 : 30;
                                 
@@ -1292,14 +1230,12 @@
                 // Update power-up timers
                 updatePowerupTimers();
                 
-                // Level progression
-                levelTimer++;
-                if (levelTimer >= levelDuration || enemiesDefeated >= enemiesToDefeat) {
-                    // Check if boss battle
-                    if (Math.random() < 0.3) { // 30% chance
-                        startBossBattle();
-                    } else {
-                        showTriviaQuestion();
+                // Move boss if active
+                if (bossActive) {
+                    // Simple side-to-side movement
+                    boss.x += boss.speed;
+                    if (boss.x <= 0 || boss.x + boss.width >= CANVAS_WIDTH) {
+                        boss.speed *= -1;
                     }
                 }
                 
@@ -1316,14 +1252,11 @@
                     powerup.draw();
                 }
                 
-                drawPlayer();
+                if (bossActive) {
+                    drawBoss();
+                }
                 
-                // Draw level progress bar
-                const progressWidth = 200 * Math.min(1, levelTimer / levelDuration);
-                ctx.fillStyle = 'red';
-                ctx.fillRect(CANVAS_WIDTH/2 - 100, CANVAS_HEIGHT - 20, 200, 10);
-                ctx.fillStyle = 'green';
-                ctx.fillRect(CANVAS_WIDTH/2 - 100, CANVAS_HEIGHT - 20, progressWidth, 10);
+                drawPlayer();
             }
             
             // Continue game loop
