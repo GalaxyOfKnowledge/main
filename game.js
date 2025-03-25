@@ -12,7 +12,7 @@ const optionsElement = document.getElementById('options');
 // Game state
 let gameState = 'menu'; // menu, playing, trivia
 let score = 0;
-let lives = 3;
+let lives = 5;  // Increased from 3 to 5
 let level = 1;
 let enemies = [];
 let bullets = [];
@@ -22,15 +22,15 @@ let player = {
     y: canvas.height - 60,
     width: 50,
     height: 50,
-    speed: 5,
+    speed: 7,  // Increased player speed
     color: '#3498db'
 };
 let keys = {};
 let gameLoop;
-let enemySpeed = 1;
-let enemySpawnRate = 1000; // ms
+let enemySpeed = 0.7;  // Reduced from 1
+let enemySpawnRate = 1500; // Increased from 1000 (slower spawn)
 let lastEnemySpawn = 0;
-let levelTime = 30000; // 30 seconds per level
+let levelTime = 45000; // Increased from 30000 (45 seconds per level)
 let levelStartTime = 0;
 let triviaQuestions = [
     {
@@ -38,39 +38,39 @@ let triviaQuestions = [
         options: ["Sampaguita", "Rose", "Orchid", "Sunflower"],
         answer: 0,
         correctBonus: { score: 100, lives: 0, power: "double" },
-        wrongPenalty: { speed: 1.2, bullets: -1 }
+        wrongPenalty: { speed: 1.1, bullets: 0 }  // Reduced penalty
     },
     {
         question: "Which Philippine hero is known as the 'Sublime Paralytic'?",
         options: ["Jose Rizal", "Andres Bonifacio", "Apolinario Mabini", "Emilio Aguinaldo"],
         answer: 2,
         correctBonus: { score: 150, lives: 1, power: "shield" },
-        wrongPenalty: { speed: 1.5, bullets: 0 }
+        wrongPenalty: { speed: 1.2, bullets: 0 }  // Reduced penalty
     },
     {
         question: "What is the oldest city in the Philippines?",
         options: ["Manila", "Cebu", "Vigan", "Davao"],
         answer: 1,
         correctBonus: { score: 200, lives: 0, power: "triple" },
-        wrongPenalty: { speed: 1.3, bullets: -1 }
+        wrongPenalty: { speed: 1.1, bullets: 0 }  // Reduced penalty
     },
     {
         question: "Which Philippine island is known as the 'Wreck Diving Capital of the Philippines'?",
         options: ["Boracay", "Palawan", "Coron", "Siargao"],
         answer: 2,
         correctBonus: { score: 250, lives: 0, power: "rapid" },
-        wrongPenalty: { speed: 1.4, bullets: -2 }
+        wrongPenalty: { speed: 1.2, bullets: -1 }  // Reduced penalty
     },
     {
         question: "What is the traditional Filipino art of hand-to-hand combat?",
         options: ["Arnis", "Karate", "Taekwondo", "Kung Fu"],
         answer: 0,
         correctBonus: { score: 300, lives: 1, power: "shield" },
-        wrongPenalty: { speed: 1.5, bullets: -1 }
+        wrongPenalty: { speed: 1.2, bullets: 0 }  // Reduced penalty
     }
 ];
 let currentTrivia = null;
-let playerBulletCount = 3;
+let playerBulletCount = 5;  // Increased from 3
 let playerPower = "normal";
 
 // Event listeners
@@ -96,15 +96,15 @@ function startGame() {
     gameState = 'playing';
     menu.style.display = 'none';
     score = 0;
-    lives = 3;
+    lives = 5;  // Start with 5 lives
     level = 1;
     enemies = [];
     bullets = [];
     enemyBullets = [];
     player.x = canvas.width / 2 - 25;
-    playerBulletCount = 3;
+    playerBulletCount = 5;  // Start with 5 bullets
     playerPower = "normal";
-    enemySpeed = 1;
+    enemySpeed = 0.7;  // Reset to easier speed
     levelStartTime = Date.now();
     
     gameLoop = setInterval(update, 16); // ~60fps
@@ -148,8 +148,8 @@ function update() {
         const enemy = enemies[i];
         enemy.y += enemySpeed;
         
-        // Enemy shoots randomly
-        if (Math.random() < 0.01) {
+        // Enemy shoots randomly (reduced chance)
+        if (Math.random() < 0.005) {  // Reduced from 0.01
             enemyBullets.push({
                 x: enemy.x + enemy.width / 2 - 2,
                 y: enemy.y + enemy.height,
@@ -163,15 +163,10 @@ function update() {
         ctx.fillStyle = enemy.color;
         ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
         
-        // Check if enemy reached bottom
+        // Remove enemy if it goes off screen (no penalty)
         if (enemy.y > canvas.height) {
             enemies.splice(i, 1);
             i--;
-            lives--;
-            if (lives <= 0) {
-                gameOver();
-                return;
-            }
         }
     }
     
@@ -189,10 +184,10 @@ function update() {
         for (let j = 0; j < enemies.length; j++) {
             const enemy = enemies[j];
             if (
-                bullet.x < enemy.x + enemy.width &&
                 bullet.x + bullet.width > enemy.x &&
-                bullet.y < enemy.y + enemy.height &&
-                bullet.y + bullet.height > enemy.y
+                bullet.x < enemy.x + enemy.width &&
+                bullet.y + bullet.height > enemy.y &&
+                bullet.y < enemy.y + enemy.height
             ) {
                 // Collision detected
                 enemies.splice(j, 1);
@@ -219,12 +214,12 @@ function update() {
         ctx.fillStyle = '#ff0000';
         ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
         
-        // Check if bullet hit player
+        // Check if bullet hit player (more precise collision)
         if (
-            bullet.x < player.x + player.width &&
             bullet.x + bullet.width > player.x &&
-            bullet.y < player.y + player.height &&
-            bullet.y + bullet.height > player.y
+            bullet.x < player.x + player.width &&
+            bullet.y + bullet.height > player.y &&
+            bullet.y < player.y + player.height
         ) {
             // Player hit
             enemyBullets.splice(i, 1);
@@ -264,6 +259,11 @@ function update() {
     // Draw time remaining
     const timeLeft = Math.ceil((levelTime - (Date.now() - levelStartTime)) / 1000);
     ctx.fillText(`Time: ${timeLeft}s`, canvas.width - 100, 30);
+    
+    // Replenish bullets over time
+    if (Date.now() % 1000 < 16 && playerBulletCount < 5) {  // Replenish faster
+        playerBulletCount++;
+    }
 }
 
 function spawnEnemy() {
@@ -342,7 +342,7 @@ function shoot() {
             if (gameState === 'playing') {
                 playerBulletCount++;
             }
-        }, 500);
+        }, 300);  // Faster replenish for rapid fire
     }
 }
 
@@ -388,15 +388,15 @@ function checkAnswer(selectedIndex) {
             setTimeout(() => {
                 player.color = originalColor;
                 playerPower = "normal";
-            }, 5000);
+            }, 8000);  // Longer shield duration
         }
     } else {
         // Wrong answer
         alert(`Wrong! The correct answer was: ${currentTrivia.options[currentTrivia.answer]}`);
         
-        // Apply penalties
+        // Apply reduced penalties
         enemySpeed *= currentTrivia.wrongPenalty.speed;
-        playerBulletCount = Math.max(1, playerBulletCount + currentTrivia.wrongPenalty.bullets);
+        playerBulletCount = Math.max(3, playerBulletCount + currentTrivia.wrongPenalty.bullets);  // Minimum 3 bullets
     }
     
     // Start next level
@@ -405,7 +405,7 @@ function checkAnswer(selectedIndex) {
     enemies = [];
     bullets = [];
     enemyBullets = [];
-    playerBulletCount = 3;
+    playerBulletCount = 5;  // Reset to 5 bullets
     if (playerPower !== "shield") playerPower = "normal";
     
     gameState = 'playing';
