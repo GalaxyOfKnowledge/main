@@ -59,14 +59,21 @@
         #highscoreButton { background-color: #FFC107; color: black; }
         #settingsButton { background-color: #2196F3; color: white; }
         
-        #hud {
+        #powerupHud {
             position: absolute;
             top: 10px;
-            left: 10px;
-            font-size: 18px;
+            right: 10px;
+            font-size: 14px;
+            text-align: right;
             background-color: rgba(0, 0, 0, 0.5);
             padding: 10px;
             border-radius: 5px;
+        }
+        
+        .powerup-indicator {
+            margin: 5px;
+            padding: 5px;
+            border-radius: 3px;
         }
         
         #bossHealthBar {
@@ -123,40 +130,37 @@
             border-color: #2E7D32;
         }
         
-        #nameInput {
-            padding: 10px;
-            font-size: 18px;
-            width: 200px;
-            margin: 10px;
-        }
-        
-        .settings-row {
-            margin: 15px;
+        #shipSelection {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
             display: flex;
-            align-items: center;
+            flex-direction: column;
+            gap: 10px;
         }
         
-        .settings-label {
-            width: 200px;
-            font-size: 18px;
-        }
-        
-        .settings-value {
-            width: 100px;
-            text-align: center;
-            font-size: 18px;
-        }
-        
-        .settings-button {
+        .ship-icon {
             width: 40px;
             height: 40px;
-            font-size: 20px;
-            margin: 0 10px;
-            cursor: pointer;
-            background-color: #333;
-            color: white;
-            border: none;
+            border: 2px solid #555;
             border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .ship-icon.available {
+            border-color: #FFD700;
+            box-shadow: 0 0 10px #FFD700;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 5px #FFD700; }
+            50% { box-shadow: 0 0 15px #FFD700; }
+            100% { box-shadow: 0 0 5px #FFD700; }
         }
         
         #mobileControls {
@@ -189,20 +193,22 @@
                 width: 90%;
                 bottom: 100px;
             }
+            
+            #shipSelection {
+                bottom: 100px;
+                right: 10px;
+            }
         }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas"></canvas>
     
-    <!-- HUD Elements -->
-    <div id="hud">
-        <div>Lives: <span id="livesDisplay">3</span></div>
-        <div>Score: <span id="scoreDisplay">0</span></div>
-        <div>Level: <span id="levelDisplay">1</span></div>
-        <div>Barong Shield: <span id="barongIndicator">OFF</span></div>
-        <div>Jeepney Boost: <span id="jeepneyIndicator">OFF</span></div>
-        <div>Tinikling Mode: <span id="tiniklingIndicator">OFF</span></div>
+    <!-- Power-up HUD (right side) -->
+    <div id="powerupHud">
+        <div class="powerup-indicator" id="barongIndicator" style="background-color: #2196F3;">Barong Shield: OFF</div>
+        <div class="powerup-indicator" id="jeepneyIndicator" style="background-color: #F44336;">Jeepney Boost: OFF</div>
+        <div class="powerup-indicator" id="tiniklingIndicator" style="background-color: #4CAF50;">Tinikling Mode: OFF</div>
     </div>
     
     <!-- Boss Health Bar -->
@@ -214,6 +220,13 @@
     <div id="triviaContainer">
         <div id="triviaQuestion"></div>
         <div id="triviaOptions"></div>
+    </div>
+    
+    <!-- Ship Selection UI -->
+    <div id="shipSelection">
+        <div class="ship-icon" id="defaultShip" title="Default Ship (X)">X</div>
+        <div class="ship-icon" id="bangkaShip" title="Bangka Ship (C)">C</div>
+        <div class="ship-icon" id="jeepneyShip" title="Jeepney Ship (V)">V</div>
     </div>
     
     <!-- Menu Screen -->
@@ -303,13 +316,17 @@
             speed: 5,
             lives: 3,
             score: 0,
-            level: 1,
             powerups: {
                 barongShield: false,
                 jeepneyBoost: false,
                 tiniklingMode: false
             },
-            shipSkin: 'default'
+            shipSkin: 'default',
+            availableShips: {
+                default: false,
+                bangka: false,
+                jeepney: false
+            }
         };
         
         let bullets = [];
@@ -346,7 +363,8 @@
             powerup: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3'),
             correct: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3'),
             wrong: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3'),
-            bossSpawn: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-monster-roar-1988.mp3')
+            bossSpawn: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-monster-roar-1988.mp3'),
+            shipChange: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3')
         };
         
         // Set volume for all sounds
@@ -580,6 +598,26 @@
                     keys[e.key] = true;
                 }
                 
+                // Ship transformation keys
+                if (gameState === STATE_PLAYING) {
+                    if (e.key === 'x' && player.availableShips.default) {
+                        player.shipSkin = 'default';
+                        player.availableShips.default = false;
+                        sounds.shipChange.play();
+                        updateShipSelectionUI();
+                    } else if (e.key === 'c' && player.availableShips.bangka) {
+                        player.shipSkin = 'bangka';
+                        player.availableShips.bangka = false;
+                        sounds.shipChange.play();
+                        updateShipSelectionUI();
+                    } else if (e.key === 'v' && player.availableShips.jeepney) {
+                        player.shipSkin = 'jeepney';
+                        player.availableShips.jeepney = false;
+                        sounds.shipChange.play();
+                        updateShipSelectionUI();
+                    }
+                }
+                
                 // In game over screen, allow typing name
                 if (gameState === STATE_GAME_OVER && document.getElementById('nameInputContainer').style.display !== 'none') {
                     if (e.key === 'Enter') {
@@ -605,6 +643,13 @@
             ' ': false
         };
         
+        // Update ship selection UI
+        function updateShipSelectionUI() {
+            document.getElementById('defaultShip').classList.toggle('available', player.availableShips.default);
+            document.getElementById('bangkaShip').classList.toggle('available', player.availableShips.bangka);
+            document.getElementById('jeepneyShip').classList.toggle('available', player.availableShips.jeepney);
+        }
+        
         // Start a new game
         function startGame() {
             gameState = STATE_PLAYING;
@@ -619,13 +664,17 @@
                 speed: 5,
                 lives: 3,
                 score: 0,
-                level: 1,
                 powerups: {
                     barongShield: false,
                     jeepneyBoost: false,
                     tiniklingMode: false
                 },
-                shipSkin: 'default'
+                shipSkin: 'default',
+                availableShips: {
+                    default: false,
+                    bangka: false,
+                    jeepney: false
+                }
             };
             
             // Reset game variables
@@ -640,6 +689,7 @@
             
             // Update HUD
             updateHUD();
+            updateShipSelectionUI();
             
             // Hide boss health bar
             document.getElementById('bossHealthBar').style.display = 'none';
@@ -707,21 +757,6 @@
             }
         }
         
-        // Update HUD
-        function updateHUD() {
-            document.getElementById('livesDisplay').textContent = player.lives;
-            document.getElementById('scoreDisplay').textContent = player.score;
-            document.getElementById('levelDisplay').textContent = player.level;
-            
-            // Update powerup indicators
-            document.getElementById('barongIndicator').textContent = 
-                player.powerups.barongShield ? 'ACTIVE' : 'OFF';
-            document.getElementById('jeepneyIndicator').textContent = 
-                player.powerups.jeepneyBoost ? 'ACTIVE' : 'OFF';
-            document.getElementById('tiniklingIndicator').textContent = 
-                player.powerups.tiniklingMode ? 'ACTIVE' : 'OFF';
-        }
-        
         // Spawn boss
         function spawnBoss() {
             bossActive = true;
@@ -731,7 +766,7 @@
                 width: 150,
                 height: 120,
                 speed: 1,
-                health: 10 + player.level * 2
+                health: 20
             };
             bossMaxHealth = boss.health;
             
@@ -801,10 +836,6 @@
                     document.getElementById('bossHealthBar').style.display = 'none';
                     document.getElementById('triviaContainer').style.display = 'none';
                     
-                    // Advance level
-                    player.level++;
-                    updateHUD();
-                    
                     // Play explosion sound
                     sounds.explosion.play();
                     
@@ -816,12 +847,14 @@
                 }
             } else {
                 // Wrong answer - boss attacks
-                player.lives--;
-                updateHUD();
-                
-                if (player.lives <= 0) {
-                    gameOver();
-                    return;
+                if (!player.powerups.barongShield) {
+                    player.lives--;
+                    updateHUD();
+                    
+                    if (player.lives <= 0) {
+                        gameOver();
+                        return;
+                    }
                 }
                 
                 // Play sound
@@ -830,6 +863,16 @@
                 // Get next question after delay
                 setTimeout(showBossQuestion, 1000);
             }
+        }
+        
+        // Update HUD
+        function updateHUD() {
+            document.getElementById('barongIndicator').textContent = 
+                player.powerups.barongShield ? 'ACTIVE' : 'OFF';
+            document.getElementById('jeepneyIndicator').textContent = 
+                player.powerups.jeepneyBoost ? 'ACTIVE' : 'OFF';
+            document.getElementById('tiniklingIndicator').textContent = 
+                player.powerups.tiniklingMode ? 'ACTIVE' : 'OFF';
         }
         
         // Enemy class
@@ -941,13 +984,13 @@
         
         // Power-up class
         class PowerUp {
-            constructor(x, y) {
+            constructor(x, y, type = null) {
                 this.x = x;
                 this.y = y;
                 this.width = 30;
                 this.height = 30;
                 this.speed = 2;
-                this.type = ['barongShield', 'jeepneyBoost', 'tiniklingMode'][Math.floor(Math.random() * 3)];
+                this.type = type || ['barongShield', 'jeepneyBoost', 'tiniklingMode', 'defaultShip', 'bangkaShip', 'jeepneyShip'][Math.floor(Math.random() * 6)];
             }
             
             update() {
@@ -965,11 +1008,29 @@
                     ctx.fillRect(this.x, this.y, this.width, this.height);
                     ctx.fillStyle = 'yellow';
                     ctx.fillRect(this.x + 5, this.y + 5, this.width - 10, this.height - 10);
-                } else { // tiniklingMode
+                } else if (this.type === 'tiniklingMode') {
                     ctx.fillStyle = 'green';
                     ctx.fillRect(this.x, this.y, this.width, this.height);
                     ctx.fillStyle = 'white';
                     ctx.fillRect(this.x + 5, this.y + 5, this.width - 10, this.height - 10);
+                } else if (this.type === 'defaultShip') {
+                    ctx.fillStyle = '#4CAF50';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.fillText('X', this.x + 10, this.y + 20);
+                } else if (this.type === 'bangkaShip') {
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.fillText('C', this.x + 10, this.y + 20);
+                } else if (this.type === 'jeepneyShip') {
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.fillText('V', this.x + 10, this.y + 20);
                 }
             }
             
@@ -1042,15 +1103,6 @@
                 ctx.fillStyle = '#87CEEB'; // sky blue
                 ctx.fillRect(player.x + 10, player.y + 10, 10, 10);
                 ctx.fillRect(player.x + player.width - 20, player.y + 10, 10, 10);
-            } else if (player.shipSkin === 'kite_fighter') {
-                // Kite fighter
-                ctx.fillStyle = 'red';
-                ctx.beginPath();
-                ctx.moveTo(player.x + player.width/2, player.y);
-                ctx.lineTo(player.x, player.y + player.height);
-                ctx.lineTo(player.x + player.width, player.y + player.height);
-                ctx.closePath();
-                ctx.fill();
             }
         }
         
@@ -1111,15 +1163,20 @@
                     enemySpawnTimer++;
                     if (enemySpawnTimer >= enemySpawnRate) {
                         enemySpawnTimer = 0;
-                        if (enemies.length < 5 + player.level) {
+                        if (enemies.length < 5) {
                             enemies.push(new Enemy());
                         }
                         // Decrease spawn rate over time
                         enemySpawnRate = Math.max(20, enemySpawnRate - 0.1);
                     }
                     
+                    // Spawn power-ups randomly
+                    if (Math.random() < 0.01) {
+                        spawnPowerUp();
+                    }
+                    
                     // Check if should spawn boss
-                    if (player.score >= BOSS_SPAWN_SCORE * player.level) {
+                    if (player.score >= BOSS_SPAWN_SCORE) {
                         spawnBoss();
                     }
                 }
@@ -1142,10 +1199,6 @@
                             document.getElementById('bossHealthBar').style.display = 'none';
                             document.getElementById('triviaContainer').style.display = 'none';
                             
-                            // Advance level
-                            player.level++;
-                            updateHUD();
-                            
                             // Play explosion sound
                             sounds.explosion.play();
                             
@@ -1163,13 +1216,26 @@
                 // Update enemies
                 for (let i = enemies.length - 1; i >= 0; i--) {
                     enemies[i].update();
-                    if (enemies[i].isOffScreen()) {
-                        enemies.splice(i, 1);
+                    
+                    // Check if enemy hits player
+                    if (!player.powerups.barongShield &&
+                        player.x < enemies[i].x + enemies[i].width &&
+                        player.x + player.width > enemies[i].x &&
+                        player.y < enemies[i].y + enemies[i].height &&
+                        player.y + player.height > enemies[i].y) {
+                        
                         player.lives--;
+                        enemies.splice(i, 1);
                         updateHUD();
+                        
                         if (player.lives <= 0) {
                             gameOver();
                         }
+                        continue;
+                    }
+                    
+                    if (enemies[i].isOffScreen()) {
+                        enemies.splice(i, 1);
                     }
                 }
                 
@@ -1188,11 +1254,8 @@
                                               enemy.type === 'sarimanok' ? 50 : 30;
                                 
                                 // Chance to drop power-up
-                                if (Math.random() < 0.1) {
-                                    powerups.push(new PowerUp(
-                                        enemy.x + enemy.width/2,
-                                        enemy.y + enemy.height/2
-                                    ));
+                                if (Math.random() < 0.2) {
+                                    spawnPowerUp();
                                 }
                                 
                                 sounds.explosion.play();
@@ -1214,11 +1277,21 @@
                         player.y < powerups[i].y + powerups[i].height &&
                         player.y + player.height > powerups[i].y) {
                         
-                        player.powerups[powerups[i].type] = true;
-                        powerupTimers[powerups[i].type] = powerupDuration;
+                        if (powerups[i].type === 'defaultShip') {
+                            player.availableShips.default = true;
+                        } else if (powerups[i].type === 'bangkaShip') {
+                            player.availableShips.bangka = true;
+                        } else if (powerups[i].type === 'jeepneyShip') {
+                            player.availableShips.jeepney = true;
+                        } else {
+                            player.powerups[powerups[i].type] = true;
+                            powerupTimers[powerups[i].type] = powerupDuration;
+                        }
+                        
                         powerups.splice(i, 1);
                         sounds.powerup.play();
                         updateHUD();
+                        updateShipSelectionUI();
                         continue;
                     }
                     
