@@ -3,31 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pinoy Space Invaders</title>
+    <title>Pinoy Quiz Trivia Space Invader</title>
     <style>
         body {
             margin: 0;
             padding: 0;
             background-color: #000;
-            color: #fff;
-            font-family: 'Arial', sans-serif;
+            color: white;
+            font-family: Arial, sans-serif;
             overflow: hidden;
-            user-select: none;
+            touch-action: none;
         }
         
-        #gameContainer {
-            position: relative;
-            width: 800px;
-            height: 600px;
-            margin: 20px auto;
-            background-color: #111;
-            border: 2px solid #4a90e2;
-            border-radius: 10px;
-            overflow: hidden;
+        #gameCanvas {
+            display: block;
+            background-color: black;
+            margin: 0 auto;
         }
         
-        #mainMenu, #settingsMenu, #highscoreMenu, #gameScreen, #triviaScreen, #bossTriviaScreen, #gameOverScreen {
+        #menuScreen, #gameOverScreen, #highscoreScreen, #settingsScreen, #triviaScreen, #bossBattleScreen {
             position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             display: flex;
@@ -35,1526 +32,1306 @@
             justify-content: center;
             align-items: center;
             background-color: rgba(0, 0, 0, 0.8);
-            z-index: 100;
         }
         
-        #gameScreen {
-            display: none;
-            z-index: 1;
-        }
-        
-        .menuTitle {
+        .title {
             font-size: 48px;
-            color: #ffcc00;
+            font-weight: bold;
             margin-bottom: 40px;
-            text-shadow: 0 0 10px #ff6600;
-            font-family: 'Impact', sans-serif;
+            color: #fff;
+            text-align: center;
         }
         
-        .menuButton {
+        .menu-button {
             width: 200px;
             height: 50px;
             margin: 10px;
-            background-color: #4a90e2;
-            color: white;
-            border: none;
-            border-radius: 25px;
-            font-size: 18px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .menuButton:hover {
-            background-color: #ff6600;
-            transform: scale(1.05);
-        }
-        
-        #canvas {
-            background-color: #000;
-        }
-        
-        #playerInfo {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            color: white;
-            font-size: 16px;
-        }
-        
-        #triviaQuestion {
-            font-size: 24px;
-            color: #ffcc00;
-            margin-bottom: 20px;
-            text-align: center;
-            padding: 0 20px;
-        }
-        
-        .triviaOption {
-            width: 80%;
-            padding: 15px;
-            margin: 10px;
-            background-color: #333;
-            color: white;
-            border: 2px solid #4a90e2;
-            border-radius: 10px;
-            font-size: 18px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .triviaOption:hover {
-            background-color: #4a90e2;
-            transform: scale(1.02);
-        }
-        
-        #triviaFeedback {
-            margin-top: 20px;
             font-size: 20px;
-            color: #ffcc00;
-            text-align: center;
-            min-height: 30px;
-        }
-        
-        #triviaFunFact {
-            margin-top: 20px;
-            font-size: 16px;
-            color: #4a90e2;
-            font-style: italic;
-            text-align: center;
-            padding: 0 20px;
-        }
-        
-        #bossHealth {
-            width: 80%;
-            height: 30px;
-            background-color: #333;
-            border: 2px solid #ff0000;
+            cursor: pointer;
+            border: none;
             border-radius: 5px;
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-        
-        #bossHealthBar {
-            height: 100%;
-            width: 100%;
-            background-color: #ff0000;
-            transition: width 0.3s;
-        }
-        
-        #bossImage {
-            width: 200px;
-            height: 200px;
-            margin-bottom: 20px;
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-        }
-        
-        #highscoreList {
-            width: 80%;
-            height: 400px;
-            overflow-y: auto;
-            margin: 20px 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            border: 1px solid #4a90e2;
-            border-radius: 5px;
-            padding: 10px;
-        }
-        
-        .highscoreEntry {
             display: flex;
-            justify-content: space-between;
-            padding: 8px;
-            border-bottom: 1px solid #333;
-        }
-        
-        .highscoreEntry:nth-child(odd) {
-            background-color: rgba(74, 144, 226, 0.1);
-        }
-        
-        .highscoreEntry:nth-child(1) {
-            color: gold;
-            font-weight: bold;
-        }
-        
-        .highscoreEntry:nth-child(2) {
-            color: silver;
-            font-weight: bold;
-        }
-        
-        .highscoreEntry:nth-child(3) {
-            color: #cd7f32;
-            font-weight: bold;
-        }
-        
-        #settingsOptions {
-            width: 80%;
-            margin: 20px 0;
-        }
-        
-        .settingRow {
-            display: flex;
-            justify-content: space-between;
-            margin: 15px 0;
+            justify-content: center;
             align-items: center;
         }
         
-        .settingLabel {
-            font-size: 18px;
-            color: #ffcc00;
+        #playButton { background-color: #4CAF50; color: white; }
+        #highscoreButton { background-color: #FFC107; color: black; }
+        #settingsButton { background-color: #2196F3; color: white; }
+        
+        .question {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            max-width: 80%;
         }
         
-        .settingControl {
-            padding: 8px;
+        .option {
+            width: 80%;
+            max-width: 500px;
+            padding: 10px;
+            margin: 5px;
             background-color: #333;
-            color: white;
-            border: 1px solid #4a90e2;
+            border: 2px solid #555;
             border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
         }
         
-        #powerUpIndicator {
+        .option:hover {
+            background-color: #444;
+        }
+        
+        .option.correct {
+            background-color: #4CAF50;
+            border-color: #2E7D32;
+        }
+        
+        .option.incorrect {
+            background-color: #F44336;
+            border-color: #C62828;
+        }
+        
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 18px;
+        }
+        
+        #powerupHud {
             position: absolute;
             top: 10px;
             right: 10px;
-            color: #00ff00;
-            font-size: 16px;
-        }
-        
-        #coopControls {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            color: white;
             font-size: 14px;
-            display: none;
+            text-align: right;
         }
         
-        #gameOverMessage {
-            font-size: 36px;
-            color: #ff0000;
-            margin-bottom: 20px;
-            text-align: center;
+        .powerup-indicator {
+            margin: 5px;
+            padding: 5px;
+            border-radius: 3px;
         }
         
-        #finalScore {
-            font-size: 24px;
-            color: #ffcc00;
-            margin-bottom: 30px;
+        #bossHealthBar {
+            width: 300px;
+            height: 20px;
+            background-color: #F44336;
+            margin: 20px auto;
+            position: relative;
         }
         
-        #unlockedSkins {
-            margin-top: 20px;
+        #bossHealth {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 100%;
+        }
+        
+        #bossTitle {
+            color: #F44336;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        #nameInput {
+            padding: 10px;
             font-size: 18px;
-            color: #4a90e2;
+            width: 200px;
+            margin: 10px;
+        }
+        
+        .settings-row {
+            margin: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .settings-label {
+            width: 200px;
+            font-size: 18px;
+        }
+        
+        .settings-value {
+            width: 100px;
             text-align: center;
+            font-size: 18px;
+        }
+        
+        .settings-button {
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            margin: 0 10px;
+            cursor: pointer;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        
+        #mobileControls {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            display: none;
+            justify-content: center;
+        }
+        
+        .mobile-btn {
+            width: 80px;
+            height: 80px;
+            margin: 0 20px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            user-select: none;
+        }
+        
+        @media (max-width: 768px) {
+            #mobileControls {
+                display: flex;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="gameContainer">
-        <canvas id="canvas" width="800" height="600"></canvas>
-        
-        <div id="playerInfo">
-            Lives: <span id="lives">3</span> | 
-            Score: <span id="score">0</span> | 
-            Level: <span id="level">1</span>
-        </div>
-        
-        <div id="powerUpIndicator"></div>
-        
-        <div id="coopControls">
-            Player 1: Arrow keys to move, Space to shoot<br>
-            Player 2: Use number keys (1-4) to answer trivia
-        </div>
-        
-        <!-- Main Menu Screen -->
-        <div id="mainMenu">
-            <div class="menuTitle">PINOY SPACE INVADERS</div>
-            <button class="menuButton" id="playButton">PLAY</button>
-            <button class="menuButton" id="highscoreButton">HIGHSCORE</button>
-            <button class="menuButton" id="settingsButton">SETTINGS</button>
-        </div>
-        
-        <!-- Settings Screen -->
-        <div id="settingsMenu" style="display: none;">
-            <div class="menuTitle">SETTINGS</div>
-            <div id="settingsOptions">
-                <div class="settingRow">
-                    <span class="settingLabel">Game Mode:</span>
-                    <select class="settingControl" id="gameMode">
-                        <option value="single">Single Player</option>
-                        <option value="coop">Co-op Bayanihan Mode</option>
-                    </select>
-                </div>
-                <div class="settingRow">
-                    <span class="settingLabel">Difficulty:</span>
-                    <select class="settingControl" id="difficulty">
-                        <option value="easy">Easy</option>
-                        <option value="medium" selected>Medium</option>
-                        <option value="hard">Hard</option>
-                    </select>
-                </div>
-                <div class="settingRow">
-                    <span class="settingLabel">Music Volume:</span>
-                    <input type="range" class="settingControl" id="musicVolume" min="0" max="100" value="50">
-                </div>
-                <div class="settingRow">
-                    <span class="settingLabel">SFX Volume:</span>
-                    <input type="range" class="settingControl" id="sfxVolume" min="0" max="100" value="70">
-                </div>
-            </div>
-            <button class="menuButton" id="saveSettingsButton">SAVE SETTINGS</button>
-            <button class="menuButton" id="backToMenuButton">BACK TO MENU</button>
-        </div>
-        
-        <!-- Highscore Screen -->
-        <div id="highscoreMenu" style="display: none;">
-            <div class="menuTitle">HIGHSCORES</div>
-            <div id="highscoreList">
-                <!-- Highscores will be populated here -->
-            </div>
-            <button class="menuButton" id="backToMenuButton2">BACK TO MENU</button>
-        </div>
-        
-        <!-- Trivia Screen -->
-        <div id="triviaScreen" style="display: none;">
-            <div id="triviaQuestion"></div>
-            <button class="triviaOption" id="option1"></button>
-            <button class="triviaOption" id="option2"></button>
-            <button class="triviaOption" id="option3"></button>
-            <button class="triviaOption" id="option4"></button>
-            <div id="triviaFeedback"></div>
-            <div id="triviaFunFact"></div>
-        </div>
-        
-        <!-- Boss Trivia Screen -->
-        <div id="bossTriviaScreen" style="display: none;">
-            <div id="bossImage"></div>
-            <div id="bossHealth">
-                <div id="bossHealthBar"></div>
-            </div>
-            <div id="bossTriviaQuestion"></div>
-            <button class="triviaOption" id="bossOption1"></button>
-            <button class="triviaOption" id="bossOption2"></button>
-            <button class="triviaOption" id="bossOption3"></button>
-            <button class="triviaOption" id="bossOption4"></button>
-            <div id="bossTriviaFeedback"></div>
-            <div id="bossTriviaFunFact"></div>
-        </div>
-        
-        <!-- Game Over Screen -->
-        <div id="gameOverScreen" style="display: none;">
-            <div id="gameOverMessage">GAME OVER</div>
-            <div id="finalScore">Your Score: 0</div>
-            <div id="unlockedSkins"></div>
-            <button class="menuButton" id="playAgainButton">PLAY AGAIN</button>
-            <button class="menuButton" id="backToMenuButton3">MAIN MENU</button>
-        </div>
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- Menu Screen -->
+    <div id="menuScreen">
+        <div class="title">Pinoy Quiz Trivia<br>Space Invader</div>
+        <button id="playButton" class="menu-button">Play</button>
+        <button id="highscoreButton" class="menu-button">Highscore</button>
+        <button id="settingsButton" class="menu-button">Settings</button>
     </div>
-
-    <!-- Audio elements with WORKING URLs -->
-    <audio id="backgroundMusic" loop>
-        <source src="https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-668.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="shootSound">
-        <source src="https://assets.mixkit.co/sfx/preview/mixkit-laser-weapon-shot-1680.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="explosionSound">
-        <source src="https://assets.mixkit.co/sfx/preview/mixkit-explosion-impact-1684.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="powerUpSound">
-        <source src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="correctAnswerSound">
-        <source src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="wrongAnswerSound">
-        <source src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3" type="audio/mpeg">
-    </audio>
-
+    
+    <!-- Game Over Screen -->
+    <div id="gameOverScreen" style="display: none;">
+        <div class="title">Game Over</div>
+        <div id="finalScore" style="font-size: 24px; margin-bottom: 20px;"></div>
+        <div id="nameInputContainer" style="display: none;">
+            <div style="margin-bottom: 10px;">Enter your name:</div>
+            <input type="text" id="nameInput" maxlength="10">
+            <button id="submitScore" class="menu-button" style="background-color: #4CAF50;">Submit</button>
+        </div>
+        <button id="continueButton" class="menu-button" style="background-color: #2196F3;">Continue</button>
+    </div>
+    
+    <!-- Highscore Screen -->
+    <div id="highscoreScreen" style="display: none;">
+        <div class="title">High Scores</div>
+        <div id="highscoreList" style="margin-bottom: 30px;"></div>
+        <button id="backButton" class="menu-button" style="background-color: #2196F3;">Back</button>
+    </div>
+    
+    <!-- Settings Screen -->
+    <div id="settingsScreen" style="display: none;">
+        <div class="title">Settings</div>
+        
+        <div class="settings-row">
+            <div class="settings-label">Music Volume:</div>
+            <button id="musicDown" class="settings-button">-</button>
+            <div id="musicVolume" class="settings-value">50%</div>
+            <button id="musicUp" class="settings-button">+</button>
+        </div>
+        
+        <div class="settings-row">
+            <div class="settings-label">Sound Effects:</div>
+            <button id="toggleSound" class="settings-button" style="width: 100px;">ON</button>
+        </div>
+        
+        <div class="settings-row">
+            <div class="settings-label">Difficulty:</div>
+            <button id="changeDifficulty" class="settings-button" style="width: 100px;">NORMAL</button>
+        </div>
+        
+        <button id="settingsBackButton" class="menu-button" style="background-color: #F44336; margin-top: 30px;">Back to Menu</button>
+    </div>
+    
+    <!-- Trivia Screen -->
+    <div id="triviaScreen" style="display: none;">
+        <div id="triviaCategory" style="color: #FFC107; font-size: 20px; margin-bottom: 10px;"></div>
+        <div id="triviaQuestion" class="question"></div>
+        <div id="triviaOptions"></div>
+        <div id="triviaFeedback" style="margin-top: 20px; font-size: 18px; color: #FFC107;"></div>
+    </div>
+    
+    <!-- Boss Battle Screen -->
+    <div id="bossBattleScreen" style="display: none;">
+        <div id="bossTitle">BOSS BATTLE!</div>
+        <div id="bossHealthBar"><div id="bossHealth"></div></div>
+        <div id="bossQuestion" class="question"></div>
+        <div id="bossOptions"></div>
+        <div id="bossFeedback" style="margin-top: 20px; font-size: 18px; color: #FFC107;"></div>
+    </div>
+    
+    <!-- HUD -->
+    <div id="hud">
+        <div>Lives: <span id="livesDisplay">3</span></div>
+        <div>Score: <span id="scoreDisplay">0</span></div>
+        <div>Level: <span id="levelDisplay">1</span></div>
+    </div>
+    
+    <div id="powerupHud">
+        <div class="powerup-indicator" id="barongIndicator" style="background-color: #2196F3;">Barong Shield: OFF</div>
+        <div class="powerup-indicator" id="jeepneyIndicator" style="background-color: #F44336;">Jeepney Boost: OFF</div>
+        <div class="powerup-indicator" id="tiniklingIndicator" style="background-color: #4CAF50;">Tinikling Mode: OFF</div>
+    </div>
+    
+    <!-- Mobile Controls -->
+    <div id="mobileControls">
+        <div class="mobile-btn" id="leftBtn">←</div>
+        <div class="mobile-btn" id="shootBtn">🔫</div>
+        <div class="mobile-btn" id="rightBtn">→</div>
+    </div>
+    
     <script>
-        // Game state
-        const gameState = {
-            currentScreen: 'mainMenu',
-            score: 0,
-            lives: 3,
-            level: 1,
-            gameMode: 'single',
-            difficulty: 'medium',
-            musicVolume: 50,
-            sfxVolume: 70,
-            powerUp: null,
-            powerUpTime: 0,
-            unlockedSkins: [],
-            bossHealth: 0,
-            bossMaxHealth: 0,
-            bossQuestionsAnswered: 0,
-            bossQuestionsRequired: 3
-        };
-
-        // Game elements
-        const canvas = document.getElementById('canvas');
+        // Game constants
+        const CANVAS_WIDTH = 800;
+        const CANVAS_HEIGHT = 600;
+        
+        // Game states
+        const STATE_MENU = 0;
+        const STATE_PLAYING = 1;
+        const STATE_TRIVIA = 2;
+        const STATE_GAME_OVER = 3;
+        const STATE_HIGHSCORE = 4;
+        const STATE_SETTINGS = 5;
+        const STATE_BOSS_BATTLE = 6;
+        
+        // Initialize canvas
+        const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const playerInfo = document.getElementById('playerInfo');
-        const livesDisplay = document.getElementById('lives');
-        const scoreDisplay = document.getElementById('score');
-        const levelDisplay = document.getElementById('level');
-        const powerUpIndicator = document.getElementById('powerUpIndicator');
-        const coopControls = document.getElementById('coopControls');
-
-        // Screens
-        const mainMenu = document.getElementById('mainMenu');
-        const settingsMenu = document.getElementById('settingsMenu');
-        const highscoreMenu = document.getElementById('highscoreMenu');
-        const gameScreen = document.getElementById('gameScreen');
-        const triviaScreen = document.getElementById('triviaScreen');
-        const bossTriviaScreen = document.getElementById('bossTriviaScreen');
-        const gameOverScreen = document.getElementById('gameOverScreen');
-
-        // Trivia elements
-        const triviaQuestion = document.getElementById('triviaQuestion');
-        const option1 = document.getElementById('option1');
-        const option2 = document.getElementById('option2');
-        const option3 = document.getElementById('option3');
-        const option4 = document.getElementById('option4');
-        const triviaFeedback = document.getElementById('triviaFeedback');
-        const triviaFunFact = document.getElementById('triviaFunFact');
-
-        // Boss trivia elements
-        const bossTriviaQuestion = document.getElementById('bossTriviaQuestion');
-        const bossOption1 = document.getElementById('bossOption1');
-        const bossOption2 = document.getElementById('bossOption2');
-        const bossOption3 = document.getElementById('bossOption3');
-        const bossOption4 = document.getElementById('bossOption4');
-        const bossTriviaFeedback = document.getElementById('bossTriviaFeedback');
-        const bossTriviaFunFact = document.getElementById('bossTriviaFunFact');
-        const bossHealthBar = document.getElementById('bossHealthBar');
-        const bossImage = document.getElementById('bossImage');
-
-        // Game over elements
-        const gameOverMessage = document.getElementById('gameOverMessage');
-        const finalScore = document.getElementById('finalScore');
-        const unlockedSkins = document.getElementById('unlockedSkins');
-
-        // Audio elements
-        const backgroundMusic = document.getElementById('backgroundMusic');
-        const shootSound = document.getElementById('shootSound');
-        const explosionSound = document.getElementById('explosionSound');
-        const powerUpSound = document.getElementById('powerUpSound');
-        const correctAnswerSound = document.getElementById('correctAnswerSound');
-        const wrongAnswerSound = document.getElementById('wrongAnswerSound');
-
-        // Game objects
-        const player = {
-            x: canvas.width / 2 - 25,
-            y: canvas.height - 60,
+        canvas.width = CANVAS_WIDTH;
+        canvas.height = CANVAS_HEIGHT;
+        
+        // Game variables
+        let gameState = STATE_MENU;
+        let player = {
+            x: CANVAS_WIDTH / 2 - 25,
+            y: CANVAS_HEIGHT - 60,
             width: 50,
-            height: 50,
+            height: 30,
             speed: 5,
-            color: '#4a90e2',
-            bullets: [],
-            bulletSpeed: 7,
-            bulletCooldown: 0,
-            skin: 'default',
-            skins: {
-                default: { color: '#4a90e2', image: null },
-                jeepney: { color: '#ff6600', image: null },
-                bangka: { color: '#0099cc', image: null },
-                kite: { color: '#ffcc00', image: null }
+            lives: 3,
+            score: 0,
+            level: 1,
+            shipSkin: 'default',
+            powerups: {
+                barongShield: false,
+                jeepneyBoost: false,
+                tiniklingMode: false
             }
         };
-
+        
+        let bullets = [];
         let enemies = [];
-        let enemyBullets = [];
-        let powerUps = [];
-        let gameRunning = false;
-        let lastTime = 0;
+        let powerups = [];
+        let bulletCooldown = 0;
+        let enemySpawnRate = 60;
         let enemySpawnTimer = 0;
-        let levelClearTimer = 0;
-        let bossActive = false;
-        let currentBoss = null;
-
-        // Trivia questions database
+        let levelTimer = 0;
+        let levelDuration = 1800; // 30 seconds at 60fps
+        let enemiesDefeated = 0;
+        let enemiesToDefeat = 10;
+        
+        // Boss battle variables
+        let bossHealth = 0;
+        let bossQuestionsAnswered = 0;
+        let bossQuestionsNeeded = 3;
+        
+        // Trivia variables
+        let currentQuestion = null;
+        let selectedOption = null;
+        let triviaCorrect = false;
+        
+        // High scores
+        let highScores = [];
+        const MAX_HIGH_SCORES = 10;
+        
+        // Settings
+        let settings = {
+            musicVolume: 0.5,
+            soundEffects: true,
+            difficulty: 'normal' // easy, normal, hard
+        };
+        
+        // Sound effects
+        const sounds = {
+            shoot: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-laser-weapon-shot-1680.mp3'),
+            explosion: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-explosion-impact-1684.mp3'),
+            powerup: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3'),
+            correct: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3'),
+            wrong: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3')
+        };
+        
+        // Set volume for all sounds
+        Object.values(sounds).forEach(sound => {
+            sound.volume = settings.soundEffects ? 0.5 : 0;
+        });
+        
+        // Background music
+        const backgroundMusic = new Audio('https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-668.mp3');
+        backgroundMusic.volume = settings.musicVolume;
+        backgroundMusic.loop = true;
+        
+        // Trivia questions
         const triviaQuestions = [
             {
                 question: "What is the national bird of the Philippines?",
-                options: ["Maya", "Philippine Eagle", "Parrot", "Kingfisher"],
+                options: ["Maya", "Philippine Eagle", "Cockatoo", "Kingfisher"],
                 answer: 1,
-                funFact: "The Philippine Eagle is one of the largest and most powerful eagles in the world, and is endemic to the Philippines.",
-                category: "nature"
-            },
-            {
-                question: "Which Filipino dish is made from pork cooked in vinegar, soy sauce, garlic, and spices?",
-                options: ["Sinigang", "Adobo", "Kare-Kare", "Dinuguan"],
-                answer: 1,
-                funFact: "Adobo is considered the unofficial national dish of the Philippines and has many regional variations.",
-                category: "food"
-            },
-            {
-                question: "What is the traditional Filipino bamboo dance?",
-                options: ["Cariñosa", "Tinikling", "Pandanggo sa Ilaw", "Sayaw sa Bangko"],
-                answer: 1,
-                funFact: "Tinikling mimics the movement of tikling birds as they walk between grass stems or run over tree branches.",
-                category: "culture"
+                category: "National Symbols",
+                funFact: "The Philippine Eagle is one of the largest and most powerful eagles in the world!"
             },
             {
                 question: "Which Philippine hero is known as the 'Sublime Paralytic'?",
                 options: ["Jose Rizal", "Andres Bonifacio", "Apolinario Mabini", "Emilio Aguinaldo"],
                 answer: 2,
-                funFact: "Apolinario Mabini served as the first Prime Minister of the Philippines despite being paralyzed by polio.",
-                category: "history"
+                category: "History",
+                funFact: "Mabini served as the first Prime Minister of the Philippines despite being paralyzed by polio."
             },
             {
-                question: "What is the capital city of the Philippines?",
-                options: ["Cebu City", "Davao City", "Manila", "Quezon City"],
+                question: "What is the traditional Filipino leaf-wrapped rice cake?",
+                options: ["Bibingka", "Puto", "Suman", "Kutsinta"],
                 answer: 2,
-                funFact: "Manila is one of the most densely populated cities in the world with over 70,000 people per square mile.",
-                category: "geography"
+                category: "Food",
+                funFact: "Suman is usually made from glutinous rice cooked in coconut milk and wrapped in banana or palm leaves."
             },
             {
-                question: "Which Philippine volcano erupted in 1991, one of the largest eruptions of the 20th century?",
+                question: "Which province is known as the 'Rice Granary of the Philippines'?",
+                options: ["Bulacan", "Nueva Ecija", "Pampanga", "Tarlac"],
+                answer: 1,
+                category: "Geography",
+                funFact: "Nueva Ecija produces the most rice in the country, contributing significantly to national food security."
+            },
+            {
+                question: "What festival is celebrated in Cebu every third Sunday of January?",
+                options: ["Sinulog", "Ati-Atihan", "Dinagyang", "Pahiyas"],
+                answer: 0,
+                category: "Culture",
+                funFact: "Sinulog honors the Santo Niño (Child Jesus) and features vibrant street dancing with participants in colorful costumes."
+            },
+            {
+                question: "Which Filipino invention is used worldwide for medical testing?",
+                options: ["Medical incubator", "Karaoke", "Arduino", "Salvage therapy"],
+                answer: 0,
+                category: "Science",
+                funFact: "Fe del Mundo invented the bamboo incubator to help rural communities without electricity care for premature babies."
+            },
+            {
+                question: "What is the capital of the Philippines?",
+                options: ["Cebu", "Davao", "Manila", "Quezon City"],
+                answer: 2,
+                category: "Geography",
+                funFact: "Manila is one of the most densely populated cities in the world with over 70,000 people per square mile!"
+            },
+            {
+                question: "Which Philippine volcano erupted in 1991, the second largest eruption of the 20th century?",
                 options: ["Mayon", "Taal", "Pinatubo", "Kanlaon"],
                 answer: 2,
-                funFact: "The Pinatubo eruption lowered global temperatures by about 0.5°C (0.9°F) in the years 1991-93.",
-                category: "nature"
+                category: "Geography",
+                funFact: "The Pinatubo eruption cooled global temperatures by about 0.5°C for the next two years."
             },
             {
-                question: "What is the traditional Filipino Christmas lantern called?",
-                options: ["Parol", "Lampin", "Sulo", "Kandila"],
+                question: "What is the traditional Filipino martial art?",
+                options: ["Karate", "Taekwondo", "Arnis", "Kung Fu"],
+                answer: 2,
+                category: "Culture",
+                funFact: "Arnis was declared the national martial art and sport of the Philippines in 2009."
+            },
+            {
+                question: "Which Filipino boxer became an eight-division world champion?",
+                options: ["Manny Pacquiao", "Nonito Donaire", "Flash Elorde", "Pancho Villa"],
                 answer: 0,
-                funFact: "The parol symbolizes the Star of Bethlehem that guided the Three Kings to the baby Jesus.",
-                category: "culture"
-            },
-            {
-                question: "Which Philippine island is known as the 'Wreck Diving Capital of the World'?",
-                options: ["Boracay", "Palawan", "Coron", "Siargao"],
-                answer: 2,
-                funFact: "Coron is famous for its several World War II-era Japanese shipwrecks that are popular dive sites.",
-                category: "geography"
-            },
-            {
-                question: "What is the name of the traditional Filipino martial art?",
-                options: ["Kalaripayattu", "Silat", "Arnis", "Muay Thai"],
-                answer: 2,
-                funFact: "Arnis was declared the national martial art and sport of the Philippines in 2009.",
-                category: "culture"
-            },
-            {
-                question: "Which Philippine president was known as the 'Iron Butterfly'?",
-                options: ["Corazon Aquino", "Gloria Macapagal-Arroyo", "Imelda Marcos", "Miriam Defensor-Santiago"],
-                answer: 1,
-                funFact: "Gloria Macapagal-Arroyo earned this nickname for her strong leadership style despite her petite stature.",
-                category: "history"
-            },
-            {
-                question: "What is the name of the famous chocolate hills in Bohol?",
-                options: ["Tsokolate Hills", "Tablea Hills", "Cacao Hills", "Chocolate Hills"],
-                answer: 3,
-                funFact: "The Chocolate Hills are a geological formation of at least 1,260 hills spread over an area of more than 50 square kilometers.",
-                category: "geography"
-            },
-            {
-                question: "Which Filipino fruit is known as the 'Queen of Philippine Fruits'?",
-                options: ["Mango", "Durian", "Mangosteen", "Lanzones"],
-                answer: 2,
-                funFact: "Mangosteen is prized for its sweet, tangy flavor and is sometimes called the 'food of the gods'.",
-                category: "food"
-            },
-            {
-                question: "What is the traditional Filipino shirt made from pineapple fibers called?",
-                options: ["Barong Tagalog", "Kimona", "Baro't Saya", "Maria Clara"],
-                answer: 0,
-                funFact: "The Barong Tagalog is considered the national dress of the Philippines and is often worn at formal occasions.",
-                category: "culture"
-            },
-            {
-                question: "Which Philippine festival is known as the 'Festival of Festivals'?",
-                options: ["Sinulog", "Ati-Atihan", "Kadayawan", "Pahiyas"],
-                answer: 2,
-                funFact: "Kadayawan Festival in Davao celebrates the bountiful harvest of fruits and flowers as well as the rich cultural heritage of the region.",
-                category: "culture"
-            },
-            {
-                question: "What is the name of the smallest primate in the world found in the Philippines?",
-                options: ["Tarsier", "Philippine Flying Lemur", "Mouse Deer", "Slow Loris"],
-                answer: 0,
-                funFact: "The Philippine tarsier is one of the smallest known primates, with adult body weight ranging from 80 to 160 grams.",
-                category: "nature"
+                category: "Sports",
+                funFact: "Manny Pacquiao is the only boxer to win world titles in eight different weight divisions."
             }
         ];
-
-        // Boss enemies database
-        const bossEnemies = [
-            {
-                name: "Tikbalang Invader",
-                health: 5,
-                image: "https://i.imgur.com/JK8Qv3E.png",
-                questions: [
-                    {
-                        question: "In Philippine mythology, what does a Tikbalang do to travelers?",
-                        options: ["Leads them astray", "Steals their food", "Gives them directions", "Protects them"],
-                        answer: 0,
-                        funFact: "Tikbalangs are said to lead travelers astray in the forest, making them return to the same spot no matter how far they go."
-                    },
-                    {
-                        question: "How can you escape from a Tikbalang according to folklore?",
-                        options: ["Run faster", "Wear your shirt inside out", "Climb a tree", "Offer money"],
-                        answer: 1,
-                        funFact: "Philippine folklore suggests wearing your shirt inside out or asking permission to pass can free you from a Tikbalang's trickery."
-                    },
-                    {
-                        question: "What is the Tikbalang's appearance described as?",
-                        options: ["Half-horse, half-human", "Half-dog, half-human", "Half-bird, half-human", "Half-fish, half-human"],
-                        answer: 0,
-                        funFact: "The Tikbalang is described as a tall, bony creature with the head and feet of a horse and the body of a human."
-                    }
-                ],
-                category: "mythology"
-            },
-            {
-                name: "Kapre Armada",
-                health: 7,
-                image: "https://i.imgur.com/vV4mQnW.png",
-                questions: [
-                    {
-                        question: "Where are Kapres most commonly found according to folklore?",
-                        options: ["In the ocean", "In banana trees", "In old houses", "In balete trees"],
-                        answer: 3,
-                        funFact: "Kapres are said to reside in large trees like balete or acacia, often seen smoking a giant cigar."
-                    },
-                    {
-                        question: "What is a Kapre's favorite activity?",
-                        options: ["Singing", "Smoking", "Dancing", "Cooking"],
-                        answer: 1,
-                        funFact: "Kapres are often depicted smoking large cigars, with the smoke sometimes being the only visible sign of their presence."
-                    },
-                    {
-                        question: "How can you tell a Kapre is nearby?",
-                        options: ["You hear laughter", "You smell tobacco", "You see footprints", "You feel cold"],
-                        answer: 1,
-                        funFact: "The strong smell of tobacco is said to be a telltale sign that a Kapre is nearby, even if you can't see it."
-                    }
-                ],
-                category: "mythology"
-            },
-            {
-                name: "Manananggal Fleet",
-                health: 6,
-                image: "https://i.imgur.com/Lp9YhGz.png",
-                questions: [
-                    {
-                        question: "What is unique about the Manananggal's appearance?",
-                        options: ["It has wings", "Its upper body detaches", "It has no shadow", "It has long claws"],
-                        answer: 1,
-                        funFact: "The Manananggal is said to separate its upper torso from its lower body to fly around at night."
-                    },
-                    {
-                        question: "What does the Manananggal prey on?",
-                        options: ["Children", "Pregnant women", "Farmers", "Fishermen"],
-                        answer: 1,
-                        funFact: "Manananggals are said to prey on pregnant women, using an elongated proboscis-like tongue to suck out fetuses."
-                    },
-                    {
-                        question: "How can you protect yourself from a Manananggal?",
-                        options: ["Garlic", "Salt", "Rice grains", "All of the above"],
-                        answer: 3,
-                        funFact: "Various methods like garlic, salt, rice grains, or finding and sprinkling salt on the lower half can ward off or kill a Manananggal."
-                    }
-                ],
-                category: "mythology"
+        
+        // Load high scores from localStorage
+        function loadHighScores() {
+            const savedScores = localStorage.getItem('pinoySpaceInvaderHighScores');
+            if (savedScores) {
+                highScores = JSON.parse(savedScores);
+            } else {
+                highScores = [
+                    { name: "Jose", score: 10000 },
+                    { name: "Maria", score: 8000 },
+                    { name: "Juan", score: 6000 },
+                    { name: "Ana", score: 4000 },
+                    { name: "Pedro", score: 2000 }
+                ];
             }
-        ];
-
-        // Regular enemies database
-        const regularEnemies = [
-            {
-                name: "Aswang Drone",
-                health: 1,
-                speed: 2,
-                color: "#990000",
-                points: 100,
-                behavior: "zigzag",
-                image: "https://i.imgur.com/8m5zY9p.png"
-            },
-            {
-                name: "Sarimanok Scout",
-                health: 2,
-                speed: 1.5,
-                color: "#ff9900",
-                points: 150,
-                behavior: "straight",
-                image: "https://i.imgur.com/8X3vV7f.png"
-            },
-            {
-                name: "Nuno Sa Punso Mine",
-                health: 1,
-                speed: 0.5,
-                color: "#663300",
-                points: 200,
-                behavior: "stationary",
-                image: "https://i.imgur.com/4Q6Wg3k.png"
-            },
-            {
-                name: "Tiyanak Fighter",
-                health: 3,
-                speed: 1.8,
-                color: "#00cc00",
-                points: 250,
-                behavior: "dive",
-                image: "https://i.imgur.com/9zLmYyQ.png"
+        }
+        
+        // Save high scores to localStorage
+        function saveHighScores() {
+            localStorage.setItem('pinoySpaceInvaderHighScores', JSON.stringify(highScores));
+        }
+        
+        // Add a new high score
+        function addHighScore(name, score) {
+            highScores.push({ name, score });
+            highScores.sort((a, b) => b.score - a.score);
+            highScores = highScores.slice(0, MAX_HIGH_SCORES);
+            saveHighScores();
+        }
+        
+        // Load settings from localStorage
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('pinoySpaceInvaderSettings');
+            if (savedSettings) {
+                settings = JSON.parse(savedSettings);
+                updateSettingsUI();
             }
-        ];
-
-        // Power-ups database
-        const powerUpsDB = [
-            {
-                name: "Barong Shield",
-                color: "#ffffff",
-                effect: "invincibility",
-                duration: 10000,
-                image: "https://i.imgur.com/pV8Xc3G.png",
-                triviaCategory: "culture"
-            },
-            {
-                name: "Jeepney Boost",
-                color: "#ff6600",
-                effect: "speed",
-                duration: 8000,
-                image: "https://i.imgur.com/7jK9W6v.png",
-                triviaCategory: "culture"
-            },
-            {
-                name: "Tinikling Mode",
-                color: "#ffcc00",
-                effect: "doubleDamage",
-                duration: 12000,
-                image: "https://i.imgur.com/3nQqY7T.png",
-                triviaCategory: "culture"
-            },
-            {
-                name: "Adobo Bomb",
-                color: "#663300",
-                effect: "clearScreen",
-                duration: 0,
-                image: "https://i.imgur.com/2v8pQ9W.png",
-                triviaCategory: "food"
-            },
-            {
-                name: "Mango Heal",
-                color: "#ff9900",
-                effect: "extraLife",
-                duration: 0,
-                image: "https://i.imgur.com/6tYqJ2Z.png",
-                triviaCategory: "food"
-            }
-        ];
-
-        // Highscores
-        let highscores = JSON.parse(localStorage.getItem('pinoySpaceInvadersHighscores')) || [];
-
-        // Event listeners for menu buttons
-        document.getElementById('playButton').addEventListener('click', startGame);
-        document.getElementById('highscoreButton').addEventListener('click', showHighscores);
-        document.getElementById('settingsButton').addEventListener('click', showSettings);
-        document.getElementById('saveSettingsButton').addEventListener('click', saveSettings);
-        document.getElementById('backToMenuButton').addEventListener('click', backToMenu);
-        document.getElementById('backToMenuButton2').addEventListener('click', backToMenu);
-        document.getElementById('backToMenuButton3').addEventListener('click', backToMenu);
-        document.getElementById('playAgainButton').addEventListener('click', startGame);
-
-        // Event listeners for trivia options
-        option1.addEventListener('click', () => checkAnswer(0));
-        option2.addEventListener('click', () => checkAnswer(1));
-        option3.addEventListener('click', () => checkAnswer(2));
-        option4.addEventListener('click', () => checkAnswer(3));
-
-        // Event listeners for boss trivia options
-        bossOption1.addEventListener('click', () => checkBossAnswer(0));
-        bossOption2.addEventListener('click', () => checkBossAnswer(1));
-        bossOption3.addEventListener('click', () => checkBossAnswer(2));
-        bossOption4.addEventListener('click', () => checkBossAnswer(3));
-
-        // Keyboard controls
-        const keys = {
-            ArrowLeft: false,
-            ArrowRight: false,
-            ArrowUp: false,
-            ArrowDown: false,
-            Space: false,
-            '1': false,
-            '2': false,
-            '3': false,
-            '4': false
-        };
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key in keys) {
-                keys[e.key] = true;
-                e.preventDefault();
-                
-                if (gameState.gameMode === 'coop' && gameRunning) {
-                    if (e.key === '1') checkAnswer(0);
-                    if (e.key === '2') checkAnswer(1);
-                    if (e.key === '3') checkAnswer(2);
-                    if (e.key === '4') checkAnswer(3);
-                }
-            }
-        });
-
-        document.addEventListener('keyup', (e) => {
-            if (e.key in keys) {
-                keys[e.key] = false;
-                e.preventDefault();
-            }
-        });
-
-        // Initialize game
-        function initGame() {
-            player.x = canvas.width / 2 - 25;
-            player.y = canvas.height - 60;
-            player.bullets = [];
-            enemies = [];
-            enemyBullets = [];
-            powerUps = [];
-            gameState.score = 0;
-            gameState.lives = 3;
-            gameState.level = 1;
-            gameState.powerUp = null;
-            gameState.powerUpTime = 0;
-            gameState.bossHealth = 0;
-            gameState.bossMaxHealth = 0;
-            gameState.bossQuestionsAnswered = 0;
-            bossActive = false;
-            currentBoss = null;
+        }
+        
+        // Save settings to localStorage
+        function saveSettings() {
+            localStorage.setItem('pinoySpaceInvaderSettings', JSON.stringify(settings));
+            updateSettingsUI();
+        }
+        
+        // Update settings UI elements
+        function updateSettingsUI() {
+            document.getElementById('musicVolume').textContent = `${Math.round(settings.musicVolume * 100)}%`;
+            document.getElementById('toggleSound').textContent = settings.soundEffects ? 'ON' : 'OFF';
+            document.getElementById('changeDifficulty').textContent = settings.difficulty.toUpperCase();
             
-            updatePlayerInfo();
+            // Update sound volumes
+            backgroundMusic.volume = settings.musicVolume;
+            Object.values(sounds).forEach(sound => {
+                sound.volume = settings.soundEffects ? 0.5 : 0;
+            });
             
-            switch (gameState.difficulty) {
+            // Apply difficulty settings
+            switch (settings.difficulty) {
                 case 'easy':
                     player.speed = 6;
-                    player.bulletSpeed = 8;
+                    enemySpeed = 0.8;
                     break;
-                case 'medium':
+                case 'normal':
                     player.speed = 5;
-                    player.bulletSpeed = 7;
+                    enemySpeed = 1.0;
                     break;
                 case 'hard':
                     player.speed = 4;
-                    player.bulletSpeed = 6;
+                    enemySpeed = 1.2;
                     break;
             }
+        }
+        
+        // Initialize game
+        function initGame() {
+            loadHighScores();
+            loadSettings();
+            backgroundMusic.play().catch(e => console.log("Autoplay prevented:", e));
             
-            if (gameState.gameMode === 'coop') {
-                coopControls.style.display = 'block';
-            } else {
-                coopControls.style.display = 'none';
-            }
+            // Set up event listeners
+            document.getElementById('playButton').addEventListener('click', startGame);
+            document.getElementById('highscoreButton').addEventListener('click', showHighScores);
+            document.getElementById('settingsButton').addEventListener('click', showSettings);
+            document.getElementById('continueButton').addEventListener('click', () => {
+                gameState = STATE_MENU;
+                document.getElementById('gameOverScreen').style.display = 'none';
+                document.getElementById('menuScreen').style.display = 'flex';
+            });
+            document.getElementById('submitScore').addEventListener('click', submitHighScore);
+            document.getElementById('backButton').addEventListener('click', () => {
+                gameState = STATE_MENU;
+                document.getElementById('highscoreScreen').style.display = 'none';
+                document.getElementById('menuScreen').style.display = 'flex';
+            });
+            document.getElementById('settingsBackButton').addEventListener('click', () => {
+                gameState = STATE_MENU;
+                document.getElementById('settingsScreen').style.display = 'none';
+                document.getElementById('menuScreen').style.display = 'flex';
+                saveSettings();
+            });
             
-            gameRunning = true;
-            lastTime = performance.now();
+            // Settings controls
+            document.getElementById('musicDown').addEventListener('click', () => {
+                settings.musicVolume = Math.max(0, settings.musicVolume - 0.1);
+                saveSettings();
+            });
+            document.getElementById('musicUp').addEventListener('click', () => {
+                settings.musicVolume = Math.min(1, settings.musicVolume + 0.1);
+                saveSettings();
+            });
+            document.getElementById('toggleSound').addEventListener('click', () => {
+                settings.soundEffects = !settings.soundEffects;
+                saveSettings();
+            });
+            document.getElementById('changeDifficulty').addEventListener('click', () => {
+                const difficulties = ['easy', 'normal', 'hard'];
+                const currentIndex = difficulties.indexOf(settings.difficulty);
+                settings.difficulty = difficulties[(currentIndex + 1) % difficulties.length];
+                saveSettings();
+            });
+            
+            // Mobile controls
+            document.getElementById('leftBtn').addEventListener('touchstart', () => {
+                keys.ArrowLeft = true;
+            });
+            document.getElementById('leftBtn').addEventListener('touchend', () => {
+                keys.ArrowLeft = false;
+            });
+            document.getElementById('rightBtn').addEventListener('touchstart', () => {
+                keys.ArrowRight = true;
+            });
+            document.getElementById('rightBtn').addEventListener('touchend', () => {
+                keys.ArrowRight = false;
+            });
+            document.getElementById('shootBtn').addEventListener('touchstart', () => {
+                keys[' '] = true;
+            });
+            document.getElementById('shootBtn').addEventListener('touchend', () => {
+                keys[' '] = false;
+            });
+            
+            // Keyboard controls
+            window.addEventListener('keydown', (e) => {
+                if (e.key in keys) {
+                    keys[e.key] = true;
+                }
+                
+                // In game over screen, allow typing name
+                if (gameState === STATE_GAME_OVER && document.getElementById('nameInputContainer').style.display !== 'none') {
+                    if (e.key === 'Enter') {
+                        submitHighScore();
+                    }
+                }
+            });
+            
+            window.addEventListener('keyup', (e) => {
+                if (e.key in keys) {
+                    keys[e.key] = false;
+                }
+            });
+            
+            // Start game loop
             requestAnimationFrame(gameLoop);
         }
-
-        // Game loop
-        function gameLoop(timestamp) {
-            if (!gameRunning) return;
-            
-            const deltaTime = timestamp - lastTime;
-            lastTime = timestamp;
-            
-            update(deltaTime);
-            render();
-            
-            requestAnimationFrame(gameLoop);
-        }
-
-        // Update game state
-        function update(deltaTime) {
-            if (keys.ArrowLeft && player.x > 0) {
-                player.x -= player.speed;
-            }
-            if (keys.ArrowRight && player.x < canvas.width - player.width) {
-                player.x += player.speed;
-            }
-            if (keys.ArrowUp && player.y > canvas.height / 2) {
-                player.y -= player.speed;
-            }
-            if (keys.ArrowDown && player.y < canvas.height - player.height) {
-                player.y += player.speed;
-            }
-            
-            if (player.bulletCooldown > 0) {
-                player.bulletCooldown -= deltaTime;
-            }
-            
-            if (keys.Space && player.bulletCooldown <= 0) {
-                shoot();
-                player.bulletCooldown = 300;
-            }
-            
-            for (let i = player.bullets.length - 1; i >= 0; i--) {
-                player.bullets[i].y -= player.bulletSpeed;
-                
-                if (player.bullets[i].y < 0) {
-                    player.bullets.splice(i, 1);
-                    continue;
-                }
-                
-                for (let j = enemies.length - 1; j >= 0; j--) {
-                    if (checkCollision(player.bullets[i], enemies[j])) {
-                        const damage = (gameState.powerUp === 'Tinikling Mode') ? 2 : 1;
-                        enemies[j].health -= damage;
-                        
-                        if (enemies[j].health <= 0) {
-                            gameState.score += enemies[j].points;
-                            enemies.splice(j, 1);
-                            playSound(explosionSound);
-                            
-                            if (Math.random() < 0.1) {
-                                spawnPowerUp(enemies[j].x, enemies[j].y);
-                            }
-                        }
-                        
-                        player.bullets.splice(i, 1);
-                        updatePlayerInfo();
-                        break;
-                    }
-                }
-            }
-            
-            enemySpawnTimer += deltaTime;
-            
-            const spawnRate = 1000 - (gameState.level * 50);
-            if (enemySpawnTimer > spawnRate && enemies.length < 10 + gameState.level && !bossActive) {
-                spawnEnemy();
-                enemySpawnTimer = 0;
-            }
-            
-            for (let i = enemies.length - 1; i >= 0; i--) {
-                const enemy = enemies[i];
-                
-                switch (enemy.behavior) {
-                    case 'straight':
-                        enemy.y += enemy.speed;
-                        break;
-                    case 'zigzag':
-                        enemy.y += enemy.speed;
-                        enemy.x += Math.sin(enemy.y * 0.05) * 2;
-                        break;
-                    case 'dive':
-                        if (enemy.y < canvas.height / 2) {
-                            enemy.y += enemy.speed;
-                        } else {
-                            const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
-                            enemy.x += Math.cos(angle) * enemy.speed;
-                            enemy.y += Math.sin(angle) * enemy.speed;
-                        }
-                        break;
-                }
-                
-                if (enemy.y > canvas.height) {
-                    enemies.splice(i, 1);
-                    gameState.lives--;
-                    updatePlayerInfo();
-                    
-                    if (gameState.lives <= 0) {
-                        gameOver();
-                    }
-                }
-                
-                if (Math.random() < 0.002 && enemy.behavior !== 'stationary') {
-                    enemyShoot(enemy);
-                }
-            }
-            
-            for (let i = enemyBullets.length - 1; i >= 0; i--) {
-                enemyBullets[i].y += enemyBullets[i].speed;
-                
-                if (enemyBullets[i].y > canvas.height) {
-                    enemyBullets.splice(i, 1);
-                    continue;
-                }
-                
-                if (!gameState.powerUp || gameState.powerUp !== 'Barong Shield') {
-                    if (checkCollision(enemyBullets[i], player)) {
-                        enemyBullets.splice(i, 1);
-                        gameState.lives--;
-                        updatePlayerInfo();
-                        
-                        if (gameState.lives <= 0) {
-                            gameOver();
-                        }
-                        break;
-                    }
-                }
-            }
-            
-            for (let i = powerUps.length - 1; i >= 0; i--) {
-                powerUps[i].y += 2;
-                
-                if (powerUps[i].y > canvas.height) {
-                    powerUps.splice(i, 1);
-                    continue;
-                }
-                
-                if (checkCollision(powerUps[i], player)) {
-                    activatePowerUp(powerUps[i]);
-                    powerUps.splice(i, 1);
-                    playSound(powerUpSound);
-                }
-            }
-            
-            if (gameState.powerUp) {
-                gameState.powerUpTime -= deltaTime;
-                
-                if (gameState.powerUpTime <= 0) {
-                    deactivatePowerUp();
-                }
-            }
-            
-            if (!bossActive) {
-                levelClearTimer += deltaTime;
-                
-                const levelDuration = 30000 - (gameState.level * 1000);
-                if (levelClearTimer > levelDuration || enemies.length === 0) {
-                    if (gameState.level % 3 === 0) {
-                        startBossBattle();
-                    } else {
-                        showTrivia();
-                    }
-                    levelClearTimer = 0;
-                }
-            } else {
-                if (currentBoss && gameState.bossQuestionsAnswered >= gameState.bossQuestionsRequired) {
-                    gameState.score += currentBoss.health * 500;
-                    bossActive = false;
-                    currentBoss = null;
-                    gameState.level++;
-                    updatePlayerInfo();
-                    levelClearTimer = 0;
-                    
-                    if (gameState.level % 5 === 0) {
-                        unlockNewSkin();
-                    }
-                }
-            }
-        }
-
-        // Render game
-        function render() {
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            for (let i = 0; i < 100; i++) {
-                const x = Math.sin(i * 10) * canvas.width / 2 + canvas.width / 2;
-                const y = (i * 6 + (performance.now() / 50) % canvas.height);
-                ctx.fillStyle = '#fff';
-                ctx.fillRect(x, y, 1, 1);
-            }
-            
-            if (player.skins[player.skin].image) {
-                ctx.drawImage(player.skins[player.skin].image, player.x, player.y, player.width, player.height);
-            } else {
-                ctx.fillStyle = player.skins[player.skin].color;
-                ctx.fillRect(player.x, player.y, player.width, player.height);
-            }
-            
-            ctx.fillStyle = '#ff0';
-            player.bullets.forEach(bullet => {
-                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
-            });
-            
-            enemies.forEach(enemy => {
-                if (enemy.image) {
-                    ctx.drawImage(enemy.image, enemy.x, enemy.y, enemy.width, enemy.height);
-                } else {
-                    ctx.fillStyle = enemy.color;
-                    ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
-                }
-            });
-            
-            ctx.fillStyle = '#f00';
-            enemyBullets.forEach(bullet => {
-                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
-            });
-            
-            powerUps.forEach(powerUp => {
-                if (powerUp.image) {
-                    ctx.drawImage(powerUp.image, powerUp.x, powerUp.y, powerUp.width, powerUp.height);
-                } else {
-                    ctx.fillStyle = powerUp.color;
-                    ctx.fillRect(powerUp.x, powerUp.y, powerUp.width, powerUp.height);
-                }
-            });
-            
-            if (bossActive && currentBoss) {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                ctx.fillRect(canvas.width / 2 - 150, 20, 300, 30);
-                
-                const healthWidth = (gameState.bossHealth / gameState.bossMaxHealth) * 300;
-                ctx.fillStyle = '#f00';
-                ctx.fillRect(canvas.width / 2 - 150, 20, healthWidth, 30);
-                
-                ctx.fillStyle = '#fff';
-                ctx.font = '20px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText(currentBoss.name, canvas.width / 2, 50);
-                ctx.textAlign = 'left';
-            }
-            
-            if (gameState.powerUp) {
-                const remainingTime = Math.ceil(gameState.powerUpTime / 1000);
-                powerUpIndicator.textContent = `${gameState.powerUp}: ${remainingTime}s`;
-            } else {
-                powerUpIndicator.textContent = '';
-            }
-        }
-
-        function checkCollision(obj1, obj2) {
-            return obj1.x < obj2.x + obj2.width &&
-                   obj1.x + obj1.width > obj2.x &&
-                   obj1.y < obj2.y + obj2.height &&
-                   obj1.y + obj1.height > obj2.y;
-        }
-
-        function shoot() {
-            player.bullets.push({
-                x: player.x + player.width / 2 - 2,
-                y: player.y,
-                width: 4,
-                height: 10
-            });
-            playSound(shootSound);
-        }
-
-        function enemyShoot(enemy) {
-            enemyBullets.push({
-                x: enemy.x + enemy.width / 2 - 2,
-                y: enemy.y + enemy.height,
-                width: 4,
-                height: 10,
-                speed: 3 + Math.random() * 2
-            });
-        }
-
-        function spawnEnemy() {
-            const enemyType = regularEnemies[Math.floor(Math.random() * regularEnemies.length)];
-            
-            const enemy = {
-                x: Math.random() * (canvas.width - 50),
-                y: -50,
-                width: 40,
-                height: 40,
-                health: enemyType.health,
-                speed: enemyType.speed,
-                color: enemyType.color,
-                points: enemyType.points,
-                behavior: enemyType.behavior,
-                name: enemyType.name
-            };
-            
-            if (enemyType.image) {
-                enemy.image = new Image();
-                enemy.image.src = enemyType.image;
-            }
-            
-            enemies.push(enemy);
-        }
-
-        function spawnPowerUp(x, y) {
-            const powerUpType = powerUpsDB[Math.floor(Math.random() * powerUpsDB.length)];
-            
-            const powerUp = {
-                x: x,
-                y: y,
-                width: 30,
-                height: 30,
-                color: powerUpType.color,
-                name: powerUpType.name,
-                effect: powerUpType.effect,
-                duration: powerUpType.duration,
-                triviaCategory: powerUpType.triviaCategory
-            };
-            
-            if (powerUpType.image) {
-                powerUp.image = new Image();
-                powerUp.image.src = powerUpType.image;
-            }
-            
-            powerUps.push(powerUp);
-        }
-
-        function activatePowerUp(powerUp) {
-            gameState.powerUp = powerUp.name;
-            gameState.powerUpTime = powerUp.duration;
-            
-            switch (powerUp.effect) {
-                case 'invincibility':
-                    break;
-                case 'speed':
-                    player.speed *= 1.5;
-                    break;
-                case 'doubleDamage':
-                    break;
-                case 'clearScreen':
-                    enemies.forEach(enemy => {
-                        gameState.score += enemy.points;
-                    });
-                    enemies = [];
-                    break;
-                case 'extraLife':
-                    gameState.lives++;
-                    updatePlayerInfo();
-                    break;
-            }
-        }
-
-        function deactivatePowerUp() {
-            if (gameState.powerUp === 'Jeepney Boost') {
-                player.speed /= 1.5;
-            }
-            
-            gameState.powerUp = null;
-            gameState.powerUpTime = 0;
-        }
-
-        function updatePlayerInfo() {
-            livesDisplay.textContent = gameState.lives;
-            scoreDisplay.textContent = gameState.score;
-            levelDisplay.textContent = gameState.level;
-        }
-
-        function showTrivia() {
-            gameRunning = false;
-            
-            let filteredQuestions = triviaQuestions;
-            if (gameState.powerUp) {
-                const activePowerUp = powerUpsDB.find(p => p.name === gameState.powerUp);
-                if (activePowerUp) {
-                    filteredQuestions = triviaQuestions.filter(q => q.category === activePowerUp.triviaCategory);
-                }
-            }
-            
-            if (filteredQuestions.length === 0) {
-                filteredQuestions = triviaQuestions;
-            }
-            
-            const randomQuestion = filteredQuestions[Math.floor(Math.random() * filteredQuestions.length)];
-            
-            triviaQuestion.textContent = randomQuestion.question;
-            option1.textContent = randomQuestion.options[0];
-            option2.textContent = randomQuestion.options[1];
-            option3.textContent = randomQuestion.options[2];
-            option4.textContent = randomQuestion.options[3];
-            
-            triviaQuestion.dataset.correctAnswer = randomQuestion.answer;
-            triviaQuestion.dataset.funFact = randomQuestion.funFact;
-            
-            triviaFeedback.textContent = '';
-            triviaFunFact.textContent = '';
-            
-            triviaScreen.style.display = 'flex';
-        }
-
-        function checkAnswer(selectedOption) {
-            if (!triviaScreen.style.display || triviaScreen.style.display === 'none') return;
-            
-            const correctAnswer = parseInt(triviaQuestion.dataset.correctAnswer);
-            
-            if (selectedOption === correctAnswer) {
-                triviaFeedback.textContent = 'Correct!';
-                triviaFeedback.style.color = '#00ff00';
-                triviaFunFact.textContent = triviaQuestion.dataset.funFact;
-                playSound(correctAnswerSound);
-                
-                const bonus = Math.floor(Math.random() * 3) + 1;
-                
-                switch (bonus) {
-                    case 1:
-                        gameState.lives++;
-                        triviaFeedback.textContent += ' Bonus: +1 Life!';
-                        break;
-                    case 2:
-                        const multiplier = Math.floor(Math.random() * 2) + 2;
-                        gameState.score += gameState.level * 100 * multiplier;
-                        triviaFeedback.textContent += ` Bonus: ${multiplier}x Score!`;
-                        break;
-                    case 3:
-                        spawnPowerUp(player.x, player.y);
-                        triviaFeedback.textContent += ' Bonus: Power-Up!';
-                        break;
-                }
-                
-                updatePlayerInfo();
-                
-                setTimeout(() => {
-                    triviaScreen.style.display = 'none';
-                    gameState.level++;
-                    updatePlayerInfo();
-                    gameRunning = true;
-                    lastTime = performance.now();
-                }, 3000);
-            } else {
-                triviaFeedback.textContent = 'Wrong! The correct answer is: ' + triviaQuestion.options[correctAnswer];
-                triviaFeedback.style.color = '#ff0000';
-                triviaFunFact.textContent = triviaQuestion.dataset.funFact;
-                playSound(wrongAnswerSound);
-                
-                const penalty = Math.floor(Math.random() * 2) + 1;
-                
-                switch (penalty) {
-                    case 1:
-                        enemies.forEach(enemy => {
-                            enemy.speed *= 1.2;
-                        });
-                        triviaFeedback.textContent += ' Penalty: Enemies are faster!';
-                        break;
-                    case 2:
-                        player.bulletSpeed = Math.max(3, player.bulletSpeed - 1);
-                        triviaFeedback.textContent += ' Penalty: Slower bullets!';
-                        break;
-                }
-                
-                setTimeout(() => {
-                    triviaScreen.style.display = 'none';
-                    gameState.level++;
-                    updatePlayerInfo();
-                    gameRunning = true;
-                    lastTime = performance.now();
-                }, 3000);
-            }
-        }
-
-        function startBossBattle() {
-            gameRunning = false;
-            bossActive = true;
-            
-            currentBoss = bossEnemies[Math.floor(Math.random() * bossEnemies.length)];
-            gameState.bossHealth = currentBoss.health;
-            gameState.bossMaxHealth = currentBoss.health;
-            gameState.bossQuestionsAnswered = 0;
-            
-            bossImage.style.backgroundImage = `url('${currentBoss.image}')`;
-            
-            showBossQuestion();
-            
-            bossTriviaScreen.style.display = 'flex';
-        }
-
-        function showBossQuestion() {
-            const randomQuestion = currentBoss.questions[Math.floor(Math.random() * currentBoss.questions.length)];
-            
-            bossTriviaQuestion.textContent = randomQuestion.question;
-            bossOption1.textContent = randomQuestion.options[0];
-            bossOption2.textContent = randomQuestion.options[1];
-            bossOption3.textContent = randomQuestion.options[2];
-            bossOption4.textContent = randomQuestion.options[3];
-            
-            bossTriviaQuestion.dataset.correctAnswer = randomQuestion.answer;
-            bossTriviaQuestion.dataset.funFact = randomQuestion.funFact;
-            
-            bossTriviaFeedback.textContent = '';
-            bossTriviaFunFact.textContent = '';
-            
-            bossHealthBar.style.width = `${(gameState.bossHealth / gameState.bossMaxHealth) * 100}%`;
-        }
-
-        function checkBossAnswer(selectedOption) {
-            if (!bossTriviaScreen.style.display || bossTriviaScreen.style.display === 'none') return;
-            
-            const correctAnswer = parseInt(bossTriviaQuestion.dataset.correctAnswer);
-            
-            if (selectedOption === correctAnswer) {
-                bossTriviaFeedback.textContent = 'Correct!';
-                bossTriviaFeedback.style.color = '#00ff00';
-                bossTriviaFunFact.textContent = bossTriviaQuestion.dataset.funFact;
-                playSound(correctAnswerSound);
-                
-                gameState.bossHealth--;
-                gameState.bossQuestionsAnswered++;
-                
-                bossHealthBar.style.width = `${(gameState.bossHealth / gameState.bossMaxHealth) * 100}%`;
-                
-                if (gameState.bossHealth <= 0 || gameState.bossQuestionsAnswered >= gameState.bossQuestionsRequired) {
-                    bossTriviaFeedback.textContent = 'Boss Defeated!';
-                    
-                    setTimeout(() => {
-                        bossTriviaScreen.style.display = 'none';
-                        gameRunning = true;
-                        lastTime = performance.now();
-                    }, 3000);
-                } else {
-                    setTimeout(showBossQuestion, 2000);
-                }
-            } else {
-                bossTriviaFeedback.textContent = 'Wrong! The correct answer is: ' + bossTriviaQuestion.options[correctAnswer];
-                bossTriviaFeedback.style.color = '#ff0000';
-                bossTriviaFunFact.textContent = bossTriviaQuestion.dataset.funFact;
-                playSound(wrongAnswerSound);
-                
-                for (let i = 0; i < 3; i++) {
-                    spawnEnemy();
-                }
-                
-                setTimeout(showBossQuestion, 2000);
-            }
-        }
-
-        function gameOver() {
-            gameRunning = false;
-            
-            highscores.push({
-                name: 'Player',
-                score: gameState.score,
-                level: gameState.level,
-                date: new Date().toLocaleDateString()
-            });
-            
-            highscores.sort((a, b) => b.score - a.score);
-            
-            if (highscores.length > 10) {
-                highscores = highscores.slice(0, 10);
-            }
-            
-            localStorage.setItem('pinoySpaceInvadersHighscores', JSON.stringify(highscores));
-            
-            finalScore.textContent = `Your Score: ${gameState.score} (Level ${gameState.level})`;
-            
-            if (gameState.unlockedSkins.length > 0) {
-                unlockedSkins.textContent = `Unlocked Skins: ${gameState.unlockedSkins.join(', ')}`;
-            } else {
-                unlockedSkins.textContent = '';
-            }
-            
-            gameOverScreen.style.display = 'flex';
-        }
-
-        function unlockNewSkin() {
-            const availableSkins = Object.keys(player.skins).filter(skin => 
-                skin !== 'default' && !gameState.unlockedSkins.includes(skin)
-            );
-            
-            if (availableSkins.length > 0) {
-                const newSkin = availableSkins[0];
-                gameState.unlockedSkins.push(newSkin);
-                
-                if (newSkin === 'jeepney') {
-                    player.skins.jeepney.image = new Image();
-                    player.skins.jeepney.image.src = 'https://i.imgur.com/7jK9W6v.png';
-                } else if (newSkin === 'bangka') {
-                    player.skins.bangka.image = new Image();
-                    player.skins.bangka.image.src = 'https://i.imgur.com/pV8Xc3G.png';
-                } else if (newSkin === 'kite') {
-                    player.skins.kite.image = new Image();
-                    player.skins.kite.image.src = 'https://i.imgur.com/3nQqY7T.png';
-                }
-                
-                player.skin = newSkin;
-                
-                const notification = document.createElement('div');
-                notification.textContent = `Unlocked new skin: ${newSkin}!`;
-                notification.style.position = 'absolute';
-                notification.style.top = '50%';
-                notification.style.left = '50%';
-                notification.style.transform = 'translate(-50%, -50%)';
-                notification.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-                notification.style.color = '#ffcc00';
-                notification.style.padding = '20px';
-                notification.style.borderRadius = '10px';
-                notification.style.zIndex = '100';
-                notification.style.fontSize = '24px';
-                
-                document.getElementById('gameContainer').appendChild(notification);
-                
-                setTimeout(() => {
-                    notification.remove();
-                }, 3000);
-            }
-        }
-
-        function playSound(soundElement) {
-            if (gameState.sfxVolume > 0) {
-                soundElement.volume = gameState.sfxVolume / 100;
-                soundElement.currentTime = 0;
-                soundElement.play().catch(e => console.log("Audio play failed:", e));
-            }
-        }
-
+        
+        // Track pressed keys
+        const keys = {
+            ArrowLeft: false,
+            ArrowRight: false,
+            ' ': false
+        };
+        
+        // Start a new game
         function startGame() {
-            mainMenu.style.display = 'none';
-            settingsMenu.style.display = 'none';
-            highscoreMenu.style.display = 'none';
-            gameOverScreen.style.display = 'none';
-            gameScreen.style.display = 'block';
+            gameState = STATE_PLAYING;
+            document.getElementById('menuScreen').style.display = 'none';
             
-            initGame();
+            // Reset player
+            player = {
+                x: CANVAS_WIDTH / 2 - 25,
+                y: CANVAS_HEIGHT - 60,
+                width: 50,
+                height: 30,
+                speed: 5,
+                lives: 3,
+                score: 0,
+                level: 1,
+                shipSkin: 'default',
+                powerups: {
+                    barongShield: false,
+                    jeepneyBoost: false,
+                    tiniklingMode: false
+                }
+            };
+            
+            // Reset game variables
+            bullets = [];
+            enemies = [];
+            powerups = [];
+            bulletCooldown = 0;
+            enemySpawnRate = 60;
+            enemySpawnTimer = 0;
+            levelTimer = 0;
+            enemiesDefeated = 0;
+            enemiesToDefeat = 10;
+            
+            // Update HUD
+            updateHUD();
+            
+            // Start background music
+            backgroundMusic.currentTime = 0;
+            backgroundMusic.play().catch(e => console.log("Autoplay prevented:", e));
         }
-
-        function showSettings() {
-            mainMenu.style.display = 'none';
-            settingsMenu.style.display = 'flex';
+        
+        // Show high scores
+        function showHighScores() {
+            gameState = STATE_HIGHSCORE;
+            document.getElementById('menuScreen').style.display = 'none';
+            document.getElementById('highscoreScreen').style.display = 'flex';
             
-            document.getElementById('gameMode').value = gameState.gameMode;
-            document.getElementById('difficulty').value = gameState.difficulty;
-            document.getElementById('musicVolume').value = gameState.musicVolume;
-            document.getElementById('sfxVolume').value = gameState.sfxVolume;
-        }
-
-        function saveSettings() {
-            gameState.gameMode = document.getElementById('gameMode').value;
-            gameState.difficulty = document.getElementById('difficulty').value;
-            gameState.musicVolume = parseInt(document.getElementById('musicVolume').value);
-            gameState.sfxVolume = parseInt(document.getElementById('sfxVolume').value);
-            
-            backgroundMusic.volume = gameState.musicVolume / 100;
-            
-            backToMenu();
-        }
-
-        function showHighscores() {
-            mainMenu.style.display = 'none';
-            highscoreMenu.style.display = 'flex';
-            
+            // Populate high score list
             const highscoreList = document.getElementById('highscoreList');
             highscoreList.innerHTML = '';
             
-            if (highscores.length === 0) {
-                const noScores = document.createElement('div');
-                noScores.textContent = 'No highscores yet!';
-                noScores.style.textAlign = 'center';
-                noScores.style.padding = '20px';
-                highscoreList.appendChild(noScores);
+            highScores.forEach((score, index) => {
+                const scoreElement = document.createElement('div');
+                scoreElement.style.fontSize = '20px';
+                scoreElement.style.margin = '5px';
+                scoreElement.textContent = `${index + 1}. ${score.name} - ${score.score}`;
+                highscoreList.appendChild(scoreElement);
+            });
+        }
+        
+        // Show settings
+        function showSettings() {
+            gameState = STATE_SETTINGS;
+            document.getElementById('menuScreen').style.display = 'none';
+            document.getElementById('settingsScreen').style.display = 'flex';
+        }
+        
+        // Game over
+        function gameOver() {
+            gameState = STATE_GAME_OVER;
+            document.getElementById('gameOverScreen').style.display = 'flex';
+            document.getElementById('finalScore').textContent = `Final Score: ${player.score}`;
+            
+            // Check if score qualifies for high score
+            const qualifiesForHighScore = highScores.length < MAX_HIGH_SCORES || 
+                                        player.score > highScores[highScores.length - 1].score;
+            
+            if (qualifiesForHighScore) {
+                document.getElementById('nameInputContainer').style.display = 'block';
+                document.getElementById('continueButton').style.display = 'none';
+                document.getElementById('nameInput').focus();
             } else {
-                highscores.forEach((score, index) => {
-                    const entry = document.createElement('div');
-                    entry.className = 'highscoreEntry';
-                    
-                    const rank = document.createElement('span');
-                    rank.textContent = `${index + 1}. ${score.name}`;
-                    
-                    const scoreInfo = document.createElement('span');
-                    scoreInfo.textContent = `${score.score} (Level ${score.level}) - ${score.date}`;
-                    
-                    entry.appendChild(rank);
-                    entry.appendChild(scoreInfo);
-                    highscoreList.appendChild(entry);
-                });
+                document.getElementById('nameInputContainer').style.display = 'none';
+                document.getElementById('continueButton').style.display = 'block';
             }
         }
-
-        function backToMenu() {
-            settingsMenu.style.display = 'none';
-            highscoreMenu.style.display = 'none';
-            gameOverScreen.style.display = 'none';
-            mainMenu.style.display = 'flex';
+        
+        // Submit high score
+        function submitHighScore() {
+            const nameInput = document.getElementById('nameInput');
+            if (nameInput.value.trim() !== '') {
+                addHighScore(nameInput.value.trim(), player.score);
+                nameInput.value = '';
+                document.getElementById('nameInputContainer').style.display = 'none';
+                document.getElementById('continueButton').style.display = 'block';
+            }
         }
-
-        // Initialize the game when page loads
-        window.addEventListener('load', () => {
-            mainMenu.style.display = 'flex';
-            gameScreen.style.display = 'none';
-            updatePlayerInfo();
-        });
+        
+        // Show trivia question
+        function showTriviaQuestion() {
+            gameState = STATE_TRIVIA;
+            document.getElementById('triviaScreen').style.display = 'flex';
+            
+            // Select a random question
+            currentQuestion = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
+            selectedOption = null;
+            triviaCorrect = false;
+            
+            // Display question
+            document.getElementById('triviaCategory').textContent = currentQuestion.category;
+            document.getElementById('triviaQuestion').textContent = currentQuestion.question;
+            
+            // Display options
+            const optionsContainer = document.getElementById('triviaOptions');
+            optionsContainer.innerHTML = '';
+            
+            currentQuestion.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', () => selectTriviaOption(index));
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            // Clear feedback
+            document.getElementById('triviaFeedback').textContent = '';
+        }
+        
+        // Select trivia option
+        function selectTriviaOption(index) {
+            if (selectedOption !== null) return; // Prevent multiple selections
+            
+            selectedOption = index;
+            const options = document.querySelectorAll('#triviaOptions .option');
+            
+            if (index === currentQuestion.answer) {
+                // Correct answer
+                triviaCorrect = true;
+                options[index].classList.add('correct');
+                document.getElementById('triviaFeedback').textContent = 'Correct! ' + currentQuestion.funFact;
+                
+                // Play sound
+                sounds.correct.play();
+                
+                // Apply bonus based on category
+                switch (currentQuestion.category) {
+                    case 'National Symbols':
+                        player.lives++;
+                        break;
+                    case 'History':
+                        player.score += 500;
+                        break;
+                    case 'Food':
+                        // Spawn a power-up
+                        spawnPowerUp();
+                        break;
+                    case 'Geography':
+                        player.powerups.jeepneyBoost = true;
+                        powerupTimers.jeepneyBoost = powerupDuration;
+                        break;
+                    case 'Culture':
+                        // Unlock a random ship skin
+                        const skins = ['default', 'bangka', 'jeepney', 'kite_fighter'];
+                        player.shipSkin = skins[Math.floor(Math.random() * skins.length)];
+                        break;
+                    case 'Science':
+                        player.score += 1000;
+                        break;
+                    case 'Sports':
+                        player.powerups.tiniklingMode = true;
+                        powerupTimers.tiniklingMode = powerupDuration;
+                        break;
+                }
+                
+                updateHUD();
+            } else {
+                // Wrong answer
+                triviaCorrect = false;
+                options[index].classList.add('incorrect');
+                options[currentQuestion.answer].classList.add('correct');
+                document.getElementById('triviaFeedback').textContent = 'Wrong! The correct answer is: ' + currentQuestion.options[currentQuestion.answer];
+                
+                // Play sound
+                sounds.wrong.play();
+                
+                // Make game harder
+                enemySpeed += 0.2;
+                bulletCooldown += 10;
+            }
+            
+            // Return to game after delay
+            setTimeout(() => {
+                document.getElementById('triviaScreen').style.display = 'none';
+                gameState = STATE_PLAYING;
+                
+                // If correct, maybe spawn a power-up
+                if (triviaCorrect && Math.random() < 0.3) {
+                    spawnPowerUp();
+                }
+                
+                // Advance level
+                player.level++;
+                levelTimer = 0;
+                enemiesDefeated = 0;
+                enemiesToDefeat = 10 + player.level * 2;
+                
+                updateHUD();
+            }, 3000);
+        }
+        
+        // Show boss battle
+        function startBossBattle() {
+            gameState = STATE_BOSS_BATTLE;
+            document.getElementById('bossBattleScreen').style.display = 'flex';
+            
+            // Set boss stats
+            bossHealth = 5 + player.level;
+            bossQuestionsAnswered = 0;
+            bossQuestionsNeeded = 3;
+            
+            // Update boss health display
+            updateBossHealth();
+            
+            // Get first question
+            getNextBossQuestion();
+        }
+        
+        // Get next boss question
+        function getNextBossQuestion() {
+            currentQuestion = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
+            selectedOption = null;
+            
+            // Display question
+            document.getElementById('bossQuestion').textContent = currentQuestion.question;
+            
+            // Display options
+            const optionsContainer = document.getElementById('bossOptions');
+            optionsContainer.innerHTML = '';
+            
+            currentQuestion.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', () => selectBossOption(index));
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            // Clear feedback
+            document.getElementById('bossFeedback').textContent = '';
+        }
+        
+        // Select boss option
+        function selectBossOption(index) {
+            if (selectedOption !== null) return; // Prevent multiple selections
+            
+            selectedOption = index;
+            const options = document.querySelectorAll('#bossOptions .option');
+            
+            if (index === currentQuestion.answer) {
+                // Correct answer
+                options[index].classList.add('correct');
+                document.getElementById('bossFeedback').textContent = 'Correct! ' + currentQuestion.funFact;
+                sounds.correct.play();
+                
+                bossQuestionsAnswered++;
+                updateBossHealth();
+                
+                if (bossQuestionsAnswered >= bossQuestionsNeeded) {
+                    // Boss defeated
+                    player.score += 2000;
+                    setTimeout(() => {
+                        document.getElementById('bossBattleScreen').style.display = 'none';
+                        gameState = STATE_PLAYING;
+                        
+                        // Advance level
+                        player.level++;
+                        levelTimer = 0;
+                        enemiesDefeated = 0;
+                        enemiesToDefeat = 10 + player.level * 2;
+                        
+                        updateHUD();
+                    }, 2000);
+                } else {
+                    // Next question
+                    setTimeout(getNextBossQuestion, 2000);
+                }
+            } else {
+                // Wrong answer
+                options[index].classList.add('incorrect');
+                options[currentQuestion.answer].classList.add('correct');
+                document.getElementById('bossFeedback').textContent = 'Wrong! The correct answer is: ' + currentQuestion.options[currentQuestion.answer];
+                sounds.wrong.play();
+                
+                // Boss attacks
+                player.lives--;
+                updateHUD();
+                
+                if (player.lives <= 0) {
+                    gameOver();
+                    return;
+                }
+                
+                // Next question
+                setTimeout(getNextBossQuestion, 2000);
+            }
+        }
+        
+        // Update boss health display
+        function updateBossHealth() {
+            const healthPercent = (bossQuestionsNeeded - bossQuestionsAnswered) / bossQuestionsNeeded * 100;
+            document.getElementById('bossHealth').style.width = `${healthPercent}%`;
+        }
+        
+        // Update HUD
+        function updateHUD() {
+            document.getElementById('livesDisplay').textContent = player.lives;
+            document.getElementById('scoreDisplay').textContent = player.score;
+            document.getElementById('levelDisplay').textContent = player.level;
+            
+            // Update powerup indicators
+            document.getElementById('barongIndicator').textContent = 
+                `Barong Shield: ${player.powerups.barongShield ? 'ACTIVE' : 'OFF'}`;
+            document.getElementById('jeepneyIndicator').textContent = 
+                `Jeepney Boost: ${player.powerups.jeepneyBoost ? 'ACTIVE' : 'OFF'}`;
+            document.getElementById('tiniklingIndicator').textContent = 
+                `Tinikling Mode: ${player.powerups.tiniklingMode ? 'ACTIVE' : 'OFF'}`;
+        }
+        
+        // Enemy class
+        class Enemy {
+            constructor() {
+                this.type = ['kapre', 'aswang', 'sarimanok'][Math.floor(Math.random() * 3)];
+                
+                if (this.type === 'kapre') {
+                    this.width = 60;
+                    this.height = 50;
+                    this.health = 3;
+                    this.speed = enemySpeed * 0.7;
+                } else if (this.type === 'aswang') {
+                    this.width = 30;
+                    this.height = 20;
+                    this.health = 1;
+                    this.speed = enemySpeed * 1.5;
+                } else { // sarimanok
+                    this.width = 45;
+                    this.height = 45;
+                    this.health = 2;
+                    this.speed = enemySpeed;
+                }
+                
+                this.x = Math.random() * (CANVAS_WIDTH - this.width);
+                this.y = -this.height;
+            }
+            
+            update() {
+                this.y += this.speed;
+            }
+            
+            draw() {
+                if (this.type === 'kapre') {
+                    // Draw kapre (big, dark enemy)
+                    ctx.fillStyle = '#654321';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    
+                    // Eyes
+                    ctx.fillStyle = 'red';
+                    ctx.beginPath();
+                    ctx.arc(this.x + 15, this.y + 15, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(this.x + this.width - 15, this.y + 15, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (this.type === 'aswang') {
+                    // Draw aswang (small, fast enemy)
+                    ctx.fillStyle = '#800080';
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width/2, this.y);
+                    ctx.lineTo(this.x, this.y + this.height);
+                    ctx.lineTo(this.x + this.width, this.y + this.height);
+                    ctx.closePath();
+                    ctx.fill();
+                } else { // sarimanok
+                    // Draw sarimanok (colorful bird-like enemy)
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    
+                    // Colorful details
+                    ctx.fillStyle = 'red';
+                    ctx.beginPath();
+                    ctx.arc(this.x + 10, this.y + 10, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = 'green';
+                    ctx.beginPath();
+                    ctx.arc(this.x + this.width - 10, this.y + 10, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            isOffScreen() {
+                return this.y > CANVAS_HEIGHT;
+            }
+            
+            hit() {
+                this.health--;
+                return this.health <= 0;
+            }
+        }
+        
+        // Bullet class
+        class Bullet {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.radius = 5;
+                this.speed = 7;
+                this.damage = player.powerups.tiniklingMode ? 2 : 1;
+            }
+            
+            update() {
+                this.y -= this.speed;
+            }
+            
+            draw() {
+                ctx.fillStyle = 'yellow';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            isOffScreen() {
+                return this.y < 0;
+            }
+        }
+        
+        // Power-up class
+        class PowerUp {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 30;
+                this.height = 30;
+                this.speed = 2;
+                this.type = ['barongShield', 'jeepneyBoost', 'tiniklingMode'][Math.floor(Math.random() * 3)];
+            }
+            
+            update() {
+                this.y += this.speed;
+            }
+            
+            draw() {
+                if (this.type === 'barongShield') {
+                    ctx.fillStyle = 'blue';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(this.x + 5, this.y + 5, this.width - 10, this.height - 10);
+                } else if (this.type === 'jeepneyBoost') {
+                    ctx.fillStyle = 'red';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    ctx.fillStyle = 'yellow';
+                    ctx.fillRect(this.x + 5, this.y + 5, this.width - 10, this.height - 10);
+                } else { // tiniklingMode
+                    ctx.fillStyle = 'green';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(this.x + 5, this.y + 5, this.width - 10, this.height - 10);
+                }
+            }
+            
+            isOffScreen() {
+                return this.y > CANVAS_HEIGHT;
+            }
+        }
+        
+        // Spawn a power-up
+        function spawnPowerUp() {
+            powerups.push(new PowerUp(
+                Math.random() * (CANVAS_WIDTH - 30),
+                -30
+            ));
+        }
+        
+        // Power-up timers
+        const powerupDuration = 300; // 5 seconds at 60fps
+        const powerupTimers = {
+            barongShield: 0,
+            jeepneyBoost: 0,
+            tiniklingMode: 0
+        };
+        
+        // Update power-up timers
+        function updatePowerupTimers() {
+            for (const type in powerupTimers) {
+                if (powerupTimers[type] > 0) {
+                    powerupTimers[type]--;
+                    if (powerupTimers[type] === 0) {
+                        player.powerups[type] = false;
+                        updateHUD();
+                    }
+                }
+            }
+        }
+        
+        // Draw player ship
+        function drawPlayer() {
+            if (player.powerups.barongShield) {
+                ctx.strokeStyle = 'blue';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(player.x - 5, player.y - 5, player.width + 10, player.height + 10);
+            }
+            
+            ctx.fillStyle = 'green';
+            
+            if (player.shipSkin === 'default') {
+                // Default ship
+                ctx.fillRect(player.x, player.y, player.width, player.height);
+                ctx.beginPath();
+                ctx.moveTo(player.x + player.width/2, player.y - 10);
+                ctx.lineTo(player.x, player.y + 10);
+                ctx.lineTo(player.x + player.width, player.y + 10);
+                ctx.closePath();
+                ctx.fill();
+            } else if (player.shipSkin === 'bangka') {
+                // Bangka (outrigger boat)
+                ctx.fillStyle = '#8B4513'; // brown
+                ctx.fillRect(player.x, player.y, player.width, player.height/2);
+                ctx.fillRect(player.x - 15, player.y + player.height/4, 15, 5);
+                ctx.fillRect(player.x + player.width, player.y + player.height/4, 15, 5);
+            } else if (player.shipSkin === 'jeepney') {
+                // Jeepney
+                ctx.fillStyle = '#FFD700'; // gold
+                ctx.fillRect(player.x, player.y, player.width, player.height);
+                ctx.fillStyle = 'red';
+                ctx.fillRect(player.x + 5, player.y + 5, player.width - 10, player.height - 10);
+                // Windows
+                ctx.fillStyle = '#87CEEB'; // sky blue
+                ctx.fillRect(player.x + 10, player.y + 10, 10, 10);
+                ctx.fillRect(player.x + player.width - 20, player.y + 10, 10, 10);
+            } else if (player.shipSkin === 'kite_fighter') {
+                // Kite fighter
+                ctx.fillStyle = 'red';
+                ctx.beginPath();
+                ctx.moveTo(player.x + player.width/2, player.y);
+                ctx.lineTo(player.x, player.y + player.height);
+                ctx.lineTo(player.x + player.width, player.y + player.height);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+        
+        // Main game loop
+        function gameLoop() {
+            // Clear canvas
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            if (gameState === STATE_PLAYING) {
+                // Move player
+                if (keys.ArrowLeft) {
+                    player.x -= player.speed * (player.powerups.jeepneyBoost ? 1.5 : 1);
+                    if (player.x < 0) player.x = 0;
+                }
+                if (keys.ArrowRight) {
+                    player.x += player.speed * (player.powerups.jeepneyBoost ? 1.5 : 1);
+                    if (player.x > CANVAS_WIDTH - player.width) player.x = CANVAS_WIDTH - player.width;
+                }
+                
+                // Shoot
+                if (keys[' '] && bulletCooldown <= 0) {
+                    bullets.push(new Bullet(player.x + player.width/2, player.y));
+                    sounds.shoot.play();
+                    bulletCooldown = 15;
+                }
+                
+                if (bulletCooldown > 0) {
+                    bulletCooldown--;
+                }
+                
+                // Spawn enemies
+                enemySpawnTimer++;
+                if (enemySpawnTimer >= enemySpawnRate) {
+                    enemySpawnTimer = 0;
+                    if (enemies.length < 5 + player.level) {
+                        enemies.push(new Enemy());
+                    }
+                    // Decrease spawn rate over time
+                    enemySpawnRate = Math.max(20, enemySpawnRate - 0.1);
+                }
+                
+                // Update bullets
+                for (let i = bullets.length - 1; i >= 0; i--) {
+                    bullets[i].update();
+                    if (bullets[i].isOffScreen()) {
+                        bullets.splice(i, 1);
+                    }
+                }
+                
+                // Update enemies
+                for (let i = enemies.length - 1; i >= 0; i--) {
+                    enemies[i].update();
+                    if (enemies[i].isOffScreen()) {
+                        enemies.splice(i, 1);
+                        player.lives--;
+                        updateHUD();
+                        if (player.lives <= 0) {
+                            gameOver();
+                        }
+                    }
+                }
+                
+                // Check bullet-enemy collisions
+                for (let i = bullets.length - 1; i >= 0; i--) {
+                    for (let j = enemies.length - 1; j >= 0; j--) {
+                        const bullet = bullets[i];
+                        const enemy = enemies[j];
+                        
+                        if (bullet.x > enemy.x && bullet.x < enemy.x + enemy.width &&
+                            bullet.y > enemy.y && bullet.y < enemy.y + enemy.height) {
+                            
+                            if (enemy.hit()) {
+                                enemies.splice(j, 1);
+                                enemiesDefeated++;
+                                player.score += enemy.type === 'kapre' ? 100 : 
+                                              enemy.type === 'sarimanok' ? 50 : 30;
+                                
+                                // Chance to drop power-up
+                                if (Math.random() < 0.1) {
+                                    powerups.push(new PowerUp(
+                                        enemy.x + enemy.width/2,
+                                        enemy.y + enemy.height/2
+                                    ));
+                                }
+                                
+                                sounds.explosion.play();
+                            }
+                            
+                            bullets.splice(i, 1);
+                            break;
+                        }
+                    }
+                }
+                
+                // Update power-ups
+                for (let i = powerups.length - 1; i >= 0; i--) {
+                    powerups[i].update();
+                    
+                    // Check if player collected power-up
+                    if (player.x < powerups[i].x + powerups[i].width &&
+                        player.x + player.width > powerups[i].x &&
+                        player.y < powerups[i].y + powerups[i].height &&
+                        player.y + player.height > powerups[i].y) {
+                        
+                        player.powerups[powerups[i].type] = true;
+                        powerupTimers[powerups[i].type] = powerupDuration;
+                        powerups.splice(i, 1);
+                        sounds.powerup.play();
+                        updateHUD();
+                        continue;
+                    }
+                    
+                    if (powerups[i].isOffScreen()) {
+                        powerups.splice(i, 1);
+                    }
+                }
+                
+                // Update power-up timers
+                updatePowerupTimers();
+                
+                // Level progression
+                levelTimer++;
+                if (levelTimer >= levelDuration || enemiesDefeated >= enemiesToDefeat) {
+                    // Check if boss battle
+                    if (Math.random() < 0.3) { // 30% chance
+                        startBossBattle();
+                    } else {
+                        showTriviaQuestion();
+                    }
+                }
+                
+                // Draw everything
+                for (const bullet of bullets) {
+                    bullet.draw();
+                }
+                
+                for (const enemy of enemies) {
+                    enemy.draw();
+                }
+                
+                for (const powerup of powerups) {
+                    powerup.draw();
+                }
+                
+                drawPlayer();
+                
+                // Draw level progress bar
+                const progressWidth = 200 * Math.min(1, levelTimer / levelDuration);
+                ctx.fillStyle = 'red';
+                ctx.fillRect(CANVAS_WIDTH/2 - 100, CANVAS_HEIGHT - 20, 200, 10);
+                ctx.fillStyle = 'green';
+                ctx.fillRect(CANVAS_WIDTH/2 - 100, CANVAS_HEIGHT - 20, progressWidth, 10);
+            }
+            
+            // Continue game loop
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Start the game
+        initGame();
     </script>
 </body>
 </html>
