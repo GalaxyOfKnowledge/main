@@ -35,7 +35,7 @@
             justify-content: center;
             align-items: center;
             background-color: rgba(0, 0, 0, 0.8);
-            z-index: 10;
+            z-index: 100;
         }
         
         #gameScreen {
@@ -183,7 +183,7 @@
         }
         
         .highscoreEntry:nth-child(3) {
-            color: #cd7f32; /* bronze */
+            color: #cd7f32;
             font-weight: bold;
         }
         
@@ -352,23 +352,24 @@
         </div>
     </div>
 
+    <!-- Audio elements with WORKING URLs -->
     <audio id="backgroundMusic" loop>
-        <source src="" type="audio/mpeg">
+        <source src="https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-668.mp3" type="audio/mpeg">
     </audio>
     <audio id="shootSound">
-        <source src="" type="audio/mpeg">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-laser-weapon-shot-1680.mp3" type="audio/mpeg">
     </audio>
     <audio id="explosionSound">
-        <source src="" type="audio/mpeg">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-explosion-impact-1684.mp3" type="audio/mpeg">
     </audio>
     <audio id="powerUpSound">
-        <source src="" type="audio/mpeg">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3" type="audio/mpeg">
     </audio>
     <audio id="correctAnswerSound">
-        <source src="" type="audio/mpeg">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3" type="audio/mpeg">
     </audio>
     <audio id="wrongAnswerSound">
-        <source src="" type="audio/mpeg">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3" type="audio/mpeg">
     </audio>
 
     <script>
@@ -673,7 +674,7 @@
                 color: "#990000",
                 points: 100,
                 behavior: "zigzag",
-                image: "https://i.imgur.com/5tYqJ2Z.png"
+                image: "https://i.imgur.com/8m5zY9p.png"
             },
             {
                 name: "Sarimanok Scout",
@@ -710,7 +711,7 @@
                 name: "Barong Shield",
                 color: "#ffffff",
                 effect: "invincibility",
-                duration: 10000, // 10 seconds
+                duration: 10000,
                 image: "https://i.imgur.com/pV8Xc3G.png",
                 triviaCategory: "culture"
             },
@@ -718,7 +719,7 @@
                 name: "Jeepney Boost",
                 color: "#ff6600",
                 effect: "speed",
-                duration: 8000, // 8 seconds
+                duration: 8000,
                 image: "https://i.imgur.com/7jK9W6v.png",
                 triviaCategory: "culture"
             },
@@ -726,7 +727,7 @@
                 name: "Tinikling Mode",
                 color: "#ffcc00",
                 effect: "doubleDamage",
-                duration: 12000, // 12 seconds
+                duration: 12000,
                 image: "https://i.imgur.com/3nQqY7T.png",
                 triviaCategory: "culture"
             },
@@ -734,7 +735,7 @@
                 name: "Adobo Bomb",
                 color: "#663300",
                 effect: "clearScreen",
-                duration: 0, // instant
+                duration: 0,
                 image: "https://i.imgur.com/2v8pQ9W.png",
                 triviaCategory: "food"
             },
@@ -742,7 +743,7 @@
                 name: "Mango Heal",
                 color: "#ff9900",
                 effect: "extraLife",
-                duration: 0, // instant
+                duration: 0,
                 image: "https://i.imgur.com/6tYqJ2Z.png",
                 triviaCategory: "food"
             }
@@ -791,7 +792,6 @@
                 keys[e.key] = true;
                 e.preventDefault();
                 
-                // In co-op mode, number keys answer trivia questions
                 if (gameState.gameMode === 'coop' && gameRunning) {
                     if (e.key === '1') checkAnswer(0);
                     if (e.key === '2') checkAnswer(1);
@@ -829,7 +829,6 @@
             
             updatePlayerInfo();
             
-            // Set difficulty
             switch (gameState.difficulty) {
                 case 'easy':
                     player.speed = 6;
@@ -845,14 +844,12 @@
                     break;
             }
             
-            // Show co-op controls if in co-op mode
             if (gameState.gameMode === 'coop') {
                 coopControls.style.display = 'block';
             } else {
                 coopControls.style.display = 'none';
             }
             
-            // Start game loop
             gameRunning = true;
             lastTime = performance.now();
             requestAnimationFrame(gameLoop);
@@ -873,7 +870,6 @@
 
         // Update game state
         function update(deltaTime) {
-            // Update player position
             if (keys.ArrowLeft && player.x > 0) {
                 player.x -= player.speed;
             }
@@ -887,41 +883,34 @@
                 player.y += player.speed;
             }
             
-            // Player shooting
             if (player.bulletCooldown > 0) {
                 player.bulletCooldown -= deltaTime;
             }
             
             if (keys.Space && player.bulletCooldown <= 0) {
                 shoot();
-                player.bulletCooldown = 300; // 300ms cooldown
+                player.bulletCooldown = 300;
             }
             
-            // Update bullets
             for (let i = player.bullets.length - 1; i >= 0; i--) {
                 player.bullets[i].y -= player.bulletSpeed;
                 
-                // Remove bullets that are off screen
                 if (player.bullets[i].y < 0) {
                     player.bullets.splice(i, 1);
                     continue;
                 }
                 
-                // Check for bullet-enemy collisions
                 for (let j = enemies.length - 1; j >= 0; j--) {
                     if (checkCollision(player.bullets[i], enemies[j])) {
-                        // Double damage if in Tinikling Mode
                         const damage = (gameState.powerUp === 'Tinikling Mode') ? 2 : 1;
                         enemies[j].health -= damage;
                         
                         if (enemies[j].health <= 0) {
-                            // Enemy destroyed
                             gameState.score += enemies[j].points;
                             enemies.splice(j, 1);
                             playSound(explosionSound);
                             
-                            // Random chance to drop power-up
-                            if (Math.random() < 0.1) { // 10% chance
+                            if (Math.random() < 0.1) {
                                 spawnPowerUp(enemies[j].x, enemies[j].y);
                             }
                         }
@@ -933,17 +922,14 @@
                 }
             }
             
-            // Update enemies
             enemySpawnTimer += deltaTime;
             
-            // Spawn new enemies
-            const spawnRate = 1000 - (gameState.level * 50); // Faster spawning as level increases
+            const spawnRate = 1000 - (gameState.level * 50);
             if (enemySpawnTimer > spawnRate && enemies.length < 10 + gameState.level && !bossActive) {
                 spawnEnemy();
                 enemySpawnTimer = 0;
             }
             
-            // Update enemy positions and behaviors
             for (let i = enemies.length - 1; i >= 0; i--) {
                 const enemy = enemies[i];
                 
@@ -959,18 +945,13 @@
                         if (enemy.y < canvas.height / 2) {
                             enemy.y += enemy.speed;
                         } else {
-                            // Dive toward player
                             const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
                             enemy.x += Math.cos(angle) * enemy.speed;
                             enemy.y += Math.sin(angle) * enemy.speed;
                         }
                         break;
-                    case 'stationary':
-                        // Stationary enemies don't move
-                        break;
                 }
                 
-                // Check if enemy reached bottom
                 if (enemy.y > canvas.height) {
                     enemies.splice(i, 1);
                     gameState.lives--;
@@ -981,23 +962,19 @@
                     }
                 }
                 
-                // Enemy shooting
-                if (Math.random() < 0.002 && enemy.behavior !== 'stationary') { // 0.2% chance per frame
+                if (Math.random() < 0.002 && enemy.behavior !== 'stationary') {
                     enemyShoot(enemy);
                 }
             }
             
-            // Update enemy bullets
             for (let i = enemyBullets.length - 1; i >= 0; i--) {
                 enemyBullets[i].y += enemyBullets[i].speed;
                 
-                // Remove bullets that are off screen
                 if (enemyBullets[i].y > canvas.height) {
                     enemyBullets.splice(i, 1);
                     continue;
                 }
                 
-                // Check for bullet-player collisions
                 if (!gameState.powerUp || gameState.powerUp !== 'Barong Shield') {
                     if (checkCollision(enemyBullets[i], player)) {
                         enemyBullets.splice(i, 1);
@@ -1012,17 +989,14 @@
                 }
             }
             
-            // Update power-ups
             for (let i = powerUps.length - 1; i >= 0; i--) {
                 powerUps[i].y += 2;
                 
-                // Remove power-ups that are off screen
                 if (powerUps[i].y > canvas.height) {
                     powerUps.splice(i, 1);
                     continue;
                 }
                 
-                // Check for power-up collection
                 if (checkCollision(powerUps[i], player)) {
                     activatePowerUp(powerUps[i]);
                     powerUps.splice(i, 1);
@@ -1030,7 +1004,6 @@
                 }
             }
             
-            // Update active power-up timer
             if (gameState.powerUp) {
                 gameState.powerUpTime -= deltaTime;
                 
@@ -1039,14 +1012,11 @@
                 }
             }
             
-            // Level progression
             if (!bossActive) {
                 levelClearTimer += deltaTime;
                 
-                // Every 30 seconds or when all enemies are cleared, show trivia
-                const levelDuration = 30000 - (gameState.level * 1000); // Shorter duration as level increases
+                const levelDuration = 30000 - (gameState.level * 1000);
                 if (levelClearTimer > levelDuration || enemies.length === 0) {
-                    // Every 3 levels, face a boss battle
                     if (gameState.level % 3 === 0) {
                         startBossBattle();
                     } else {
@@ -1055,9 +1025,7 @@
                     levelClearTimer = 0;
                 }
             } else {
-                // Boss battle updates
                 if (currentBoss && gameState.bossQuestionsAnswered >= gameState.bossQuestionsRequired) {
-                    // Boss defeated
                     gameState.score += currentBoss.health * 500;
                     bossActive = false;
                     currentBoss = null;
@@ -1065,7 +1033,6 @@
                     updatePlayerInfo();
                     levelClearTimer = 0;
                     
-                    // Unlock a new skin every 5 levels
                     if (gameState.level % 5 === 0) {
                         unlockNewSkin();
                     }
@@ -1075,11 +1042,9 @@
 
         // Render game
         function render() {
-            // Clear canvas
             ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Draw stars (background)
             for (let i = 0; i < 100; i++) {
                 const x = Math.sin(i * 10) * canvas.width / 2 + canvas.width / 2;
                 const y = (i * 6 + (performance.now() / 50) % canvas.height);
@@ -1087,7 +1052,6 @@
                 ctx.fillRect(x, y, 1, 1);
             }
             
-            // Draw player
             if (player.skins[player.skin].image) {
                 ctx.drawImage(player.skins[player.skin].image, player.x, player.y, player.width, player.height);
             } else {
@@ -1095,13 +1059,11 @@
                 ctx.fillRect(player.x, player.y, player.width, player.height);
             }
             
-            // Draw bullets
             ctx.fillStyle = '#ff0';
             player.bullets.forEach(bullet => {
                 ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
             });
             
-            // Draw enemies
             enemies.forEach(enemy => {
                 if (enemy.image) {
                     ctx.drawImage(enemy.image, enemy.x, enemy.y, enemy.width, enemy.height);
@@ -1111,13 +1073,11 @@
                 }
             });
             
-            // Draw enemy bullets
             ctx.fillStyle = '#f00';
             enemyBullets.forEach(bullet => {
                 ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
             });
             
-            // Draw power-ups
             powerUps.forEach(powerUp => {
                 if (powerUp.image) {
                     ctx.drawImage(powerUp.image, powerUp.x, powerUp.y, powerUp.width, powerUp.height);
@@ -1127,13 +1087,12 @@
                 }
             });
             
-            // Draw boss health bar if in boss battle
             if (bossActive && currentBoss) {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
                 ctx.fillRect(canvas.width / 2 - 150, 20, 300, 30);
                 
-                ctx.fillStyle = '#f00';
                 const healthWidth = (gameState.bossHealth / gameState.bossMaxHealth) * 300;
+                ctx.fillStyle = '#f00';
                 ctx.fillRect(canvas.width / 2 - 150, 20, healthWidth, 30);
                 
                 ctx.fillStyle = '#fff';
@@ -1143,7 +1102,6 @@
                 ctx.textAlign = 'left';
             }
             
-            // Draw power-up indicator
             if (gameState.powerUp) {
                 const remainingTime = Math.ceil(gameState.powerUpTime / 1000);
                 powerUpIndicator.textContent = `${gameState.powerUp}: ${remainingTime}s`;
@@ -1152,7 +1110,6 @@
             }
         }
 
-        // Helper functions
         function checkCollision(obj1, obj2) {
             return obj1.x < obj2.x + obj2.width &&
                    obj1.x + obj1.width > obj2.x &&
@@ -1196,7 +1153,6 @@
                 name: enemyType.name
             };
             
-            // Load enemy image if available
             if (enemyType.image) {
                 enemy.image = new Image();
                 enemy.image.src = enemyType.image;
@@ -1220,7 +1176,6 @@
                 triviaCategory: powerUpType.triviaCategory
             };
             
-            // Load power-up image if available
             if (powerUpType.image) {
                 powerUp.image = new Image();
                 powerUp.image.src = powerUpType.image;
@@ -1235,23 +1190,19 @@
             
             switch (powerUp.effect) {
                 case 'invincibility':
-                    // Barong Shield - no effect needed, collision check handles it
                     break;
                 case 'speed':
-                    player.speed *= 1.5; // Increase speed by 50%
+                    player.speed *= 1.5;
                     break;
                 case 'doubleDamage':
-                    // Tinikling Mode - handled in damage calculation
                     break;
                 case 'clearScreen':
-                    // Adobo Bomb - clear all enemies
                     enemies.forEach(enemy => {
                         gameState.score += enemy.points;
                     });
                     enemies = [];
                     break;
                 case 'extraLife':
-                    // Mango Heal - add an extra life
                     gameState.lives++;
                     updatePlayerInfo();
                     break;
@@ -1260,7 +1211,7 @@
 
         function deactivatePowerUp() {
             if (gameState.powerUp === 'Jeepney Boost') {
-                player.speed /= 1.5; // Reset speed
+                player.speed /= 1.5;
             }
             
             gameState.powerUp = null;
@@ -1276,7 +1227,6 @@
         function showTrivia() {
             gameRunning = false;
             
-            // Filter questions based on active power-up category if any
             let filteredQuestions = triviaQuestions;
             if (gameState.powerUp) {
                 const activePowerUp = powerUpsDB.find(p => p.name === gameState.powerUp);
@@ -1285,7 +1235,6 @@
                 }
             }
             
-            // If no questions in filtered category, use all questions
             if (filteredQuestions.length === 0) {
                 filteredQuestions = triviaQuestions;
             }
@@ -1298,7 +1247,6 @@
             option3.textContent = randomQuestion.options[2];
             option4.textContent = randomQuestion.options[3];
             
-            // Store correct answer
             triviaQuestion.dataset.correctAnswer = randomQuestion.answer;
             triviaQuestion.dataset.funFact = randomQuestion.funFact;
             
@@ -1319,20 +1267,19 @@
                 triviaFunFact.textContent = triviaQuestion.dataset.funFact;
                 playSound(correctAnswerSound);
                 
-                // Bonus for correct answer
-                const bonus = Math.floor(Math.random() * 3) + 1; // 1-3
+                const bonus = Math.floor(Math.random() * 3) + 1;
                 
                 switch (bonus) {
-                    case 1: // Extra life
+                    case 1:
                         gameState.lives++;
                         triviaFeedback.textContent += ' Bonus: +1 Life!';
                         break;
-                    case 2: // Score multiplier
-                        const multiplier = Math.floor(Math.random() * 2) + 2; // 2-3
+                    case 2:
+                        const multiplier = Math.floor(Math.random() * 2) + 2;
                         gameState.score += gameState.level * 100 * multiplier;
                         triviaFeedback.textContent += ` Bonus: ${multiplier}x Score!`;
                         break;
-                    case 3: // Power-up
+                    case 3:
                         spawnPowerUp(player.x, player.y);
                         triviaFeedback.textContent += ' Bonus: Power-Up!';
                         break;
@@ -1340,7 +1287,6 @@
                 
                 updatePlayerInfo();
                 
-                // Continue game after delay
                 setTimeout(() => {
                     triviaScreen.style.display = 'none';
                     gameState.level++;
@@ -1354,23 +1300,21 @@
                 triviaFunFact.textContent = triviaQuestion.dataset.funFact;
                 playSound(wrongAnswerSound);
                 
-                // Penalty for wrong answer
-                const penalty = Math.floor(Math.random() * 2) + 1; // 1-2
+                const penalty = Math.floor(Math.random() * 2) + 1;
                 
                 switch (penalty) {
-                    case 1: // Faster enemies
+                    case 1:
                         enemies.forEach(enemy => {
                             enemy.speed *= 1.2;
                         });
                         triviaFeedback.textContent += ' Penalty: Enemies are faster!';
                         break;
-                    case 2: // Slower bullets
+                    case 2:
                         player.bulletSpeed = Math.max(3, player.bulletSpeed - 1);
                         triviaFeedback.textContent += ' Penalty: Slower bullets!';
                         break;
                 }
                 
-                // Continue game after delay
                 setTimeout(() => {
                     triviaScreen.style.display = 'none';
                     gameState.level++;
@@ -1385,16 +1329,13 @@
             gameRunning = false;
             bossActive = true;
             
-            // Select a random boss
             currentBoss = bossEnemies[Math.floor(Math.random() * bossEnemies.length)];
             gameState.bossHealth = currentBoss.health;
             gameState.bossMaxHealth = currentBoss.health;
             gameState.bossQuestionsAnswered = 0;
             
-            // Load boss image
             bossImage.style.backgroundImage = `url('${currentBoss.image}')`;
             
-            // Start with first question
             showBossQuestion();
             
             bossTriviaScreen.style.display = 'flex';
@@ -1409,14 +1350,12 @@
             bossOption3.textContent = randomQuestion.options[2];
             bossOption4.textContent = randomQuestion.options[3];
             
-            // Store correct answer
             bossTriviaQuestion.dataset.correctAnswer = randomQuestion.answer;
             bossTriviaQuestion.dataset.funFact = randomQuestion.funFact;
             
             bossTriviaFeedback.textContent = '';
             bossTriviaFunFact.textContent = '';
             
-            // Update boss health display
             bossHealthBar.style.width = `${(gameState.bossHealth / gameState.bossMaxHealth) * 100}%`;
         }
 
@@ -1431,25 +1370,20 @@
                 bossTriviaFunFact.textContent = bossTriviaQuestion.dataset.funFact;
                 playSound(correctAnswerSound);
                 
-                // Damage boss
                 gameState.bossHealth--;
                 gameState.bossQuestionsAnswered++;
                 
-                // Update boss health display
                 bossHealthBar.style.width = `${(gameState.bossHealth / gameState.bossMaxHealth) * 100}%`;
                 
-                // Check if boss is defeated
                 if (gameState.bossHealth <= 0 || gameState.bossQuestionsAnswered >= gameState.bossQuestionsRequired) {
                     bossTriviaFeedback.textContent = 'Boss Defeated!';
                     
-                    // Continue game after delay
                     setTimeout(() => {
                         bossTriviaScreen.style.display = 'none';
                         gameRunning = true;
                         lastTime = performance.now();
                     }, 3000);
                 } else {
-                    // Show next question after delay
                     setTimeout(showBossQuestion, 2000);
                 }
             } else {
@@ -1458,12 +1392,10 @@
                 bossTriviaFunFact.textContent = bossTriviaQuestion.dataset.funFact;
                 playSound(wrongAnswerSound);
                 
-                // Boss attacks - spawn more enemies
                 for (let i = 0; i < 3; i++) {
                     spawnEnemy();
                 }
                 
-                // Show next question after delay
                 setTimeout(showBossQuestion, 2000);
             }
         }
@@ -1471,7 +1403,6 @@
         function gameOver() {
             gameRunning = false;
             
-            // Add to highscores
             highscores.push({
                 name: 'Player',
                 score: gameState.score,
@@ -1479,21 +1410,16 @@
                 date: new Date().toLocaleDateString()
             });
             
-            // Sort highscores
             highscores.sort((a, b) => b.score - a.score);
             
-            // Keep only top 10
             if (highscores.length > 10) {
                 highscores = highscores.slice(0, 10);
             }
             
-            // Save highscores
             localStorage.setItem('pinoySpaceInvadersHighscores', JSON.stringify(highscores));
             
-            // Show game over screen
             finalScore.textContent = `Your Score: ${gameState.score} (Level ${gameState.level})`;
             
-            // Show unlocked skins if any
             if (gameState.unlockedSkins.length > 0) {
                 unlockedSkins.textContent = `Unlocked Skins: ${gameState.unlockedSkins.join(', ')}`;
             } else {
@@ -1512,7 +1438,6 @@
                 const newSkin = availableSkins[0];
                 gameState.unlockedSkins.push(newSkin);
                 
-                // Load skin image if available
                 if (newSkin === 'jeepney') {
                     player.skins.jeepney.image = new Image();
                     player.skins.jeepney.image.src = 'https://i.imgur.com/7jK9W6v.png';
@@ -1524,10 +1449,8 @@
                     player.skins.kite.image.src = 'https://i.imgur.com/3nQqY7T.png';
                 }
                 
-                // Apply the new skin
                 player.skin = newSkin;
                 
-                // Show notification
                 const notification = document.createElement('div');
                 notification.textContent = `Unlocked new skin: ${newSkin}!`;
                 notification.style.position = 'absolute';
@@ -1557,7 +1480,6 @@
             }
         }
 
-        // Menu functions
         function startGame() {
             mainMenu.style.display = 'none';
             settingsMenu.style.display = 'none';
@@ -1572,7 +1494,6 @@
             mainMenu.style.display = 'none';
             settingsMenu.style.display = 'flex';
             
-            // Load current settings
             document.getElementById('gameMode').value = gameState.gameMode;
             document.getElementById('difficulty').value = gameState.difficulty;
             document.getElementById('musicVolume').value = gameState.musicVolume;
@@ -1585,7 +1506,6 @@
             gameState.musicVolume = parseInt(document.getElementById('musicVolume').value);
             gameState.sfxVolume = parseInt(document.getElementById('sfxVolume').value);
             
-            // Apply music volume
             backgroundMusic.volume = gameState.musicVolume / 100;
             
             backToMenu();
@@ -1595,7 +1515,6 @@
             mainMenu.style.display = 'none';
             highscoreMenu.style.display = 'flex';
             
-            // Populate highscores
             const highscoreList = document.getElementById('highscoreList');
             highscoreList.innerHTML = '';
             
@@ -1630,50 +1549,12 @@
             mainMenu.style.display = 'flex';
         }
 
-        // Preload images and audio
-        function preloadAssets() {
-            // Preload power-up images
-            powerUpsDB.forEach(powerUp => {
-                if (powerUp.image) {
-                    const img = new Image();
-                    img.src = powerUp.image;
-                }
-            });
-            
-            // Preload enemy images
-            regularEnemies.forEach(enemy => {
-                if (enemy.image) {
-                    const img = new Image();
-                    img.src = enemy.image;
-                }
-            });
-            
-            // Preload boss images
-            bossEnemies.forEach(boss => {
-                if (boss.image) {
-                    const img = new Image();
-                    img.src = boss.image;
-                }
-            });
-            
-// Set up audio (corrected)
-backgroundMusic.src = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
-shootSound.src = 'https://www.soundjay.com/buttons/sounds/button-09.mp3';
-explosionSound.src = 'https://www.soundjay.com/explosion-sounds/explosion-01.mp3';
-powerUpSound.src = 'https://www.soundjay.com/buttons/sounds/button-10.mp3';
-correctAnswerSound.src = 'https://www.soundjay.com/buttons/sounds/button-21.mp3';
-wrongAnswerSound.src = 'https://www.soundjay.com/buttons/sounds/button-10.mp3';
-
-// Set initial volume
-backgroundMusic.volume = gameState.musicVolume / 100;
-
-// Initialize the game when page loads
-window.addEventListener('load', () => {
-    preloadAssets();
-    updatePlayerInfo();
-    mainMenu.style.display = 'flex'; // Show menu
-    gameScreen.style.display = 'none'; // Hide game
-});
+        // Initialize the game when page loads
+        window.addEventListener('load', () => {
+            mainMenu.style.display = 'flex';
+            gameScreen.style.display = 'none';
+            updatePlayerInfo();
+        });
     </script>
 </body>
 </html>
