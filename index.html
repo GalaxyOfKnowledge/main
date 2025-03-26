@@ -21,7 +21,7 @@
             margin: 0 auto;
         }
         
-        #menuScreen, #gameOverScreen, #highscoreScreen, #settingsScreen {
+        #menuScreen, #gameOverScreen, #highscoreScreen, #settingsScreen, #winScreen {
             position: absolute;
             top: 0;
             left: 0;
@@ -59,6 +59,16 @@
         #highscoreButton { background-color: #FFC107; color: black; }
         #settingsButton { background-color: #2196F3; color: white; }
         
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 18px;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
         #powerupHud {
             position: absolute;
             top: 10px;
@@ -74,6 +84,16 @@
             margin: 5px;
             padding: 5px;
             border-radius: 3px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .powerup-timer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background-color: rgba(255, 255, 255, 0.5);
         }
         
         #bossHealthBar {
@@ -110,6 +130,7 @@
             font-size: 18px;
             margin-bottom: 10px;
             color: #FFC107;
+            text-align: center;
         }
         
         .triviaOption {
@@ -118,11 +139,13 @@
             background-color: #333;
             border: 1px solid #555;
             border-radius: 5px;
-            cursor: pointer;
+            text-align: center;
+            position: relative;
         }
         
-        .triviaOption:hover {
+        .triviaOption.highlighted {
             background-color: #444;
+            border-color: #FFD700;
         }
         
         .triviaOption.selected {
@@ -204,11 +227,26 @@
 <body>
     <canvas id="gameCanvas"></canvas>
     
+    <!-- HUD Elements -->
+    <div id="hud">
+        <div>Lives: <span id="livesDisplay">3</span></div>
+        <div>Score: <span id="scoreDisplay">0</span></div>
+    </div>
+    
     <!-- Power-up HUD (right side) -->
     <div id="powerupHud">
-        <div class="powerup-indicator" id="barongIndicator" style="background-color: #2196F3;">Barong Shield: OFF</div>
-        <div class="powerup-indicator" id="jeepneyIndicator" style="background-color: #F44336;">Jeepney Boost: OFF</div>
-        <div class="powerup-indicator" id="tiniklingIndicator" style="background-color: #4CAF50;">Tinikling Mode: OFF</div>
+        <div class="powerup-indicator" id="barongIndicator" style="background-color: #2196F3;">
+            Barong Shield: OFF
+            <div class="powerup-timer" id="barongTimer"></div>
+        </div>
+        <div class="powerup-indicator" id="jeepneyIndicator" style="background-color: #F44336;">
+            Jeepney Boost: OFF
+            <div class="powerup-timer" id="jeepneyTimer"></div>
+        </div>
+        <div class="powerup-indicator" id="tiniklingIndicator" style="background-color: #4CAF50;">
+            Tinikling Mode: OFF
+            <div class="powerup-timer" id="tiniklingTimer"></div>
+        </div>
     </div>
     
     <!-- Boss Health Bar -->
@@ -247,6 +285,13 @@
             <button id="submitScore" class="menu-button" style="background-color: #4CAF50;">Submit</button>
         </div>
         <button id="continueButton" class="menu-button" style="background-color: #2196F3;">Continue</button>
+    </div>
+    
+    <!-- Win Screen -->
+    <div id="winScreen" style="display: none;">
+        <div class="title">You Win!</div>
+        <div id="winScore" style="font-size: 24px; margin-bottom: 20px;"></div>
+        <button id="winContinueButton" class="menu-button" style="background-color: #2196F3;">Continue</button>
     </div>
     
     <!-- Highscore Screen -->
@@ -299,6 +344,7 @@
         const STATE_GAME_OVER = 2;
         const STATE_HIGHSCORE = 3;
         const STATE_SETTINGS = 4;
+        const STATE_WIN = 5;
         
         // Initialize canvas
         const canvas = document.getElementById('gameCanvas');
@@ -344,6 +390,7 @@
         let bossMaxHealth = 0;
         let currentQuestion = null;
         let selectedOption = null;
+        let highlightedOption = null;
         
         // High scores
         let highScores = [];
@@ -364,7 +411,8 @@
             correct: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3'),
             wrong: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3'),
             bossSpawn: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-monster-roar-1988.mp3'),
-            shipChange: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3')
+            shipChange: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3'),
+            win: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3')
         };
         
         // Set volume for all sounds
@@ -539,6 +587,11 @@
                 document.getElementById('gameOverScreen').style.display = 'none';
                 document.getElementById('menuScreen').style.display = 'flex';
             });
+            document.getElementById('winContinueButton').addEventListener('click', () => {
+                gameState = STATE_MENU;
+                document.getElementById('winScreen').style.display = 'none';
+                document.getElementById('menuScreen').style.display = 'flex';
+            });
             document.getElementById('submitScore').addEventListener('click', submitHighScore);
             document.getElementById('backButton').addEventListener('click', () => {
                 gameState = STATE_MENU;
@@ -615,6 +668,9 @@
                         player.availableShips.jeepney = false;
                         sounds.shipChange.play();
                         updateShipSelectionUI();
+                    } else if (e.key === 'z' && bossActive && highlightedOption !== null) {
+                        // Select highlighted trivia option
+                        selectBossOption(highlightedOption);
                     }
                 }
                 
@@ -640,7 +696,8 @@
         const keys = {
             ArrowLeft: false,
             ArrowRight: false,
-            ' ': false
+            ' ': false,
+            'z': false
         };
         
         // Update ship selection UI
@@ -648,6 +705,34 @@
             document.getElementById('defaultShip').classList.toggle('available', player.availableShips.default);
             document.getElementById('bangkaShip').classList.toggle('available', player.availableShips.bangka);
             document.getElementById('jeepneyShip').classList.toggle('available', player.availableShips.jeepney);
+        }
+        
+        // Update power-up timers display
+        function updatePowerupTimersDisplay() {
+            const barongTimer = document.getElementById('barongTimer');
+            const jeepneyTimer = document.getElementById('jeepneyTimer');
+            const tiniklingTimer = document.getElementById('tiniklingTimer');
+            
+            if (player.powerups.barongShield) {
+                const percent = (powerupTimers.barongShield / powerupDuration) * 100;
+                barongTimer.style.width = `${percent}%`;
+            } else {
+                barongTimer.style.width = '0%';
+            }
+            
+            if (player.powerups.jeepneyBoost) {
+                const percent = (powerupTimers.jeepneyBoost / powerupDuration) * 100;
+                jeepneyTimer.style.width = `${percent}%`;
+            } else {
+                jeepneyTimer.style.width = '0%';
+            }
+            
+            if (player.powerups.tiniklingMode) {
+                const percent = (powerupTimers.tiniklingMode / powerupDuration) * 100;
+                tiniklingTimer.style.width = `${percent}%`;
+            } else {
+                tiniklingTimer.style.width = '0%';
+            }
         }
         
         // Start a new game
@@ -686,10 +771,12 @@
             enemySpawnTimer = 0;
             boss = null;
             bossActive = false;
+            highlightedOption = null;
             
             // Update HUD
             updateHUD();
             updateShipSelectionUI();
+            updatePowerupTimersDisplay();
             
             // Hide boss health bar
             document.getElementById('bossHealthBar').style.display = 'none';
@@ -746,6 +833,14 @@
             }
         }
         
+        // Player wins
+        function playerWins() {
+            gameState = STATE_WIN;
+            document.getElementById('winScreen').style.display = 'flex';
+            document.getElementById('winScore').textContent = `Final Score: ${player.score}`;
+            sounds.win.play();
+        }
+        
         // Submit high score
         function submitHighScore() {
             const nameInput = document.getElementById('nameInput');
@@ -792,6 +887,7 @@
         function showBossQuestion() {
             currentQuestion = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
             selectedOption = null;
+            highlightedOption = 0; // Start with first option highlighted
             
             // Display question
             document.getElementById('triviaQuestion').textContent = currentQuestion.question;
@@ -805,8 +901,18 @@
                 optionElement.className = 'triviaOption';
                 optionElement.textContent = option;
                 optionElement.dataset.index = index;
-                optionElement.addEventListener('click', () => selectBossOption(index));
                 optionsContainer.appendChild(optionElement);
+            });
+            
+            // Highlight first option
+            updateOptionHighlight();
+        }
+        
+        // Update highlighted option
+        function updateOptionHighlight() {
+            const options = document.querySelectorAll('#triviaOptions .triviaOption');
+            options.forEach((opt, index) => {
+                opt.classList.toggle('highlighted', index === highlightedOption);
             });
         }
         
@@ -818,7 +924,7 @@
             const options = document.querySelectorAll('#triviaOptions .triviaOption');
             
             // Highlight selected option
-            options.forEach(opt => opt.classList.remove('selected'));
+            options.forEach(opt => opt.classList.remove('highlighted'));
             options[index].classList.add('selected');
             
             if (index === currentQuestion.answer) {
@@ -830,7 +936,7 @@
                 sounds.correct.play();
                 
                 if (boss.health <= 0) {
-                    // Boss defeated
+                    // Boss defeated - player wins
                     player.score += 1000;
                     bossActive = false;
                     document.getElementById('bossHealthBar').style.display = 'none';
@@ -841,6 +947,9 @@
                     
                     // Clear any remaining enemies
                     enemies = [];
+                    
+                    // Player wins
+                    setTimeout(playerWins, 1000);
                 } else {
                     // Get next question after delay
                     setTimeout(showBossQuestion, 1000);
@@ -867,6 +976,9 @@
         
         // Update HUD
         function updateHUD() {
+            document.getElementById('livesDisplay').textContent = player.lives;
+            document.getElementById('scoreDisplay').textContent = player.score;
+            
             document.getElementById('barongIndicator').textContent = 
                 player.powerups.barongShield ? 'ACTIVE' : 'OFF';
             document.getElementById('jeepneyIndicator').textContent = 
@@ -1039,14 +1151,6 @@
             }
         }
         
-        // Spawn a power-up
-        function spawnPowerUp() {
-            powerups.push(new PowerUp(
-                Math.random() * (CANVAS_WIDTH - 30),
-                -30
-            ));
-        }
-        
         // Power-up timers
         const powerupDuration = 300; // 5 seconds at 60fps
         const powerupTimers = {
@@ -1066,6 +1170,7 @@
                     }
                 }
             }
+            updatePowerupTimersDisplay();
         }
         
         // Draw player ship
@@ -1131,6 +1236,33 @@
             ctx.fillRect(boss.x + boss.width - 25, boss.y + boss.height, 15, 30);
         }
         
+        // Check if player is over a trivia option
+        function checkTriviaOptionHover() {
+            if (!bossActive || !currentQuestion) return;
+            
+            const options = document.querySelectorAll('#triviaOptions .triviaOption');
+            const optionRects = Array.from(options).map(opt => opt.getBoundingClientRect());
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            // Convert player position to screen coordinates
+            const playerScreenX = player.x + canvasRect.left;
+            const playerScreenY = player.y + canvasRect.top;
+            
+            // Find which option the player is hovering over
+            let newHighlighted = null;
+            optionRects.forEach((rect, index) => {
+                if (playerScreenX > rect.left && playerScreenX < rect.right &&
+                    playerScreenY > rect.top && playerScreenY < rect.bottom) {
+                    newHighlighted = index;
+                }
+            });
+            
+            if (newHighlighted !== null && newHighlighted !== highlightedOption) {
+                highlightedOption = newHighlighted;
+                updateOptionHighlight();
+            }
+        }
+        
         // Main game loop
         function gameLoop() {
             // Clear canvas
@@ -1145,6 +1277,11 @@
                 if (keys.ArrowRight) {
                     player.x += player.speed * (player.powerups.jeepneyBoost ? 1.5 : 1);
                     if (player.x > CANVAS_WIDTH - player.width) player.x = CANVAS_WIDTH - player.width;
+                }
+                
+                // Check trivia option hover
+                if (bossActive) {
+                    checkTriviaOptionHover();
                 }
                 
                 // Shoot
@@ -1168,11 +1305,6 @@
                         }
                         // Decrease spawn rate over time
                         enemySpawnRate = Math.max(20, enemySpawnRate - 0.1);
-                    }
-                    
-                    // Spawn power-ups randomly
-                    if (Math.random() < 0.01) {
-                        spawnPowerUp();
                     }
                     
                     // Check if should spawn boss
@@ -1204,6 +1336,9 @@
                             
                             // Clear any remaining enemies
                             enemies = [];
+                            
+                            // Player wins
+                            setTimeout(playerWins, 1000);
                         }
                         continue;
                     }
@@ -1253,9 +1388,22 @@
                                 player.score += enemy.type === 'kapre' ? 100 : 
                                               enemy.type === 'sarimanok' ? 50 : 30;
                                 
-                                // Chance to drop power-up
+                                // Chance to drop power-up or ship
                                 if (Math.random() < 0.2) {
-                                    spawnPowerUp();
+                                    const powerupTypes = [
+                                        'barongShield', 
+                                        'jeepneyBoost', 
+                                        'tiniklingMode',
+                                        'defaultShip',
+                                        'bangkaShip',
+                                        'jeepneyShip'
+                                    ];
+                                    const randomType = powerupTypes[Math.floor(Math.random() * powerupTypes.length)];
+                                    powerups.push(new PowerUp(
+                                        enemy.x + enemy.width/2,
+                                        enemy.y + enemy.height/2,
+                                        randomType
+                                    ));
                                 }
                                 
                                 sounds.explosion.play();
@@ -1292,6 +1440,7 @@
                         sounds.powerup.play();
                         updateHUD();
                         updateShipSelectionUI();
+                        updatePowerupTimersDisplay();
                         continue;
                     }
                     
