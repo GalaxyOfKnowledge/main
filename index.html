@@ -153,12 +153,6 @@
             flex: 1;
             min-width: 120px;
             transition: all 0.2s;
-            cursor: pointer;
-        }
-        
-        .triviaOption:hover {
-            background-color: #444;
-            border-color: #FFD700;
         }
         
         .triviaOption.highlighted {
@@ -277,6 +271,24 @@
             width: 200px;
         }
         
+        #nameInputContainer {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        #gameOverCover {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            z-index: 5;
+        }
+        
         @media (max-width: 768px) {
             #mobileControls {
                 display: flex;
@@ -299,6 +311,7 @@
     </style>
 </head>
 <body>
+    <div id="gameOverCover"></div>
     <canvas id="gameCanvas"></canvas>
     
     <div id="hud">
@@ -335,6 +348,11 @@
     <div id="gameOverScreen" style="display: none;">
         <div class="title">Game Over</div>
         <div id="finalScore" style="font-size: 24px; margin-bottom: 20px;"></div>
+        <div id="nameInputContainer">
+            <div style="margin-bottom: 10px;">Enter your name:</div>
+            <input type="text" id="nameInput" maxlength="10">
+            <button id="submitScore" class="menu-button" style="background: linear-gradient(145deg, #4CAF50, #2E7D32);">Submit</button>
+        </div>
         <button id="continueButton" class="menu-button" style="background: linear-gradient(145deg, #2196F3, #0D47A1);">Continue</button>
     </div>
     
@@ -527,6 +545,14 @@
             localStorage.setItem('pinoySpaceInvaderHighScores', JSON.stringify(highScores));
         }
         
+        // Add a new high score
+        function addHighScore(name, score) {
+            highScores.push({ name, score });
+            highScores.sort((a, b) => b.score - a.score);
+            highScores = highScores.slice(0, MAX_HIGH_SCORES);
+            saveHighScores();
+        }
+        
         // Load settings from localStorage
         function loadSettings() {
             const savedSettings = localStorage.getItem('pinoySpaceInvaderSettings');
@@ -587,6 +613,7 @@
                 saveSettings();
                 returnToMenu();
             });
+            document.getElementById('submitScore').addEventListener('click', submitHighScore);
             
             // Settings controls
             document.getElementById('musicDown').addEventListener('click', () => {
@@ -656,6 +683,13 @@
                         selectBossOption(highlightedOption);
                     }
                 }
+                
+                // In game over screen, allow typing name
+                if (gameState === STATE_GAME_OVER && document.getElementById('nameInputContainer').style.display !== 'none') {
+                    if (e.key === 'Enter') {
+                        submitHighScore();
+                    }
+                }
             });
             
             window.addEventListener('keyup', (e) => {
@@ -702,6 +736,7 @@
             document.getElementById('highscoreScreen').style.display = 'none';
             document.getElementById('settingsScreen').style.display = 'none';
             document.getElementById('menuScreen').style.display = 'flex';
+            document.getElementById('gameOverCover').style.display = 'none';
             
             // Hide all game elements
             document.getElementById('hud').style.display = 'none';
@@ -709,6 +744,17 @@
             document.getElementById('bossHealthBar').style.display = 'none';
             document.getElementById('triviaContainer').style.display = 'none';
             document.getElementById('shipSelection').style.display = 'none';
+        }
+        
+        // Submit high score
+        function submitHighScore() {
+            const nameInput = document.getElementById('nameInput');
+            if (nameInput.value.trim() !== '') {
+                addHighScore(nameInput.value.trim(), player.score);
+                nameInput.value = '';
+                document.getElementById('nameInputContainer').style.display = 'none';
+                document.getElementById('continueButton').style.display = 'block';
+            }
         }
         
         // Start a new game
@@ -799,6 +845,20 @@
             gameState = STATE_GAME_OVER;
             document.getElementById('gameOverScreen').style.display = 'flex';
             document.getElementById('finalScore').textContent = `Final Score: ${player.score}`;
+            document.getElementById('gameOverCover').style.display = 'block';
+            
+            // Check if score qualifies for high score
+            const qualifiesForHighScore = highScores.length < MAX_HIGH_SCORES || 
+                                        player.score > highScores[highScores.length - 1].score;
+            
+            if (qualifiesForHighScore) {
+                document.getElementById('nameInputContainer').style.display = 'flex';
+                document.getElementById('continueButton').style.display = 'none';
+                document.getElementById('nameInput').focus();
+            } else {
+                document.getElementById('nameInputContainer').style.display = 'none';
+                document.getElementById('continueButton').style.display = 'block';
+            }
         }
         
         // Player wins
@@ -1058,6 +1118,59 @@
             }
         }
         
+        // Ship Power-up class
+        class ShipPowerup {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.width = 40;
+                this.height = 40;
+                this.speed = 2;
+                this.type = type;
+            }
+            
+            update() {
+                this.y += this.speed;
+            }
+            
+            draw() {
+                if (this.type === 'default') {
+                    // Default ship power-up
+                    ctx.fillStyle = '#4CAF50';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width/2, this.y - 5);
+                    ctx.lineTo(this.x, this.y + 10);
+                    ctx.lineTo(this.x + this.width, this.y + 10);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (this.type === 'bangka') {
+                    // Bangka ship power-up
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(this.x, this.y, this.width, this.height/2);
+                    ctx.fillRect(this.x - 10, this.y + this.height/4, 10, 4);
+                    ctx.fillRect(this.x + this.width, this.y + this.height/4, 10, 4);
+                } else if (this.type === 'jeepney') {
+                    // Jeepney ship power-up
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    ctx.fillStyle = 'red';
+                    ctx.fillRect(this.x + 5, this.y + 5, this.width - 10, this.height - 10);
+                }
+                
+                // Add glow effect
+                ctx.shadowColor = this.type === 'default' ? '#4CAF50' : 
+                                 this.type === 'bangka' ? '#8B4513' : '#FFD700';
+                ctx.shadowBlur = 15;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.shadowBlur = 0;
+            }
+            
+            isOffScreen() {
+                return this.y > CANVAS_HEIGHT;
+            }
+        }
+        
         // Power-up class
         class PowerUp {
             constructor(x, y, type = null) {
@@ -1066,7 +1179,7 @@
                 this.width = 30;
                 this.height = 30;
                 this.speed = 2;
-                this.type = type || ['barongShield', 'jeepneyBoost', 'tiniklingMode', 'defaultShip', 'bangkaShip', 'jeepneyShip'][Math.floor(Math.random() * 6)];
+                this.type = type || ['barongShield', 'jeepneyBoost', 'tiniklingMode'][Math.floor(Math.random() * 3)];
             }
             
             update() {
@@ -1089,29 +1202,10 @@
                     ctx.fillRect(this.x, this.y, this.width, this.height);
                     ctx.fillStyle = 'white';
                     ctx.fillRect(this.x + 5, this.y + 5, this.width - 10, this.height - 10);
-                } else if (this.type === 'defaultShip') {
-                    ctx.fillStyle = '#4CAF50';
-                    ctx.fillRect(this.x, this.y, this.width, this.height);
-                    ctx.fillStyle = 'white';
-                    ctx.font = 'bold 16px Arial';
-                    ctx.fillText('X', this.x + 10, this.y + 20);
-                } else if (this.type === 'bangkaShip') {
-                    ctx.fillStyle = '#8B4513';
-                    ctx.fillRect(this.x, this.y, this.width, this.height);
-                    ctx.fillStyle = 'white';
-                    ctx.font = 'bold 16px Arial';
-                    ctx.fillText('C', this.x + 10, this.y + 20);
-                } else if (this.type === 'jeepneyShip') {
-                    ctx.fillStyle = '#FFD700';
-                    ctx.fillRect(this.x, this.y, this.width, this.height);
-                    ctx.fillStyle = 'white';
-                    ctx.font = 'bold 16px Arial';
-                    ctx.fillText('V', this.x + 10, this.y + 20);
                 }
                 
                 // Add glow effect
-                ctx.shadowColor = this.type.includes('Ship') ? 'white' : 
-                                  this.type === 'barongShield' ? 'blue' :
+                ctx.shadowColor = this.type === 'barongShield' ? 'blue' :
                                   this.type === 'jeepneyBoost' ? 'red' : 'green';
                 ctx.shadowBlur = 15;
                 ctx.fillRect(this.x, this.y, this.width, this.height);
@@ -1412,23 +1506,25 @@
                                 enemies.splice(j, 1);
                                 player.score += enemy.type === 'kapre' ? 100 : 
                                               enemy.type === 'sarimanok' ? 50 : 30;
+                                updateHUD();
                                 
                                 // Chance to drop power-up or ship
                                 if (Math.random() < 0.2) {
-                                    const powerupTypes = [
-                                        'barongShield', 
-                                        'jeepneyBoost', 
-                                        'tiniklingMode',
-                                        'defaultShip',
-                                        'bangkaShip',
-                                        'jeepneyShip'
-                                    ];
-                                    const randomType = powerupTypes[Math.floor(Math.random() * powerupTypes.length)];
-                                    powerups.push(new PowerUp(
-                                        enemy.x + enemy.width/2,
-                                        enemy.y + enemy.height/2,
-                                        randomType
-                                    ));
+                                    // 60% chance for regular power-up, 40% for ship
+                                    if (Math.random() < 0.6) {
+                                        powerups.push(new PowerUp(
+                                            enemy.x + enemy.width/2,
+                                            enemy.y + enemy.height/2
+                                        ));
+                                    } else {
+                                        const shipTypes = ['default', 'bangka', 'jeepney'];
+                                        const randomShip = shipTypes[Math.floor(Math.random() * shipTypes.length)];
+                                        powerups.push(new ShipPowerup(
+                                            enemy.x + enemy.width/2,
+                                            enemy.y + enemy.height/2,
+                                            randomShip
+                                        ));
+                                    }
                                 }
                                 
                                 sounds.explosion.play();
@@ -1450,13 +1546,12 @@
                         player.y < powerups[i].y + powerups[i].height &&
                         player.y + player.height > powerups[i].y) {
                         
-                        if (powerups[i].type === 'defaultShip') {
-                            player.availableShips.default = true;
-                        } else if (powerups[i].type === 'bangkaShip') {
-                            player.availableShips.bangka = true;
-                        } else if (powerups[i].type === 'jeepneyShip') {
-                            player.availableShips.jeepney = true;
+                        if (powerups[i] instanceof ShipPowerup) {
+                            // It's a ship power-up
+                            player.availableShips[powerups[i].type] = true;
+                            updateShipSelectionUI();
                         } else {
+                            // Regular power-up
                             player.powerups[powerups[i].type] = true;
                             powerupTimers[powerups[i].type] = powerupDuration;
                         }
@@ -1464,7 +1559,6 @@
                         powerups.splice(i, 1);
                         sounds.powerup.play();
                         updateHUD();
-                        updateShipSelectionUI();
                         continue;
                     }
                     
