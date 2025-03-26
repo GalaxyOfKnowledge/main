@@ -289,6 +289,29 @@
             z-index: 5;
         }
         
+        #comboCounter {
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            color: #FFD700;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.7);
+            display: none;
+        }
+        
+        #levelIndicator {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            font-size: 18px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        
         @media (max-width: 768px) {
             #mobileControls {
                 display: flex;
@@ -317,6 +340,7 @@
     <div id="hud">
         <div>Lives: <span id="livesDisplay">3</span></div>
         <div>Score: <span id="scoreDisplay">0</span></div>
+        <div>Combo: <span id="comboCount">0x</span></div>
     </div>
     
     <div id="powerupHud">
@@ -326,6 +350,9 @@
     <div id="bossHealthBar">
         <div id="bossHealth"></div>
     </div>
+    
+    <div id="comboCounter"></div>
+    <div id="levelIndicator">Level: <span id="levelNumber">1</span></div>
     
     <div id="triviaContainer">
         <div id="triviaQuestion"></div>
@@ -402,6 +429,7 @@
         const CANVAS_WIDTH = 800;
         const CANVAS_HEIGHT = 600;
         const BOSS_SPAWN_SCORE = 1000;
+        const LEVEL_UP_SCORE = 500;
         
         // Game states
         const STATE_MENU = 0;
@@ -447,6 +475,10 @@
         let enemySpawnRate = 60;
         let enemySpawnTimer = 0;
         let enemySpeed = 1.0;
+        let comboCount = 0;
+        let comboTimeout = 0;
+        let level = 1;
+        let lastScoreForLevel = 0;
         
         // Boss variables
         let boss = null;
@@ -477,7 +509,9 @@
             wrong: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3'),
             bossSpawn: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-monster-roar-1988.mp3'),
             shipChange: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3'),
-            win: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3')
+            win: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3'),
+            combo: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-extra-bonus-in-a-video-game-2045.mp3'),
+            levelUp: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3')
         };
         
         // Set volume for all sounds
@@ -521,6 +555,36 @@
                 options: ["Sinulog", "Ati-Atihan", "Dinagyang", "Pahiyas"],
                 answer: 0,
                 category: "Culture"
+            },
+            {
+                question: "What is the capital of the Philippines?",
+                options: ["Cebu", "Davao", "Manila", "Quezon City"],
+                answer: 2,
+                category: "Geography"
+            },
+            {
+                question: "Which Philippine volcano erupted in 1991?",
+                options: ["Mayon", "Taal", "Pinatubo", "Kanlaon"],
+                answer: 2,
+                category: "Geography"
+            },
+            {
+                question: "What is the traditional Filipino martial art?",
+                options: ["Karate", "Taekwondo", "Arnis", "Kung Fu"],
+                answer: 2,
+                category: "Culture"
+            },
+            {
+                question: "Which Filipino boxer became an eight-division world champion?",
+                options: ["Manny Pacquiao", "Nonito Donaire", "Flash Elorde", "Pancho Villa"],
+                answer: 0,
+                category: "Sports"
+            },
+            {
+                question: "What is the national flower of the Philippines?",
+                options: ["Sampaguita", "Rose", "Orchid", "Gumamela"],
+                answer: 0,
+                category: "National Symbols"
             }
         ];
         
@@ -744,6 +808,8 @@
             document.getElementById('bossHealthBar').style.display = 'none';
             document.getElementById('triviaContainer').style.display = 'none';
             document.getElementById('shipSelection').style.display = 'none';
+            document.getElementById('comboCounter').style.display = 'none';
+            document.getElementById('levelIndicator').style.display = 'none';
         }
         
         // Submit high score
@@ -794,11 +860,18 @@
             boss = null;
             bossActive = false;
             highlightedOption = null;
+            comboCount = 0;
+            comboTimeout = 0;
+            level = 1;
+            lastScoreForLevel = 0;
             
             // Show game elements
             document.getElementById('hud').style.display = 'block';
             document.getElementById('powerupHud').style.display = 'block';
             document.getElementById('shipSelection').style.display = 'flex';
+            document.getElementById('comboCounter').style.display = 'none';
+            document.getElementById('levelIndicator').style.display = 'block';
+            document.getElementById('levelNumber').textContent = level;
             
             // Update HUD
             updateHUD();
@@ -874,6 +947,8 @@
             document.getElementById('bossHealthBar').style.display = 'none';
             document.getElementById('triviaContainer').style.display = 'none';
             document.getElementById('shipSelection').style.display = 'none';
+            document.getElementById('comboCounter').style.display = 'none';
+            document.getElementById('levelIndicator').style.display = 'none';
         }
         
         // Spawn boss
@@ -885,7 +960,7 @@
                 width: 150,
                 height: 120,
                 speed: 1,
-                health: 20
+                health: 20 + (level * 5) // Boss gets stronger with each level
             };
             bossMaxHealth = boss.health;
             
@@ -961,7 +1036,8 @@
                 
                 if (boss.health <= 0) {
                     // Boss defeated - player wins
-                    player.score += 1000;
+                    player.score += 1000 * level; // More points for higher levels
+                    updateHUD();
                     bossActive = false;
                     document.getElementById('bossHealthBar').style.display = 'none';
                     document.getElementById('triviaContainer').style.display = 'none';
@@ -1002,7 +1078,60 @@
         function updateHUD() {
             document.getElementById('livesDisplay').textContent = player.lives;
             document.getElementById('scoreDisplay').textContent = player.score;
+            document.getElementById('comboCount').textContent = `${comboCount}x`;
             updatePowerupStatus();
+            
+            // Check for level up
+            if (player.score >= lastScoreForLevel + LEVEL_UP_SCORE) {
+                levelUp();
+            }
+        }
+        
+        // Level up the player
+        function levelUp() {
+            level++;
+            lastScoreForLevel = player.score;
+            document.getElementById('levelNumber').textContent = level;
+            
+            // Show level up effect
+            const levelUpText = document.getElementById('comboCounter');
+            levelUpText.textContent = `LEVEL ${level}!`;
+            levelUpText.style.display = 'block';
+            levelUpText.style.color = '#FFD700';
+            levelUpText.style.fontSize = '36px';
+            
+            sounds.levelUp.play();
+            
+            // Hide after 2 seconds
+            setTimeout(() => {
+                levelUpText.style.display = 'none';
+            }, 2000);
+        }
+        
+        // Show combo effect
+        function showCombo() {
+            if (comboCount > 3) {
+                const comboText = document.getElementById('comboCounter');
+                comboText.textContent = `${comboCount} KILL COMBO!`;
+                comboText.style.display = 'block';
+                
+                // Different colors for different combo levels
+                if (comboCount >= 10) {
+                    comboText.style.color = '#FF0000';
+                    comboText.style.fontSize = '42px';
+                } else if (comboCount >= 7) {
+                    comboText.style.color = '#FFA500';
+                    comboText.style.fontSize = '36px';
+                } else {
+                    comboText.style.color = '#FFFF00';
+                    comboText.style.fontSize = '30px';
+                }
+                
+                // Hide after 1.5 seconds
+                setTimeout(() => {
+                    comboText.style.display = 'none';
+                }, 1500);
+            }
         }
         
         // Enemy class
@@ -1118,7 +1247,7 @@
             }
         }
         
-        // Ship Power-up class
+        // Ship Power-up class (mini versions of ships)
         class ShipPowerup {
             constructor(x, y, type) {
                 this.x = x;
@@ -1127,43 +1256,52 @@
                 this.height = 40;
                 this.speed = 2;
                 this.type = type;
+                this.rotation = 0;
+                this.rotationSpeed = Math.random() * 0.02 - 0.01;
             }
             
             update() {
                 this.y += this.speed;
+                this.rotation += this.rotationSpeed;
             }
             
             draw() {
+                ctx.save();
+                ctx.translate(this.x + this.width/2, this.y + this.height/2);
+                ctx.rotate(this.rotation);
+                
                 if (this.type === 'default') {
-                    // Default ship power-up
+                    // Mini default ship
                     ctx.fillStyle = '#4CAF50';
-                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
                     ctx.beginPath();
-                    ctx.moveTo(this.x + this.width/2, this.y - 5);
-                    ctx.lineTo(this.x, this.y + 10);
-                    ctx.lineTo(this.x + this.width, this.y + 10);
+                    ctx.moveTo(0, -this.height/2);
+                    ctx.lineTo(-this.width/2, this.height/4);
+                    ctx.lineTo(this.width/2, this.height/4);
                     ctx.closePath();
                     ctx.fill();
                 } else if (this.type === 'bangka') {
-                    // Bangka ship power-up
+                    // Mini bangka ship
                     ctx.fillStyle = '#8B4513';
-                    ctx.fillRect(this.x, this.y, this.width, this.height/2);
-                    ctx.fillRect(this.x - 10, this.y + this.height/4, 10, 4);
-                    ctx.fillRect(this.x + this.width, this.y + this.height/4, 10, 4);
+                    ctx.fillRect(-this.width/2, -this.height/4, this.width, this.height/2);
+                    ctx.fillRect(-this.width/2 - 10, 0, 10, 4);
+                    ctx.fillRect(this.width/2, 0, 10, 4);
                 } else if (this.type === 'jeepney') {
-                    // Jeepney ship power-up
+                    // Mini jeepney ship
                     ctx.fillStyle = '#FFD700';
-                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
                     ctx.fillStyle = 'red';
-                    ctx.fillRect(this.x + 5, this.y + 5, this.width - 10, this.height - 10);
+                    ctx.fillRect(-this.width/2 + 5, -this.height/2 + 5, this.width - 10, this.height - 10);
                 }
                 
                 // Add glow effect
                 ctx.shadowColor = this.type === 'default' ? '#4CAF50' : 
                                  this.type === 'bangka' ? '#8B4513' : '#FFD700';
                 ctx.shadowBlur = 15;
-                ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
                 ctx.shadowBlur = 0;
+                
+                ctx.restore();
             }
             
             isOffScreen() {
@@ -1180,36 +1318,45 @@
                 this.height = 30;
                 this.speed = 2;
                 this.type = type || ['barongShield', 'jeepneyBoost', 'tiniklingMode'][Math.floor(Math.random() * 3)];
+                this.rotation = 0;
+                this.rotationSpeed = Math.random() * 0.02 - 0.01;
             }
             
             update() {
                 this.y += this.speed;
+                this.rotation += this.rotationSpeed;
             }
             
             draw() {
+                ctx.save();
+                ctx.translate(this.x + this.width/2, this.y + this.height/2);
+                ctx.rotate(this.rotation);
+                
                 if (this.type === 'barongShield') {
                     ctx.fillStyle = 'blue';
-                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
                     ctx.fillStyle = 'white';
-                    ctx.fillRect(this.x + 5, this.y + 5, this.width - 10, this.height - 10);
+                    ctx.fillRect(-this.width/2 + 5, -this.height/2 + 5, this.width - 10, this.height - 10);
                 } else if (this.type === 'jeepneyBoost') {
                     ctx.fillStyle = 'red';
-                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
                     ctx.fillStyle = 'yellow';
-                    ctx.fillRect(this.x + 5, this.y + 5, this.width - 10, this.height - 10);
+                    ctx.fillRect(-this.width/2 + 5, -this.height/2 + 5, this.width - 10, this.height - 10);
                 } else if (this.type === 'tiniklingMode') {
                     ctx.fillStyle = 'green';
-                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
                     ctx.fillStyle = 'white';
-                    ctx.fillRect(this.x + 5, this.y + 5, this.width - 10, this.height - 10);
+                    ctx.fillRect(-this.width/2 + 5, -this.height/2 + 5, this.width - 10, this.height - 10);
                 }
                 
                 // Add glow effect
                 ctx.shadowColor = this.type === 'barongShield' ? 'blue' :
                                   this.type === 'jeepneyBoost' ? 'red' : 'green';
                 ctx.shadowBlur = 15;
-                ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
                 ctx.shadowBlur = 0;
+                
+                ctx.restore();
             }
             
             isOffScreen() {
@@ -1351,18 +1498,25 @@
             if (!bossActive || !currentQuestion) return;
             
             const options = document.querySelectorAll('#triviaOptions .triviaOption');
-            const optionRects = Array.from(options).map(opt => opt.getBoundingClientRect());
-            const canvasRect = canvas.getBoundingClientRect();
+            const optionRects = Array.from(options).map(opt => {
+                const rect = opt.getBoundingClientRect();
+                const canvasRect = canvas.getBoundingClientRect();
+                return {
+                    left: rect.left - canvasRect.left,
+                    right: rect.right - canvasRect.left,
+                    top: rect.top - canvasRect.top,
+                    bottom: rect.bottom - canvasRect.top
+                };
+            });
             
-            // Convert player position to screen coordinates
-            const playerScreenX = player.x + canvasRect.left;
-            const playerScreenY = player.y + canvasRect.top;
-            
-            // Find which option the player is hovering over
+            // Find which option the player is overlapping with
             let newHighlighted = null;
             optionRects.forEach((rect, index) => {
-                if (playerScreenX > rect.left && playerScreenX < rect.right &&
-                    playerScreenY > rect.top && playerScreenY < rect.bottom) {
+                // Check if player overlaps with option
+                if (player.x + player.width > rect.left && 
+                    player.x < rect.right && 
+                    player.y + player.height > rect.top && 
+                    player.y < rect.bottom) {
                     newHighlighted = index;
                 }
             });
@@ -1388,6 +1542,15 @@
             }
             
             if (gameState === STATE_PLAYING) {
+                // Update combo timer
+                if (comboTimeout > 0) {
+                    comboTimeout--;
+                    if (comboTimeout === 0) {
+                        comboCount = 0;
+                        updateHUD();
+                    }
+                }
+                
                 // Move player
                 if (keys.ArrowLeft) {
                     player.x -= player.speed * (player.powerups.jeepneyBoost ? 1.5 : 1);
@@ -1407,7 +1570,7 @@
                 if (keys[' '] && bulletCooldown <= 0) {
                     bullets.push(new Bullet(player.x + player.width/2, player.y));
                     sounds.shoot.play();
-                    bulletCooldown = 15;
+                    bulletCooldown = 15 / (player.powerups.tiniklingMode ? 2 : 1); // Faster shooting in tinikling mode
                 }
                 
                 if (bulletCooldown > 0) {
@@ -1419,7 +1582,7 @@
                     enemySpawnTimer++;
                     if (enemySpawnTimer >= enemySpawnRate) {
                         enemySpawnTimer = 0;
-                        if (enemies.length < 5) {
+                        if (enemies.length < 5 + level) { // More enemies at higher levels
                             enemies.push(new Enemy());
                         }
                         // Decrease spawn rate over time
@@ -1427,7 +1590,7 @@
                     }
                     
                     // Check if should spawn boss
-                    if (player.score >= BOSS_SPAWN_SCORE) {
+                    if (player.score >= BOSS_SPAWN_SCORE * level) {
                         spawnBoss();
                     }
                 }
@@ -1445,7 +1608,8 @@
                         
                         if (boss.health <= 0) {
                             // Boss defeated
-                            player.score += 1000;
+                            player.score += 1000 * level;
+                            updateHUD();
                             bossActive = false;
                             document.getElementById('bossHealthBar').style.display = 'none';
                             document.getElementById('triviaContainer').style.display = 'none';
@@ -1504,12 +1668,37 @@
                             
                             if (enemy.hit()) {
                                 enemies.splice(j, 1);
-                                player.score += enemy.type === 'kapre' ? 100 : 
-                                              enemy.type === 'sarimanok' ? 50 : 30;
+                                
+                                // Add to combo
+                                comboCount++;
+                                comboTimeout = 60; // 1 second to keep combo going
+                                updateHUD();
+                                
+                                // Different points for different enemies
+                                let points = 0;
+                                if (enemy.type === 'kapre') {
+                                    points = 100 * level;
+                                } else if (enemy.type === 'sarimanok') {
+                                    points = 50 * level;
+                                } else {
+                                    points = 30 * level;
+                                }
+                                
+                                // Combo multiplier
+                                if (comboCount >= 10) {
+                                    points *= 3;
+                                    showCombo();
+                                    sounds.combo.play();
+                                } else if (comboCount >= 5) {
+                                    points *= 2;
+                                    showCombo();
+                                }
+                                
+                                player.score += points;
                                 updateHUD();
                                 
                                 // Chance to drop power-up or ship
-                                if (Math.random() < 0.2) {
+                                if (Math.random() < 0.2 + (level * 0.02)) { // Higher chance at higher levels
                                     // 60% chance for regular power-up, 40% for ship
                                     if (Math.random() < 0.6) {
                                         powerups.push(new PowerUp(
