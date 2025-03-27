@@ -977,6 +977,9 @@
             
             // Play boss spawn sound
             sounds.bossSpawn.play();
+            
+            // NEW LINE ADDED HERE: Move player up during boss fight
+            player.y = CANVAS_HEIGHT - 150; // Adjust this value if needed
         }
         
         // Update boss health display
