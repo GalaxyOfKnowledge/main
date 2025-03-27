@@ -12,17 +12,18 @@
             color: white;
             font-family: 'Arial', sans-serif;
             overflow: hidden;
-            touch-action: none;
         }
         
-        #gameCanvas {
-            display: block;
-            background-color: #111;
-            margin: 0 auto;
-            border: 2px solid #444;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-            position: relative;
-            z-index: 2;
+      /* Fullscreen canvas */
+#gameCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: block;
+    z-index: 2; /* Ensures canvas is above trivia */
+    background-color: #111;
         }
         
         #menuScreen, #gameOverScreen, #highscoreScreen, #settingsScreen, #winScreen {
@@ -117,19 +118,16 @@
             transition: width 0.3s;
         }
         
-        #triviaContainer {
-            position: absolute;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 700px;
-            background-color: rgba(0, 0, 0, 0.8);
-            padding: 15px;
-            border-radius: 15px;
-            border: 2px solid #FFD700;
-            display: none;
-            z-index: 1;
+/* Trivia container positioning */
+#triviaContainer {
+    position: fixed;
+    bottom: 150px; /* Position above bottom */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 700px;
+    z-index: 1; /* Behind canvas */
+    /* Your existing trivia styles... */        
         }
         
         #triviaQuestion {
@@ -442,12 +440,22 @@
         const STATE_SETTINGS = 4;
         const STATE_WIN = 5;
         
-        // Initialize canvas
+       // Initialize canvas
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = CANVAS_WIDTH;
-        canvas.height = CANVAS_HEIGHT;
-        
+
+        // Set dynamic sizing
+function resizeGame() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    if (player) {
+        player.x = canvas.width/2 - 25;
+        player.y = canvas.height - 60;
+    }
+}
+        resizeGame();
+window.addEventListener('resize', resizeGame);
+
         // Game variables
         let gameState = STATE_MENU;
         let player = {
@@ -957,14 +965,14 @@
         // Spawn boss
         function spawnBoss() {
             bossActive = true;
-            boss = {
-                x: CANVAS_WIDTH / 2 - 75,
-                y: 50,
-                width: 150,
-                height: 120,
-                speed: 1,
-                health: 20 + (level * 5) // Boss gets stronger with each level
-            };
+    boss = {
+        x: canvas.width / 2 - 75,
+        y: 50,
+        width: 150,
+        height: 120,
+        speed: 1,
+        health: 20 + (level * 5)
+    };
             bossMaxHealth = boss.health;
             
             // Show boss health bar
