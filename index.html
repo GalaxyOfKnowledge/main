@@ -21,6 +21,8 @@
             margin: 0 auto;
             border: 2px solid #444;
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            position: relative;
+            z-index: 2;
         }
         
         #menuScreen, #gameOverScreen, #highscoreScreen, #settingsScreen, #winScreen {
@@ -117,7 +119,7 @@
         
         #triviaContainer {
             position: absolute;
-            bottom: 20px;
+            bottom: 100px;
             left: 50%;
             transform: translateX(-50%);
             width: 90%;
@@ -127,6 +129,7 @@
             border-radius: 15px;
             border: 2px solid #FFD700;
             display: none;
+            z-index: 1;
         }
         
         #triviaQuestion {
