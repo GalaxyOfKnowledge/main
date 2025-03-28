@@ -46,59 +46,61 @@
             z-index: 10;
         }
         
-        /* Trivia container - NOW AT VERY BOTTOM */
+        /* Trivia container - now looks like part of the game */
         #triviaContainer {
             position: fixed;
             left: 50%;
-            bottom: 0;
+            bottom: 20px;
             transform: translateX(-50%);
-            width: 100%;
-            max-width: 800px;
+            width: 90%;
+            max-width: 600px;
             z-index: 2;
-            background-color: rgba(0, 0, 20, 0.9);
-            padding: 10px 20px 20px 20px;
-            border-top: 4px solid #FFD700;
-            box-shadow: 0 -5px 15px rgba(255, 215, 0, 0.3);
+            background-color: transparent;
+            padding: 10px;
             display: none;
             box-sizing: border-box;
+            text-align: center;
         }
         
         #triviaQuestion {
-            font-size: 16px;
-            margin-bottom: 15px;
+            font-size: 14px;
+            margin-bottom: 10px;
             color: #FFD700;
-            text-align: center;
             text-shadow: 2px 2px 0 #8B4513;
             line-height: 1.4;
+            background-color: rgba(0, 0, 20, 0.5);
+            padding: 8px;
+            border: 2px solid #FFD700;
         }
         
         #triviaOptions {
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 6px;
         }
         
         .triviaOption {
-            padding: 10px;
-            margin: 2px;
-            background-color: #111;
-            border: 2px solid #333;
+            padding: 8px;
+            margin: 0;
+            background-color: rgba(0, 0, 20, 0.7);
+            border: 2px solid #555;
             border-radius: 0;
             text-align: center;
             flex: 1;
-            min-width: 120px;
-            font-size: 14px;
+            min-width: 100px;
+            font-size: 12px;
             transition: all 0.1s;
             cursor: pointer;
             font-family: 'Press Start 2P', cursive;
             text-shadow: 1px 1px 0 #000;
+            color: white;
         }
         
         .triviaOption.highlighted {
-            background-color: #333;
+            background-color: rgba(85, 85, 85, 0.7);
             border-color: #FFD700;
-            box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+            box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
         }
         
         .triviaOption.selected {
@@ -202,7 +204,7 @@
         
         #shipSelection {
             position: fixed;
-            bottom: 20px;
+            bottom: 80px;
             right: 20px;
             display: flex;
             flex-direction: column;
@@ -229,15 +231,15 @@
         
         .ship-icon.available {
             border-color: #FFD700;
-            box-shadow: 0 0 8px rgba(255, 215, 0, 0.7);
+            box-shadow: 0 0 5px rgba(255, 215, 0, 0.7);
             animation: pulse 1s infinite;
             background-color: rgba(255, 215, 0, 0.2);
         }
         
         @keyframes pulse {
-            0% { box-shadow: 0 0 3px rgba(255, 215, 0, 0.7); }
-            50% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.9); }
-            100% { box-shadow: 0 0 3px rgba(255, 215, 0, 0.7); }
+            0% { box-shadow: 0 0 2px rgba(255, 215, 0, 0.7); }
+            50% { box-shadow: 0 0 8px rgba(255, 215, 0, 0.9); }
+            100% { box-shadow: 0 0 2px rgba(255, 215, 0, 0.7); }
         }
         
         #mobileControls {
@@ -381,13 +383,13 @@
             
             .triviaOption {
                 min-width: 80%;
-                margin: 5px auto;
+                margin: 3px auto;
                 font-size: 12px;
-                padding: 8px;
+                padding: 6px;
             }
             
             #triviaQuestion {
-                font-size: 14px;
+                font-size: 12px;
             }
             
             #hud, #powerupHud {
