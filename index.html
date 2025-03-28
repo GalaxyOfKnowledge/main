@@ -23,7 +23,7 @@
             width: 100vw;
             height: 100vh;
             display: block;
-            z-index: 2;
+            z-index: 1;
             background-color: rgba(0, 0, 0, 0.9);
         }
         
@@ -50,7 +50,7 @@
             transform: translateX(-50%);
             width: 90%;
             max-width: 700px;
-            z-index: 3; /* Above game elements */
+            z-index: 2;
             background-color: rgba(0, 0, 0, 0.8);
             padding: 20px;
             border-radius: 10px;
@@ -141,7 +141,7 @@
             border-radius: 10px;
             border: 1px solid #444;
             display: none;
-            z-index: 3;
+            z-index: 2;
         }
         
         #powerupHud {
@@ -155,7 +155,7 @@
             border-radius: 10px;
             border: 1px solid #444;
             display: none;
-            z-index: 3;
+            z-index: 2;
         }
         
         #bossHealthBar {
@@ -170,7 +170,7 @@
             overflow: hidden;
             border: 1px solid #444;
             display: none;
-            z-index: 3;
+            z-index: 2;
         }
         
         #bossHealth {
@@ -188,7 +188,7 @@
             flex-direction: column;
             gap: 10px;
             display: none;
-            z-index: 3;
+            z-index: 2;
         }
         
         .ship-icon {
@@ -225,7 +225,7 @@
             width: 100%;
             display: none;
             justify-content: center;
-            z-index: 3;
+            z-index: 2;
         }
         
         .mobile-btn {
@@ -314,7 +314,7 @@
             color: #FFD700;
             text-shadow: 0 0 5px rgba(255, 215, 0, 0.7);
             display: none;
-            z-index: 3;
+            z-index: 2;
         }
         
         #levelIndicator {
@@ -327,7 +327,7 @@
             padding: 5px 10px;
             border-radius: 5px;
             display: none;
-            z-index: 3;
+            z-index: 2;
         }
         
         @media (max-width: 768px) {
@@ -970,4 +970,912 @@
             
             if (qualifiesForHighScore) {
                 document.getElementById('nameInputContainer').style.display = 'flex';
-                document.getElementById('continueButton').style.display
+                document.getElementById('continueButton').style.display = 'none';
+                document.getElementById('nameInput').focus();
+            } else {
+                document.getElementById('nameInputContainer').style.display = 'none';
+                document.getElementById('continueButton').style.display = 'block';
+            }
+        }
+        
+        // Player wins
+        function playerWins() {
+            gameState = STATE_WIN;
+            document.getElementById('winScreen').style.display = 'flex';
+            document.getElementById('winScore').textContent = `Final Score: ${player.score}`;
+            sounds.win.play();
+            
+            // Hide all game elements
+            document.getElementById('hud').style.display = 'none';
+            document.getElementById('powerupHud').style.display = 'none';
+            document.getElementById('bossHealthBar').style.display = 'none';
+            document.getElementById('triviaContainer').style.display = 'none';
+            document.getElementById('shipSelection').style.display = 'none';
+            document.getElementById('comboCounter').style.display = 'none';
+            document.getElementById('levelIndicator').style.display = 'none';
+        }
+        
+        // Spawn boss
+        function spawnBoss() {
+            bossActive = true;
+            boss = {
+                x: CANVAS_WIDTH / 2 - 75,
+                y: 50,
+                width: 150,
+                height: 120,
+                speed: 1,
+                health: 20 + (level * 5)
+            };
+            bossMaxHealth = boss.health;
+            
+            // Show boss health bar
+            document.getElementById('bossHealthBar').style.display = 'block';
+            updateBossHealth();
+            
+            // Show trivia container with animation
+            const triviaContainer = document.getElementById('triviaContainer');
+            triviaContainer.style.display = 'block';
+            triviaContainer.style.opacity = '0';
+            triviaContainer.style.transform = 'translateX(-50%) translateY(20px)';
+            
+            // Animate appearance
+            setTimeout(() => {
+                triviaContainer.style.opacity = '1';
+                triviaContainer.style.transform = 'translateX(-50%) translateY(0)';
+                triviaContainer.style.transition = 'all 0.3s ease-out';
+            }, 100);
+            
+            showBossQuestion();
+            sounds.bossSpawn.play();
+        }
+        
+        // Update boss health display
+        function updateBossHealth() {
+            const healthPercent = (boss.health / bossMaxHealth) * 100;
+            document.getElementById('bossHealth').style.width = `${healthPercent}%`;
+        }
+        
+        // Show boss question
+        function showBossQuestion() {
+            currentQuestion = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
+            selectedOption = null;
+            highlightedOption = 0; // Start with first option highlighted
+            
+            // Display question with larger font
+            const questionElement = document.getElementById('triviaQuestion');
+            questionElement.textContent = currentQuestion.question;
+            questionElement.style.fontSize = '24px';
+            questionElement.style.marginBottom = '20px';
+
+            // Display options with better spacing
+            const optionsContainer = document.getElementById('triviaOptions');
+            optionsContainer.innerHTML = '';
+            optionsContainer.style.gap = '10px';
+            optionsContainer.style.justifyContent = 'center';
+
+            currentQuestion.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'triviaOption';
+                optionElement.textContent = option;
+                optionElement.dataset.index = index;
+                optionElement.style.padding = '15px';
+                optionElement.style.fontSize = '18px';
+                optionsContainer.appendChild(optionElement);
+            });
+
+            updateOptionHighlight();
+        }
+        
+        // Update highlighted option
+        function updateOptionHighlight() {
+            const options = document.querySelectorAll('#triviaOptions .triviaOption');
+            options.forEach((opt, index) => {
+                opt.classList.toggle('highlighted', index === highlightedOption);
+            });
+        }
+        
+        // Select boss option
+        function selectBossOption(index) {
+            if (selectedOption !== null) return; // Prevent multiple selections
+            
+            selectedOption = index;
+            const options = document.querySelectorAll('#triviaOptions .triviaOption');
+            
+            // Highlight selected option
+            options.forEach(opt => opt.classList.remove('highlighted'));
+            options[index].classList.add('selected');
+            
+            if (index === currentQuestion.answer) {
+                // Correct answer - damage boss
+                boss.health -= player.powerups.tiniklingMode ? 3 : 2;
+                updateBossHealth();
+                
+                // Play sound
+                sounds.correct.play();
+                
+                if (boss.health <= 0) {
+                    // Boss defeated - player wins
+                    player.score += 1000 * level;
+                    updateHUD();
+                    bossActive = false;
+                    document.getElementById('bossHealthBar').style.display = 'none';
+                    document.getElementById('triviaContainer').style.display = 'none';
+                    
+                    // Play explosion sound
+                    sounds.explosion.play();
+                    
+                    // Clear any remaining enemies
+                    enemies = [];
+                    
+                    // Player wins
+                    setTimeout(playerWins, 1000);
+                } else {
+                    // Get next question after delay
+                    setTimeout(showBossQuestion, 1000);
+                }
+            } else {
+                // Wrong answer - boss attacks
+                if (!player.powerups.barongShield) {
+                    player.lives--;
+                    updateHUD();
+                    
+                    if (player.lives <= 0) {
+                        gameOver();
+                        return;
+                    }
+                }
+                
+                // Play sound
+                sounds.wrong.play();
+                
+                // Get next question after delay
+                setTimeout(showBossQuestion, 1000);
+            }
+        }
+        
+        // Update HUD
+        function updateHUD() {
+            document.getElementById('livesDisplay').textContent = player.lives;
+            document.getElementById('scoreDisplay').textContent = player.score;
+            document.getElementById('comboCount').textContent = `${comboCount}x`;
+            updatePowerupStatus();
+            
+            // Check for level up
+            if (player.score >= lastScoreForLevel + LEVEL_UP_SCORE) {
+                levelUp();
+            }
+        }
+        
+        // Level up the player
+        function levelUp() {
+            level++;
+            lastScoreForLevel = player.score;
+            document.getElementById('levelNumber').textContent = level;
+            
+            // Show level up effect
+            const levelUpText = document.getElementById('comboCounter');
+            levelUpText.textContent = `LEVEL ${level}!`;
+            levelUpText.style.display = 'block';
+            levelUpText.style.color = '#FFD700';
+            levelUpText.style.fontSize = '36px';
+            
+            sounds.levelUp.play();
+            
+            // Hide after 2 seconds
+            setTimeout(() => {
+                levelUpText.style.display = 'none';
+            }, 2000);
+        }
+        
+        // Show combo effect
+        function showCombo() {
+            if (comboCount > 3) {
+                const comboText = document.getElementById('comboCounter');
+                comboText.textContent = `${comboCount} KILL COMBO!`;
+                comboText.style.display = 'block';
+                
+                // Different colors for different combo levels
+                if (comboCount >= 10) {
+                    comboText.style.color = '#FF0000';
+                    comboText.style.fontSize = '42px';
+                } else if (comboCount >= 7) {
+                    comboText.style.color = '#FFA500';
+                    comboText.style.fontSize = '36px';
+                } else {
+                    comboText.style.color = '#FFFF00';
+                    comboText.style.fontSize = '30px';
+                }
+                
+                // Hide after 1.5 seconds
+                setTimeout(() => {
+                    comboText.style.display = 'none';
+                }, 1500);
+            }
+        }
+        
+        // Enemy class
+        class Enemy {
+            constructor() {
+                this.type = ['kapre', 'aswang', 'sarimanok'][Math.floor(Math.random() * 3)];
+                
+                if (this.type === 'kapre') {
+                    this.width = 60;
+                    this.height = 50;
+                    this.health = 3;
+                    this.speed = enemySpeed * 0.7;
+                } else if (this.type === 'aswang') {
+                    this.width = 30;
+                    this.height = 20;
+                    this.health = 1;
+                    this.speed = enemySpeed * 1.5;
+                } else { // sarimanok
+                    this.width = 45;
+                    this.height = 45;
+                    this.health = 2;
+                    this.speed = enemySpeed;
+                }
+                
+                this.x = Math.random() * (CANVAS_WIDTH - this.width);
+                this.y = -this.height;
+            }
+            
+            update() {
+                this.y += this.speed;
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.globalCompositeOperation = 'source-over';
+                
+                if (this.type === 'kapre') {
+                    // Draw kapre (big, dark enemy)
+                    ctx.fillStyle = '#654321';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    
+                    // Eyes
+                    ctx.fillStyle = 'red';
+                    ctx.beginPath();
+                    ctx.arc(this.x + 15, this.y + 15, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(this.x + this.width - 15, this.y + 15, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (this.type === 'aswang') {
+                    // Draw aswang (small, fast enemy)
+                    ctx.fillStyle = '#800080';
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width/2, this.y);
+                    ctx.lineTo(this.x, this.y + this.height);
+                    ctx.lineTo(this.x + this.width, this.y + this.height);
+                    ctx.closePath();
+                    ctx.fill();
+                } else { // sarimanok
+                    // Draw sarimanok (colorful bird-like enemy)
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    
+                    // Colorful details
+                    ctx.fillStyle = 'red';
+                    ctx.beginPath();
+                    ctx.arc(this.x + 10, this.y + 10, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = 'green';
+                    ctx.beginPath();
+                    ctx.arc(this.x + this.width - 10, this.y + 10, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+            }
+            
+            isOffScreen() {
+                return this.y > CANVAS_HEIGHT;
+            }
+            
+            hit() {
+                this.health--;
+                return this.health <= 0;
+            }
+        }
+        
+        // Bullet class
+        class Bullet {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.radius = 5;
+                this.speed = 7;
+                this.damage = player.powerups.tiniklingMode ? 2 : 1;
+            }
+            
+            update() {
+                this.y -= this.speed;
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.fillStyle = 'yellow';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Add glow effect
+                ctx.shadowColor = 'yellow';
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.restore();
+            }
+            
+            isOffScreen() {
+                return this.y < 0;
+            }
+        }
+        
+        // Ship Power-up class (mini versions of ships)
+        class ShipPowerup {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.width = 40;
+                this.height = 40;
+                this.speed = 2;
+                this.type = type;
+                this.rotation = 0;
+                this.rotationSpeed = Math.random() * 0.02 - 0.01;
+            }
+            
+            update() {
+                this.y += this.speed;
+                this.rotation += this.rotationSpeed;
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.translate(this.x + this.width/2, this.y + this.height/2);
+                ctx.rotate(this.rotation);
+                
+                if (this.type === 'default') {
+                    // Mini default ship
+                    ctx.fillStyle = '#4CAF50';
+                    ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
+                    ctx.beginPath();
+                    ctx.moveTo(0, -this.height/2);
+                    ctx.lineTo(-this.width/2, this.height/4);
+                    ctx.lineTo(this.width/2, this.height/4);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (this.type === 'bangka') {
+                    // Mini bangka ship
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(-this.width/2, -this.height/4, this.width, this.height/2);
+                    ctx.fillRect(-this.width/2 - 10, 0, 10, 4);
+                    ctx.fillRect(this.width/2, 0, 10, 4);
+                } else if (this.type === 'jeepney') {
+                    // Mini jeepney ship
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
+                    ctx.fillStyle = 'red';
+                    ctx.fillRect(-this.width/2 + 5, -this.height/2 + 5, this.width - 10, this.height - 10);
+                }
+                
+                // Add glow effect
+                ctx.shadowColor = this.type === 'default' ? '#4CAF50' : 
+                                 this.type === 'bangka' ? '#8B4513' : '#FFD700';
+                ctx.shadowBlur = 15;
+                ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
+                ctx.shadowBlur = 0;
+                
+                ctx.restore();
+            }
+            
+            isOffScreen() {
+                return this.y > CANVAS_HEIGHT;
+            }
+        }
+        
+        // Power-up class
+        class PowerUp {
+            constructor(x, y, type = null) {
+                this.x = x;
+                this.y = y;
+                this.width = 30;
+                this.height = 30;
+                this.speed = 2;
+                this.type = type || ['barongShield', 'jeepneyBoost', 'tiniklingMode'][Math.floor(Math.random() * 3)];
+                this.rotation = 0;
+                this.rotationSpeed = Math.random() * 0.02 - 0.01;
+            }
+            
+            update() {
+                this.y += this.speed;
+                this.rotation += this.rotationSpeed;
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.translate(this.x + this.width/2, this.y + this.height/2);
+                ctx.rotate(this.rotation);
+                
+                if (this.type === 'barongShield') {
+                    ctx.fillStyle = 'blue';
+                    ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(-this.width/2 + 5, -this.height/2 + 5, this.width - 10, this.height - 10);
+                } else if (this.type === 'jeepneyBoost') {
+                    ctx.fillStyle = 'red';
+                    ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
+                    ctx.fillStyle = 'yellow';
+                    ctx.fillRect(-this.width/2 + 5, -this.height/2 + 5, this.width - 10, this.height - 10);
+                } else if (this.type === 'tiniklingMode') {
+                    ctx.fillStyle = 'green';
+                    ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(-this.width/2 + 5, -this.height/2 + 5, this.width - 10, this.height - 10);
+                }
+                
+                // Add glow effect
+                ctx.shadowColor = this.type === 'barongShield' ? 'blue' :
+                                  this.type === 'jeepneyBoost' ? 'red' : 'green';
+                ctx.shadowBlur = 15;
+                ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
+                ctx.shadowBlur = 0;
+                
+                ctx.restore();
+            }
+            
+            isOffScreen() {
+                return this.y > CANVAS_HEIGHT;
+            }
+        }
+        
+        // Power-up timers
+        const powerupDuration = 300; // 5 seconds at 60fps
+        const powerupTimers = {
+            barongShield: 0,
+            jeepneyBoost: 0,
+            tiniklingMode: 0
+        };
+        
+        // Update power-up timers
+        function updatePowerupTimers() {
+            for (const type in powerupTimers) {
+                if (powerupTimers[type] > 0) {
+                    powerupTimers[type]--;
+                    if (powerupTimers[type] === 0) {
+                        player.powerups[type] = false;
+                        updateHUD();
+                    }
+                }
+            }
+        }
+        
+        // Draw player ship
+        function drawPlayer() {
+            ctx.save();
+            ctx.globalCompositeOperation = 'source-over';
+            
+            if (player.powerups.barongShield) {
+                ctx.strokeStyle = 'blue';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(player.x - 8, player.y - 8, player.width + 16, player.height + 16);
+                
+                // Add shield glow
+                ctx.shadowColor = 'blue';
+                ctx.shadowBlur = 15;
+                ctx.strokeRect(player.x - 8, player.y - 8, player.width + 16, player.height + 16);
+                ctx.shadowBlur = 0;
+            }
+            
+            if (player.shipSkin === 'default') {
+                // Default ship
+                ctx.fillStyle = '#4CAF50';
+                ctx.fillRect(player.x, player.y, player.width, player.height);
+                ctx.beginPath();
+                ctx.moveTo(player.x + player.width/2, player.y - 10);
+                ctx.lineTo(player.x, player.y + 10);
+                ctx.lineTo(player.x + player.width, player.y + 10);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Add engine glow when moving
+                if (keys.ArrowLeft || keys.ArrowRight) {
+                    ctx.fillStyle = 'yellow';
+                    ctx.beginPath();
+                    ctx.moveTo(player.x + player.width/2 - 5, player.y + player.height);
+                    ctx.lineTo(player.x + player.width/2 + 5, player.y + player.height);
+                    ctx.lineTo(player.x + player.width/2, player.y + player.height + 10);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.shadowColor = 'yellow';
+                    ctx.shadowBlur = 10;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+            } else if (player.shipSkin === 'bangka') {
+                // Bangka (outrigger boat)
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(player.x, player.y, player.width, player.height/2);
+                ctx.fillRect(player.x - 15, player.y + player.height/4, 15, 5);
+                ctx.fillRect(player.x + player.width, player.y + player.height/4, 15, 5);
+                
+                // Add details
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(player.x + 10, player.y, 5, 5);
+                ctx.fillRect(player.x + player.width - 15, player.y, 5, 5);
+            } else if (player.shipSkin === 'jeepney') {
+                // Jeepney
+                ctx.fillStyle = '#FFD700';
+                ctx.fillRect(player.x, player.y, player.width, player.height);
+                ctx.fillStyle = 'red';
+                ctx.fillRect(player.x + 5, player.y + 5, player.width - 10, player.height - 10);
+                
+                // Windows
+                ctx.fillStyle = '#87CEEB';
+                ctx.fillRect(player.x + 10, player.y + 10, 10, 10);
+                ctx.fillRect(player.x + player.width - 20, player.y + 10, 10, 10);
+                
+                // Headlights
+                ctx.fillStyle = 'white';
+                ctx.fillRect(player.x, player.y + 15, 5, 5);
+                ctx.fillRect(player.x + player.width - 5, player.y + 15, 5, 5);
+            }
+            
+            // Add ship glow
+            ctx.shadowColor = player.shipSkin === 'default' ? '#4CAF50' : 
+                            player.shipSkin === 'bangka' ? '#8B4513' : '#FFD700';
+            ctx.shadowBlur = 15;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            ctx.shadowBlur = 0;
+            
+            ctx.restore();
+        }
+        
+        // Draw boss
+        function drawBoss() {
+            ctx.save();
+            ctx.globalCompositeOperation = 'source-over';
+            
+            // Draw tikbalang boss (horse-like creature)
+            ctx.fillStyle = '#654321';
+            ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
+            
+            // Head
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(boss.x + boss.width/2 - 20, boss.y - 30, 40, 30);
+            
+            // Eyes
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.arc(boss.x + boss.width/2 - 10, boss.y - 15, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(boss.x + boss.width/2 + 10, boss.y - 15, 5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Legs
+            ctx.fillStyle = '#654321';
+            ctx.fillRect(boss.x + 10, boss.y + boss.height, 15, 30);
+            ctx.fillRect(boss.x + boss.width - 25, boss.y + boss.height, 15, 30);
+            
+            // Add glow effect
+            ctx.shadowColor = 'red';
+            ctx.shadowBlur = 20;
+            ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
+            ctx.shadowBlur = 0;
+            
+            ctx.restore();
+        }
+        
+        // Check if player is over a trivia option
+        function checkTriviaOptionHover() {
+            if (!bossActive || !currentQuestion) return;
+            
+            const options = document.querySelectorAll('#triviaOptions .triviaOption');
+            const optionRects = Array.from(options).map(opt => {
+                const rect = opt.getBoundingClientRect();
+                const canvasRect = canvas.getBoundingClientRect();
+                return {
+                    left: rect.left - canvasRect.left,
+                    right: rect.right - canvasRect.left,
+                    top: rect.top - canvasRect.top,
+                    bottom: rect.bottom - canvasRect.top
+                };
+            });
+            
+            // Find which option the player is overlapping with
+            let newHighlighted = null;
+            optionRects.forEach((rect, index) => {
+                // Check if player overlaps with option
+                if (player.x + player.width > rect.left && 
+                    player.x < rect.right && 
+                    player.y + player.height > rect.top && 
+                    player.y < rect.bottom) {
+                    newHighlighted = index;
+                }
+            });
+            
+            if (newHighlighted !== null && newHighlighted !== highlightedOption) {
+                highlightedOption = newHighlighted;
+                updateOptionHighlight();
+            }
+        }
+        
+        // Main game loop
+        function gameLoop() {
+            // Clear canvas with a subtle starfield effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            // Draw stars
+            ctx.fillStyle = 'white';
+            for (let i = 0; i < 100; i++) {
+                const x = Math.sin(Date.now() * 0.0001 + i) * CANVAS_WIDTH;
+                const y = (i * CANVAS_HEIGHT / 100 + Date.now() * 0.05) % CANVAS_HEIGHT;
+                ctx.fillRect(x, y, 1, 1);
+            }
+            
+            if (gameState === STATE_PLAYING) {
+                // Update combo timer
+                if (comboTimeout > 0) {
+                    comboTimeout--;
+                    if (comboTimeout === 0) {
+                        comboCount = 0;
+                        updateHUD();
+                    }
+                }
+                
+                // Move player
+                if (keys.ArrowLeft) {
+                    player.x -= player.speed * (player.powerups.jeepneyBoost ? 1.5 : 1);
+                    if (player.x < 0) player.x = 0;
+                }
+                if (keys.ArrowRight) {
+                    player.x += player.speed * (player.powerups.jeepneyBoost ? 1.5 : 1);
+                    if (player.x > CANVAS_WIDTH - player.width) player.x = CANVAS_WIDTH - player.width;
+                }
+                
+                // Check trivia option hover
+                if (bossActive) {
+                    checkTriviaOptionHover();
+                }
+                
+                // Shoot
+                if (keys[' '] && bulletCooldown <= 0) {
+                    bullets.push(new Bullet(player.x + player.width/2, player.y));
+                    sounds.shoot.play();
+                    bulletCooldown = 15 / (player.powerups.tiniklingMode ? 2 : 1); // Faster shooting in tinikling mode
+                }
+                
+                if (bulletCooldown > 0) {
+                    bulletCooldown--;
+                }
+                
+                // Spawn enemies if boss is not active
+                if (!bossActive) {
+                    enemySpawnTimer++;
+                    if (enemySpawnTimer >= enemySpawnRate) {
+                        enemySpawnTimer = 0;
+                        if (enemies.length < 5 + level) { // More enemies at higher levels
+                            enemies.push(new Enemy());
+                        }
+                        // Decrease spawn rate over time
+                        enemySpawnRate = Math.max(20, enemySpawnRate - 0.1);
+                    }
+                    
+                    // Check if should spawn boss
+                    if (player.score >= BOSS_SPAWN_SCORE * level) {
+                        spawnBoss();
+                    }
+                }
+                
+                // Update bullets
+                for (let i = bullets.length - 1; i >= 0; i--) {
+                    bullets[i].update();
+                    
+                    // Check if bullet hits boss
+                    if (bossActive && bullets[i].x > boss.x && bullets[i].x < boss.x + boss.width &&
+                        bullets[i].y > boss.y && bullets[i].y < boss.y + boss.height) {
+                        boss.health--;
+                        updateBossHealth();
+                        bullets.splice(i, 1);
+                        
+                        if (boss.health <= 0) {
+                            // Boss defeated
+                            player.score += 1000 * level;
+                            updateHUD();
+                            bossActive = false;
+                            document.getElementById('bossHealthBar').style.display = 'none';
+                            document.getElementById('triviaContainer').style.display = 'none';
+                            
+                            // Play explosion sound
+                            sounds.explosion.play();
+                            
+                            // Clear any remaining enemies
+                            enemies = [];
+                            
+                            // Player wins
+                            setTimeout(playerWins, 1000);
+                        }
+                        continue;
+                    }
+                    
+                    if (bullets[i].isOffScreen()) {
+                        bullets.splice(i, 1);
+                    }
+                }
+                
+                // Update enemies
+                for (let i = enemies.length - 1; i >= 0; i--) {
+                    enemies[i].update();
+                    
+                    // Check if enemy hits player
+                    if (!player.powerups.barongShield &&
+                        player.x < enemies[i].x + enemies[i].width &&
+                        player.x + player.width > enemies[i].x &&
+                        player.y < enemies[i].y + enemies[i].height &&
+                        player.y + player.height > enemies[i].y) {
+                        
+                        player.lives--;
+                        enemies.splice(i, 1);
+                        updateHUD();
+                        
+                        if (player.lives <= 0) {
+                            gameOver();
+                        }
+                        continue;
+                    }
+                    
+                    if (enemies[i].isOffScreen()) {
+                        enemies.splice(i, 1);
+                    }
+                }
+                
+                // Check bullet-enemy collisions
+                for (let i = bullets.length - 1; i >= 0; i--) {
+                    for (let j = enemies.length - 1; j >= 0; j--) {
+                        const bullet = bullets[i];
+                        const enemy = enemies[j];
+                        
+                        if (bullet.x > enemy.x && bullet.x < enemy.x + enemy.width &&
+                            bullet.y > enemy.y && bullet.y < enemy.y + enemy.height) {
+                            
+                            if (enemy.hit()) {
+                                enemies.splice(j, 1);
+                                
+                                // Add to combo
+                                comboCount++;
+                                comboTimeout = 60; // 1 second to keep combo going
+                                updateHUD();
+                                
+                                // Different points for different enemies
+                                let points = 0;
+                                if (enemy.type === 'kapre') {
+                                    points = 100 * level;
+                                } else if (enemy.type === 'sarimanok') {
+                                    points = 50 * level;
+                                } else {
+                                    points = 30 * level;
+                                }
+                                
+                                // Combo multiplier
+                                if (comboCount >= 10) {
+                                    points *= 3;
+                                    showCombo();
+                                    sounds.combo.play();
+                                } else if (comboCount >= 5) {
+                                    points *= 2;
+                                    showCombo();
+                                }
+                                
+                                player.score += points;
+                                updateHUD();
+                                
+                                // Chance to drop power-up or ship
+                                if (Math.random() < 0.2 + (level * 0.02)) { // Higher chance at higher levels
+                                    // 60% chance for regular power-up, 40% for ship
+                                    if (Math.random() < 0.6) {
+                                        powerups.push(new PowerUp(
+                                            enemy.x + enemy.width/2,
+                                            enemy.y + enemy.height/2
+                                        ));
+                                    } else {
+                                        const shipTypes = ['default', 'bangka', 'jeepney'];
+                                        const randomShip = shipTypes[Math.floor(Math.random() * shipTypes.length)];
+                                        powerups.push(new ShipPowerup(
+                                            enemy.x + enemy.width/2,
+                                            enemy.y + enemy.height/2,
+                                            randomShip
+                                        ));
+                                    }
+                                }
+                                
+                                sounds.explosion.play();
+                            }
+                            
+                            bullets.splice(i, 1);
+                            break;
+                        }
+                    }
+                }
+                
+                // Update power-ups
+                for (let i = powerups.length - 1; i >= 0; i--) {
+                    powerups[i].update();
+                    
+                    // Check if player collected power-up
+                    if (player.x < powerups[i].x + powerups[i].width &&
+                        player.x + player.width > powerups[i].x &&
+                        player.y < powerups[i].y + powerups[i].height &&
+                        player.y + player.height > powerups[i].y) {
+                        
+                        if (powerups[i] instanceof ShipPowerup) {
+                            // It's a ship power-up
+                            player.availableShips[powerups[i].type] = true;
+                            updateShipSelectionUI();
+                        } else {
+                            // Regular power-up
+                            player.powerups[powerups[i].type] = true;
+                            powerupTimers[powerups[i].type] = powerupDuration;
+                        }
+                        
+                        powerups.splice(i, 1);
+                        sounds.powerup.play();
+                        updateHUD();
+                        continue;
+                    }
+                    
+                    if (powerups[i].isOffScreen()) {
+                        powerups.splice(i, 1);
+                    }
+                }
+                
+                // Update power-up timers
+                updatePowerupTimers();
+                
+                // Move boss if active
+                if (bossActive) {
+                    // Simple side-to-side movement
+                    boss.x += boss.speed;
+                    if (boss.x <= 0 || boss.x + boss.width >= CANVAS_WIDTH) {
+                        boss.speed *= -1;
+                    }
+                }
+                
+                // Draw everything
+                for (const bullet of bullets) {
+                    bullet.draw();
+                }
+                
+                for (const enemy of enemies) {
+                    enemy.draw();
+                }
+                
+                for (const powerup of powerups) {
+                    powerup.draw();
+                }
+                
+                if (bossActive) {
+                    drawBoss();
+                }
+                
+                drawPlayer();
+            }
+            
+            // Continue game loop
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Start the game
+        window.onload = function() {
+            initGame();
+            resizeGame();
+        };
+    </script>
+</body>
+</html>
