@@ -45,8 +45,8 @@
         /* Trivia container - NOW VISIBLE! */
         #triviaContainer {
             position: fixed;
-            bottom: 20vh;
             left: 50%;
+            bottom: 20px; /* Fixed position at bottom */
             transform: translateX(-50%);
             width: 90%;
             max-width: 700px;
@@ -502,7 +502,7 @@
             },
             shipSkin: 'default',
             availableShips: {
-                default: false,
+                default: true,  // Player starts with default ship available
                 bangka: false,
                 jeepney: false
             }
@@ -889,7 +889,7 @@
                 },
                 shipSkin: 'default',
                 availableShips: {
-                    default: false,
+                    default: true,  // Player starts with default ship available
                     bangka: false,
                     jeepney: false
                 }
