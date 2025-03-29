@@ -610,22 +610,20 @@
             difficulty: 'normal' // easy, normal, hard
         };
         
-        // Sound effects - Using base64 encoded silent audio as fallback
-        const silentAudio = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
-        
+        // Sound effects - Using direct links to audio files
         const sounds = {
-            shoot: new Audio(silentAudio),
-            enemyShoot: new Audio(silentAudio),
-            explosion: new Audio(silentAudio),
-            powerup: new Audio(silentAudio),
-            correct: new Audio(silentAudio),
-            wrong: new Audio(silentAudio),
-            bossSpawn: new Audio(silentAudio),
-            shipChange: new Audio(silentAudio),
-            win: new Audio(silentAudio),
-            combo: new Audio(silentAudio),
-            levelUp: new Audio(silentAudio),
-            hit: new Audio(silentAudio)
+            shoot: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-shot-1681.mp3'),
+            enemyShoot: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-laser-weapon-shot-1680.mp3'),
+            explosion: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-8-bit-explosion-1691.mp3'),
+            powerup: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3'),
+            correct: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3'),
+            wrong: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3'),
+            bossSpawn: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-monster-dinosaur-roar-1988.mp3'),
+            shipChange: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3'),
+            win: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3'),
+            combo: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-extra-bonus-in-a-video-game-2045.mp3'),
+            levelUp: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3'),
+            hit: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-changing-tab-206.mp3')
         };
         
         // Set volume for all sounds
@@ -633,8 +631,8 @@
             sound.volume = settings.soundEffects ? 0.5 : 0;
         });
         
-        // Background music - Using silent audio as fallback
-        const backgroundMusic = new Audio(silentAudio);
+        // Background music - 8-bit OPM music
+        const backgroundMusic = new Audio('https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-668.mp3');
         backgroundMusic.volume = settings.musicVolume;
         backgroundMusic.loop = true;
         
@@ -838,6 +836,14 @@
                 keys[' '] = false;
             });
             
+            // Add click event listeners for trivia options
+            document.getElementById('triviaOptions').addEventListener('click', (e) => {
+                if (gameState === STATE_PLAYING && bossActive && e.target.classList.contains('triviaOption')) {
+                    const index = parseInt(e.target.dataset.index);
+                    selectBossOption(index);
+                }
+            });
+            
             // Keyboard controls
             window.addEventListener('keydown', (e) => {
                 if (e.key in keys) {
@@ -957,11 +963,13 @@
         // Submit high score
         function submitHighScore() {
             const nameInput = document.getElementById('nameInput');
-            if (nameInput.value.trim() !== '') {
-                addHighScore(nameInput.value.trim().toUpperCase(), player.score);
+            const name = nameInput.value.trim();
+            if (name !== '') {
+                addHighScore(name.toUpperCase(), player.score);
                 nameInput.value = '';
                 document.getElementById('nameInputContainer').style.display = 'none';
                 document.getElementById('continueButton').style.display = 'block';
+                showHighScores(); // Show the updated high scores
             }
         }
         
