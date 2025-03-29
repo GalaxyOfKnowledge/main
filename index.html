@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pinoy Quiz Trivia Space Invader</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
         body {
             margin: 0;
             padding: 0;
@@ -15,8 +17,6 @@
             touch-action: manipulation;
             image-rendering: pixelated;
         }
-        
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
         /* Fullscreen canvas */
         #gameCanvas {
@@ -610,20 +610,22 @@
             difficulty: 'normal' // easy, normal, hard
         };
         
-        // Sound effects - Using 8-bit style sounds
+        // Sound effects - Using base64 encoded silent audio as fallback
+        const silentAudio = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+        
         const sounds = {
-            shoot: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-shot-1681.mp3'),
-            enemyShoot: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-laser-weapon-shot-1680.mp3'),
-            explosion: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-8-bit-explosion-1691.mp3'),
-            powerup: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3'),
-            correct: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3'),
-            wrong: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3'),
-            bossSpawn: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-monster-dinosaur-roar-1988.mp3'),
-            shipChange: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3'),
-            win: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3'),
-            combo: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-extra-bonus-in-a-video-game-2045.mp3'),
-            levelUp: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3'),
-            hit: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-changing-tab-206.mp3')
+            shoot: new Audio(silentAudio),
+            enemyShoot: new Audio(silentAudio),
+            explosion: new Audio(silentAudio),
+            powerup: new Audio(silentAudio),
+            correct: new Audio(silentAudio),
+            wrong: new Audio(silentAudio),
+            bossSpawn: new Audio(silentAudio),
+            shipChange: new Audio(silentAudio),
+            win: new Audio(silentAudio),
+            combo: new Audio(silentAudio),
+            levelUp: new Audio(silentAudio),
+            hit: new Audio(silentAudio)
         };
         
         // Set volume for all sounds
@@ -631,8 +633,8 @@
             sound.volume = settings.soundEffects ? 0.5 : 0;
         });
         
-        // Background music - 8-bit OPM music
-        const backgroundMusic = new Audio('https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-668.mp3');
+        // Background music - Using silent audio as fallback
+        const backgroundMusic = new Audio(silentAudio);
         backgroundMusic.volume = settings.musicVolume;
         backgroundMusic.loop = true;
         
@@ -844,22 +846,22 @@
                 
                 // Ship transformation keys
                 if (gameState === STATE_PLAYING) {
-                    if (e.key === 'x' && player.availableShips.default) {
+                    if (e.key.toLowerCase() === 'x' && player.availableShips.default) {
                         player.shipSkin = 'default';
                         player.availableShips.default = false;
                         sounds.shipChange.play();
                         updateShipSelectionUI();
-                    } else if (e.key === 'c' && player.availableShips.bangka) {
+                    } else if (e.key.toLowerCase() === 'c' && player.availableShips.bangka) {
                         player.shipSkin = 'bangka';
                         player.availableShips.bangka = false;
                         sounds.shipChange.play();
                         updateShipSelectionUI();
-                    } else if (e.key === 'v' && player.availableShips.jeepney) {
+                    } else if (e.key.toLowerCase() === 'v' && player.availableShips.jeepney) {
                         player.shipSkin = 'jeepney';
                         player.availableShips.jeepney = false;
                         sounds.shipChange.play();
                         updateShipSelectionUI();
-                    } else if (e.key === 'z' && bossActive && highlightedOption !== null) {
+                    } else if (e.key.toLowerCase() === 'z' && bossActive && highlightedOption !== null) {
                         // Select highlighted trivia option
                         selectBossOption(highlightedOption);
                     }
@@ -1169,6 +1171,19 @@
             const options = document.querySelectorAll('#triviaOptions .triviaOption');
             options.forEach((opt, index) => {
                 opt.classList.toggle('highlighted', index === highlightedOption);
+            });
+        }
+        
+        // Check which trivia option is being hovered
+        function checkTriviaOptionHover() {
+            if (selectedOption !== null) return;
+            
+            const options = document.querySelectorAll('#triviaOptions .triviaOption');
+            options.forEach((opt, index) => {
+                if (opt.matches(':hover')) {
+                    highlightedOption = index;
+                    updateOptionHighlight();
+                }
             });
         }
         
@@ -1774,27 +1789,15 @@
                             player.durability[player.shipSkin]--;
                             updateDurabilityDisplay();
                             
-                            // Check if player has any durability left
-                            if (player.durability.default <= 0 && player.durability.bangka <= 0 && player.durability.jeepney <= 0) {
+                            // Check if current ship has no durability left
+                            if (player.durability[player.shipSkin] <= 0) {
                                 gameOver();
                                 break;
                             }
-                            
-                            // If current ship has no durability left, switch to another available ship
-                            if (player.durability[player.shipSkin] <= 0) {
-                                if (player.durability.default > 0) {
-                                    player.shipSkin = 'default';
-                                } else if (player.durability.bangka > 0) {
-                                    player.shipSkin = 'bangka';
-                                } else if (player.durability.jeepney > 0) {
-                                    player.shipSkin = 'jeepney';
-                                }
-                            }
-                            
-                            sounds.hit.play();
                         }
                         
                         enemyBullets.splice(i, 1);
+                        sounds.hit.play();
                         continue;
                     }
                     
@@ -1854,21 +1857,10 @@
                         player.durability[player.shipSkin]--;
                         updateDurabilityDisplay();
                         
-                        // Check if player has any durability left
-                        if (player.durability.default <= 0 && player.durability.bangka <= 0 && player.durability.jeepney <= 0) {
+                        // Check if current ship has no durability left
+                        if (player.durability[player.shipSkin] <= 0) {
                             gameOver();
                             break;
-                        }
-                        
-                        // If current ship has no durability left, switch to another available ship
-                        if (player.durability[player.shipSkin] <= 0) {
-                            if (player.durability.default > 0) {
-                                player.shipSkin = 'default';
-                            } else if (player.durability.bangka > 0) {
-                                player.shipSkin = 'bangka';
-                            } else if (player.durability.jeepney > 0) {
-                                player.shipSkin = 'jeepney';
-                            }
                         }
                         
                         enemies.splice(i, 1);
@@ -1962,7 +1954,10 @@
                         if (powerups[i] instanceof ShipPowerup) {
                             // It's a ship power-up - add durability for that ship type
                             player.durability[powerups[i].type] += 1;
+                            // Make this ship type available for selection
+                            player.availableShips[powerups[i].type] = true;
                             updateDurabilityDisplay();
+                            updateShipSelectionUI();
                         } else {
                             // Regular power-up
                             player.powerups[powerups[i].type] = true;
