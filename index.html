@@ -70,7 +70,6 @@
             line-height: 1.4;
             background-color: rgba(0, 0, 20, 0.5);
             padding: 8px;
-            border: 2px solid #FFD700;
         }
         
         #triviaOptions {
@@ -84,8 +83,6 @@
             padding: 8px;
             margin: 0;
             background-color: rgba(0, 0, 20, 0.7);
-            border: 2px solid #555;
-            border-radius: 0;
             text-align: center;
             flex: 1;
             min-width: 100px;
@@ -99,13 +96,11 @@
         
         .triviaOption.highlighted {
             background-color: rgba(85, 85, 85, 0.7);
-            border-color: #FFD700;
             box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
         }
         
         .triviaOption.selected {
             background: #2E7D32;
-            border-color: #4CAF50;
         }
         
         /* Rest of your existing CSS... */
@@ -154,6 +149,21 @@
             top: 10px;
             left: 10px;
             font-size: 14px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            border-radius: 0;
+            border: 2px solid #444;
+            display: none;
+            z-index: 2;
+            font-family: 'Press Start 2P', cursive;
+            text-shadow: 2px 2px 0 #000;
+        }
+        
+        #durabilityHud {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            font-size: 12px;
             background-color: rgba(0, 0, 0, 0.7);
             padding: 8px 12px;
             border-radius: 0;
@@ -392,7 +402,7 @@
                 font-size: 12px;
             }
             
-            #hud, #powerupHud {
+            #hud, #powerupHud, #durabilityHud {
                 font-size: 10px;
                 padding: 5px 8px;
             }
@@ -411,9 +421,12 @@
     <canvas id="gameCanvas"></canvas>
     
     <div id="hud">
-        <div>LIVES: <span id="livesDisplay">3</span></div>
         <div>SCORE: <span id="scoreDisplay">0</span></div>
         <div>COMBO: <span id="comboCount">0x</span></div>
+    </div>
+    
+    <div id="durabilityHud">
+        DURABILITY: <span id="durabilityDisplay"></span>
     </div>
     
     <div id="powerupHud">
@@ -525,7 +538,7 @@
             
             if (player) {
                 player.x = CANVAS_WIDTH/2 - player.width/2;
-                player.y = CANVAS_HEIGHT - player.height - 20;
+                player.y = CANVAS_HEIGHT - player.height - 50; // Move player higher
             }
             
             if (bossActive && boss) {
@@ -539,11 +552,15 @@
         let gameState = STATE_MENU;
         let player = {
             x: CANVAS_WIDTH / 2 - 25,
-            y: CANVAS_HEIGHT - 60,
+            y: CANVAS_HEIGHT - 90, // Move player higher
             width: 50,
             height: 30,
             speed: 5,
-            lives: 3,
+            durability: {
+                default: 3,
+                bangka: 3,
+                jeepney: 3
+            },
             score: 0,
             powerups: {
                 barongShield: false,
@@ -560,11 +577,14 @@
         
         let bullets = [];
         let enemies = [];
+        let enemyBullets = []; // For enemy attacks
         let powerups = [];
         let bulletCooldown = 0;
         let enemySpawnRate = 60;
         let enemySpawnTimer = 0;
         let enemySpeed = 1.0;
+        let enemyShootTimer = 0;
+        let enemyShootRate = 120; // How often enemies shoot
         let comboCount = 0;
         let comboTimeout = 0;
         let level = 1;
@@ -593,6 +613,7 @@
         // Sound effects - Using 8-bit style sounds
         const sounds = {
             shoot: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-shot-1681.mp3'),
+            enemyShoot: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-laser-weapon-shot-1680.mp3'),
             explosion: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-8-bit-explosion-1691.mp3'),
             powerup: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3'),
             correct: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3'),
@@ -601,7 +622,8 @@
             shipChange: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3'),
             win: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3'),
             combo: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-extra-bonus-in-a-video-game-2045.mp3'),
-            levelUp: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3')
+            levelUp: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3'),
+            hit: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-changing-tab-206.mp3')
         };
         
         // Set volume for all sounds
@@ -740,14 +762,17 @@
                 case 'easy':
                     player.speed = 6;
                     enemySpeed = 0.8;
+                    enemyShootRate = 150;
                     break;
                 case 'normal':
                     player.speed = 5;
                     enemySpeed = 1.0;
+                    enemyShootRate = 120;
                     break;
                 case 'hard':
                     player.speed = 4;
                     enemySpeed = 1.2;
+                    enemyShootRate = 90;
                     break;
             }
         }
@@ -873,6 +898,25 @@
             document.getElementById('jeepneyShip').classList.toggle('available', player.availableShips.jeepney);
         }
         
+        // Update durability display
+        function updateDurabilityDisplay() {
+            let displayText = '';
+            
+            // Show durability for each ship type
+            if (player.durability.default > 0) {
+                displayText += `${player.durability.default} DEFAULT `;
+            }
+            if (player.durability.bangka > 0) {
+                displayText += `${player.durability.bangka} BANGKA `;
+            }
+            if (player.durability.jeepney > 0) {
+                displayText += `${player.durability.jeepney} JEEPNEY `;
+            }
+            
+            document.getElementById('durabilityDisplay').textContent = 
+                displayText.trim() || 'NONE';
+        }
+        
         // Update power-up status display
         function updatePowerupStatus() {
             let status = [];
@@ -896,6 +940,7 @@
             
             // Hide all game elements
             document.getElementById('hud').style.display = 'none';
+            document.getElementById('durabilityHud').style.display = 'none';
             document.getElementById('powerupHud').style.display = 'none';
             document.getElementById('bossHealthBar').style.display = 'none';
             document.getElementById('triviaContainer').style.display = 'none';
@@ -926,11 +971,15 @@
             // Reset player
             player = {
                 x: CANVAS_WIDTH / 2 - 25,
-                y: CANVAS_HEIGHT - 60,
+                y: CANVAS_HEIGHT - 90, // Move player higher
                 width: 50,
                 height: 30,
                 speed: 5,
-                lives: 3,
+                durability: {
+                    default: 3,
+                    bangka: 3,
+                    jeepney: 3
+                },
                 score: 0,
                 powerups: {
                     barongShield: false,
@@ -948,10 +997,12 @@
             // Reset game variables
             bullets = [];
             enemies = [];
+            enemyBullets = [];
             powerups = [];
             bulletCooldown = 0;
             enemySpawnRate = 60;
             enemySpawnTimer = 0;
+            enemyShootTimer = 0;
             boss = null;
             bossActive = false;
             highlightedOption = null;
@@ -962,6 +1013,7 @@
             
             // Show game elements
             document.getElementById('hud').style.display = 'block';
+            document.getElementById('durabilityHud').style.display = 'block';
             document.getElementById('powerupHud').style.display = 'block';
             document.getElementById('shipSelection').style.display = 'flex';
             document.getElementById('comboCounter').style.display = 'none';
@@ -970,6 +1022,7 @@
             
             // Update HUD
             updateHUD();
+            updateDurabilityDisplay();
             updatePowerupStatus();
             updateShipSelectionUI();
             
@@ -1037,6 +1090,7 @@
             
             // Hide all game elements
             document.getElementById('hud').style.display = 'none';
+            document.getElementById('durabilityHud').style.display = 'none';
             document.getElementById('powerupHud').style.display = 'none';
             document.getElementById('bossHealthBar').style.display = 'none';
             document.getElementById('triviaContainer').style.display = 'none';
@@ -1160,12 +1214,25 @@
             } else {
                 // Wrong answer - boss attacks
                 if (!player.powerups.barongShield) {
-                    player.lives--;
-                    updateHUD();
+                    // Reduce durability for current ship
+                    player.durability[player.shipSkin]--;
+                    updateDurabilityDisplay();
                     
-                    if (player.lives <= 0) {
+                    // Check if player has any durability left
+                    if (player.durability.default <= 0 && player.durability.bangka <= 0 && player.durability.jeepney <= 0) {
                         gameOver();
                         return;
+                    }
+                    
+                    // If current ship has no durability left, switch to another available ship
+                    if (player.durability[player.shipSkin] <= 0) {
+                        if (player.durability.default > 0) {
+                            player.shipSkin = 'default';
+                        } else if (player.durability.bangka > 0) {
+                            player.shipSkin = 'bangka';
+                        } else if (player.durability.jeepney > 0) {
+                            player.shipSkin = 'jeepney';
+                        }
                     }
                 }
                 
@@ -1179,9 +1246,9 @@
         
         // Update HUD
         function updateHUD() {
-            document.getElementById('livesDisplay').textContent = player.lives;
             document.getElementById('scoreDisplay').textContent = player.score;
             document.getElementById('comboCount').textContent = `${comboCount}x`;
+            updateDurabilityDisplay();
             updatePowerupStatus();
             
             // Check for level up
@@ -1247,16 +1314,19 @@
                     this.height = 50;
                     this.health = 3;
                     this.speed = enemySpeed * 0.7;
+                    this.shootChance = 0.3; // 30% chance to shoot
                 } else if (this.type === 'aswang') {
                     this.width = 30;
                     this.height = 20;
                     this.health = 1;
                     this.speed = enemySpeed * 1.5;
+                    this.shootChance = 0.5; // 50% chance to shoot
                 } else { // sarimanok
                     this.width = 45;
                     this.height = 45;
                     this.health = 2;
                     this.speed = enemySpeed;
+                    this.shootChance = 0.4; // 40% chance to shoot
                 }
                 
                 this.x = Math.random() * (CANVAS_WIDTH - this.width);
@@ -1307,6 +1377,19 @@
             hit() {
                 this.health--;
                 return this.health <= 0;
+            }
+            
+            shoot() {
+                if (Math.random() < this.shootChance) {
+                    enemyBullets.push({
+                        x: this.x + this.width/2,
+                        y: this.y + this.height,
+                        width: 5,
+                        height: 10,
+                        speed: 3
+                    });
+                    sounds.enemyShoot.play();
+                }
             }
         }
         
@@ -1503,7 +1586,7 @@
             }
             
             if (player.shipSkin === 'default') {
-                // Default ship
+                // Default ship - balanced stats
                 ctx.fillStyle = '#4CAF50';
                 ctx.fillRect(Math.round(player.x), Math.round(player.y), Math.round(player.width), Math.round(player.height));
                 ctx.beginPath();
@@ -1529,7 +1612,7 @@
                     ctx.shadowBlur = 0;
                 }
             } else if (player.shipSkin === 'bangka') {
-                // Bangka (outrigger boat)
+                // Bangka (outrigger boat) - slower but takes less damage
                 ctx.fillStyle = '#8B4513';
                 ctx.fillRect(Math.round(player.x), Math.round(player.y), Math.round(player.width), Math.round(player.height/2));
                 ctx.fillRect(Math.round(player.x - 15), Math.round(player.y + player.height/4), 15, 5);
@@ -1540,7 +1623,7 @@
                 ctx.fillRect(Math.round(player.x + 10), Math.round(player.y), 5, 5);
                 ctx.fillRect(Math.round(player.x + player.width - 15), Math.round(player.y), 5, 5);
             } else if (player.shipSkin === 'jeepney') {
-                // Jeepney
+                // Jeepney - faster but takes more damage
                 ctx.fillStyle = '#FFD700';
                 ctx.fillRect(Math.round(player.x), Math.round(player.y), Math.round(player.width), Math.round(player.height));
                 ctx.fillStyle = 'red';
@@ -1597,40 +1680,6 @@
             ctx.shadowBlur = 0;
             
             ctx.restore();
-        }
-        
-        // Check if player is over a trivia option
-        function checkTriviaOptionHover() {
-            if (!bossActive || !currentQuestion) return;
-            
-            const options = document.querySelectorAll('#triviaOptions .triviaOption');
-            const optionRects = Array.from(options).map(opt => {
-                const rect = opt.getBoundingClientRect();
-                const canvasRect = canvas.getBoundingClientRect();
-                return {
-                    left: rect.left - canvasRect.left,
-                    right: rect.right - canvasRect.left,
-                    top: rect.top - canvasRect.top,
-                    bottom: rect.bottom - canvasRect.top
-                };
-            });
-            
-            // Find which option the player is overlapping with
-            let newHighlighted = null;
-            optionRects.forEach((rect, index) => {
-                // Check if player overlaps with option
-                if (player.x + player.width > rect.left && 
-                    player.x < rect.right && 
-                    player.y + player.height > rect.top && 
-                    player.y < rect.bottom) {
-                    newHighlighted = index;
-                }
-            });
-            
-            if (newHighlighted !== null && newHighlighted !== highlightedOption) {
-                highlightedOption = newHighlighted;
-                updateOptionHighlight();
-            }
         }
         
         // Main game loop
@@ -1701,6 +1750,59 @@
                     }
                 }
                 
+                // Make enemies shoot
+                enemyShootTimer++;
+                if (enemyShootTimer >= enemyShootRate) {
+                    enemyShootTimer = 0;
+                    for (const enemy of enemies) {
+                        enemy.shoot();
+                    }
+                }
+                
+                // Update enemy bullets
+                for (let i = enemyBullets.length - 1; i >= 0; i--) {
+                    enemyBullets[i].y += enemyBullets[i].speed;
+                    
+                    // Check if enemy bullet hits player
+                    if (player.x < enemyBullets[i].x + enemyBullets[i].width &&
+                        player.x + player.width > enemyBullets[i].x &&
+                        player.y < enemyBullets[i].y + enemyBullets[i].height &&
+                        player.y + player.height > enemyBullets[i].y) {
+                        
+                        if (!player.powerups.barongShield) {
+                            // Reduce durability for current ship
+                            player.durability[player.shipSkin]--;
+                            updateDurabilityDisplay();
+                            
+                            // Check if player has any durability left
+                            if (player.durability.default <= 0 && player.durability.bangka <= 0 && player.durability.jeepney <= 0) {
+                                gameOver();
+                                break;
+                            }
+                            
+                            // If current ship has no durability left, switch to another available ship
+                            if (player.durability[player.shipSkin] <= 0) {
+                                if (player.durability.default > 0) {
+                                    player.shipSkin = 'default';
+                                } else if (player.durability.bangka > 0) {
+                                    player.shipSkin = 'bangka';
+                                } else if (player.durability.jeepney > 0) {
+                                    player.shipSkin = 'jeepney';
+                                }
+                            }
+                            
+                            sounds.hit.play();
+                        }
+                        
+                        enemyBullets.splice(i, 1);
+                        continue;
+                    }
+                    
+                    if (enemyBullets[i].y > CANVAS_HEIGHT) {
+                        enemyBullets.splice(i, 1);
+                    }
+                }
+                
                 // Update bullets
                 for (let i = bullets.length - 1; i >= 0; i--) {
                     bullets[i].update();
@@ -1748,13 +1850,29 @@
                         player.y < enemies[i].y + enemies[i].height &&
                         player.y + player.height > enemies[i].y) {
                         
-                        player.lives--;
-                        enemies.splice(i, 1);
-                        updateHUD();
+                        // Reduce durability for current ship
+                        player.durability[player.shipSkin]--;
+                        updateDurabilityDisplay();
                         
-                        if (player.lives <= 0) {
+                        // Check if player has any durability left
+                        if (player.durability.default <= 0 && player.durability.bangka <= 0 && player.durability.jeepney <= 0) {
                             gameOver();
+                            break;
                         }
+                        
+                        // If current ship has no durability left, switch to another available ship
+                        if (player.durability[player.shipSkin] <= 0) {
+                            if (player.durability.default > 0) {
+                                player.shipSkin = 'default';
+                            } else if (player.durability.bangka > 0) {
+                                player.shipSkin = 'bangka';
+                            } else if (player.durability.jeepney > 0) {
+                                player.shipSkin = 'jeepney';
+                            }
+                        }
+                        
+                        enemies.splice(i, 1);
+                        sounds.hit.play();
                         continue;
                     }
                     
@@ -1842,9 +1960,9 @@
                         player.y + player.height > powerups[i].y) {
                         
                         if (powerups[i] instanceof ShipPowerup) {
-                            // It's a ship power-up
-                            player.availableShips[powerups[i].type] = true;
-                            updateShipSelectionUI();
+                            // It's a ship power-up - add durability for that ship type
+                            player.durability[powerups[i].type] += 1;
+                            updateDurabilityDisplay();
                         } else {
                             // Regular power-up
                             player.powerups[powerups[i].type] = true;
@@ -1881,6 +1999,11 @@
                 
                 for (const enemy of enemies) {
                     enemy.draw();
+                }
+                
+                for (const enemyBullet of enemyBullets) {
+                    ctx.fillStyle = 'red';
+                    ctx.fillRect(Math.round(enemyBullet.x), Math.round(enemyBullet.y), Math.round(enemyBullet.width), Math.round(enemyBullet.height));
                 }
                 
                 for (const powerup of powerups) {
