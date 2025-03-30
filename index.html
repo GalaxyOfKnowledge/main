@@ -108,6 +108,19 @@
             border-color: #FFD700;
         }
         
+        .triviaOption.highlighted::after {
+            content: '(Z)';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #FFD700;
+            color: #000;
+            font-size: 12px;
+            padding: 2px 5px;
+            border-radius: 0;
+            border: 2px solid #8B4513;
+        }
+        
         .triviaOption.selected {
             background: #2E7D32;
             border-color: #4CAF50;
@@ -188,23 +201,33 @@
         
         .durability-ships {
             display: flex;
-            align-items: center;
-            gap: 10px;
+            flex-direction: column;
+            gap: 5px;
         }
         
         .durability-title {
             font-size: 12px;
-            margin-right: 5px;
+            margin-bottom: 5px;
+            text-decoration: underline;
         }
         
-        .ship-durability {
+        .ship-durability-row {
             display: flex;
-            gap: 3px;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .ship-key {
+            width: 20px;
+            text-align: center;
+            background: #333;
+            padding: 2px;
+            border: 1px solid #555;
         }
         
         .ship-icon-small {
-            width: 15px;
-            height: 15px;
+            width: 20px;
+            height: 20px;
             border-radius: 0;
         }
         
@@ -619,9 +642,24 @@
     <div id="durabilityHud">
         <div class="durability-ships">
             <div class="durability-title">DURABILITY:</div>
-            <div class="ship-durability" id="defaultDurability"></div>
-            <div class="ship-durability" id="bangkaDurability"></div>
-            <div class="ship-durability" id="jeepneyDurability"></div>
+            <div class="ship-durability-row">
+                <span>DEFAULT: </span>
+                <span class="ship-key">X</span>
+                <div class="ship-icon-small default"></div>
+                <span id="defaultDurabilityCount">3</span>
+            </div>
+            <div class="ship-durability-row">
+                <span>BANGKA: </span>
+                <span class="ship-key">C</span>
+                <div class="ship-icon-small bangka"></div>
+                <span id="bangkaDurabilityCount">3</span>
+            </div>
+            <div class="ship-durability-row">
+                <span>JEEPNEY: </span>
+                <span class="ship-key">V</span>
+                <div class="ship-icon-small jeepney"></div>
+                <span id="jeepneyDurabilityCount">3</span>
+            </div>
         </div>
     </div>
     
@@ -1316,29 +1354,18 @@
         
         // Update durability display
         function updateDurabilityDisplay() {
-            // Clear existing icons
-            document.getElementById('defaultDurability').innerHTML = '';
-            document.getElementById('bangkaDurability').innerHTML = '';
-            document.getElementById('jeepneyDurability').innerHTML = '';
+            document.getElementById('defaultDurabilityCount').textContent = player.durability.default;
+            document.getElementById('bangkaDurabilityCount').textContent = player.durability.bangka;
+            document.getElementById('jeepneyDurabilityCount').textContent = player.durability.jeepney;
             
-            // Add icons for each durability point
-            for (let i = 0; i < player.durability.default; i++) {
-                const icon = document.createElement('div');
-                icon.className = 'ship-icon-small default';
-                document.getElementById('defaultDurability').appendChild(icon);
-            }
+            // Highlight active ship
+            const defaultRow = document.querySelector('.ship-durability-row:nth-child(2)');
+            const bangkaRow = document.querySelector('.ship-durability-row:nth-child(3)');
+            const jeepneyRow = document.querySelector('.ship-durability-row:nth-child(4)');
             
-            for (let i = 0; i < player.durability.bangka; i++) {
-                const icon = document.createElement('div');
-                icon.className = 'ship-icon-small bangka';
-                document.getElementById('bangkaDurability').appendChild(icon);
-            }
-            
-            for (let i = 0; i < player.durability.jeepney; i++) {
-                const icon = document.createElement('div');
-                icon.className = 'ship-icon-small jeepney';
-                document.getElementById('jeepneyDurability').appendChild(icon);
-            }
+            defaultRow.style.color = player.shipSkin === 'default' ? '#FFD700' : 'white';
+            bangkaRow.style.color = player.shipSkin === 'bangka' ? '#FFD700' : 'white';
+            jeepneyRow.style.color = player.shipSkin === 'jeepney' ? '#FFD700' : 'white';
         }
         
         // Update power-up status display
@@ -2789,6 +2816,16 @@
                             player.availableShips[powerups[i].type] = true;
                             updateDurabilityDisplay();
                             updateShipSelectionUI();
+                            
+                            // Highlight the ship in the durability display
+                            const shipRow = document.querySelector(`.ship-durability-row:nth-child(${
+                                powerups[i].type === 'default' ? 2 : 
+                                powerups[i].type === 'bangka' ? 3 : 4
+                            })`);
+                            shipRow.style.animation = 'pulse 0.5s 3';
+                            setTimeout(() => {
+                                shipRow.style.animation = '';
+                            }, 1500);
                         } else {
                             // Regular power-up
                             player.powerups[powerups[i].type] = true;
