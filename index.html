@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galaxy Of Knowledge</title>
+    <title>Pinoy Quiz Trivia Space Invader</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -241,6 +241,29 @@
         }
         
         .ship-icon-small.jeepney {
+            background-color: #FFD700;
+        }
+        
+        .durability-icons {
+            display: flex;
+            gap: 3px;
+        }
+        
+        .durability-icon {
+            width: 16px;
+            height: 16px;
+            border: 1px solid #555;
+        }
+        
+        .durability-icon.default {
+            background-color: #4CAF50;
+        }
+        
+        .durability-icon.bangka {
+            background-color: #8B4513;
+        }
+        
+        .durability-icon.jeepney {
             background-color: #FFD700;
         }
         
@@ -635,7 +658,7 @@
         /* Timer styles */
         #timerContainer {
             position: fixed;
-            top: 10px;
+            bottom: 100px;
             left: 50%;
             transform: translateX(-50%);
             width: 200px;
@@ -651,6 +674,24 @@
             background: #FFD700;
             width: 100%;
             transition: width 0.1s;
+        }
+        
+        /* Wave transition message */
+        #waveTransitionMessage {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: #FFD700;
+            text-shadow: 3px 3px 0 #8B4513;
+            display: none;
+            z-index: 2;
+            font-family: 'Press Start 2P', cursive;
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border: 2px solid #FFD700;
         }
         
         /* Trivia Laser UI */
@@ -761,6 +802,11 @@
             .quiz-options {
                 width: 90%;
             }
+            
+            #waveTransitionMessage {
+                font-size: 18px;
+                width: 90%;
+            }
         }
     </style>
 </head>
@@ -779,20 +825,17 @@
             <div class="ship-durability-row">
                 <span>DEFAULT: </span>
                 <span class="ship-key">X</span>
-                <div class="ship-icon-small default"></div>
-                <span id="defaultDurabilityCount">3</span>
+                <div class="durability-icons" id="defaultDurabilityIcons"></div>
             </div>
             <div class="ship-durability-row">
                 <span>BANGKA: </span>
                 <span class="ship-key">C</span>
-                <div class="ship-icon-small bangka"></div>
-                <span id="bangkaDurabilityCount">3</span>
+                <div class="durability-icons" id="bangkaDurabilityIcons"></div>
             </div>
             <div class="ship-durability-row">
                 <span>JEEPNEY: </span>
                 <span class="ship-key">V</span>
-                <div class="ship-icon-small jeepney"></div>
-                <span id="jeepneyDurabilityCount">3</span>
+                <div class="durability-icons" id="jeepneyDurabilityIcons"></div>
             </div>
         </div>
     </div>
@@ -816,6 +859,8 @@
         <div id="timerBar"></div>
     </div>
     
+    <div id="waveTransitionMessage"></div>
+    
     <div id="comboCounter"></div>
     <div id="waveIndicator">WAVE: <span id="waveNumber">1</span></div>
     
@@ -837,7 +882,7 @@
     </div>
     
     <div id="menuScreen">
-        <div class="title">GALAXY of<br>KNOWLEDGE</div>
+        <div class="title">PINOY QUIZ TRIVIA<br>SPACE INVADER</div>
         <button id="playButton" class="menu-button">PLAY</button>
         <button id="highscoreButton" class="menu-button">HIGHSCORE</button>
         <button id="settingsButton" class="menu-button">SETTINGS</button>
@@ -1032,7 +1077,7 @@
                     The game progresses through waves of enemies.<br>
                     After each wave, you'll face a trivia question.<br>
                     Correct answers make the next wave easier, wrong answers make it harder.<br>
-                    Every 5 waves, you'll face a boss battle!
+                    At wave 15, you'll face the final boss battle!
                 </div>
             </div>
         </div>
@@ -1054,7 +1099,7 @@
     
     <script>
         // Game constants
-        const BOSS_WAVE_INTERVAL = 5;
+        const BOSS_WAVE = 15; // Boss appears at wave 15
         const TRIVIA_LASER_MAX = 100;
         
         // Game states
@@ -1159,6 +1204,11 @@
         let timeBonusDuration = 5; // seconds
         let slowMoActive = false;
         let slowMoTimer = 0;
+        
+        // Wave transition variables
+        let waveTransitionActive = false;
+        let waveTransitionTimer = 0;
+        let waveTransitionDuration = 120; // frames
         
         // High scores
         let highScores = [];
@@ -1513,9 +1563,9 @@
                         player.availableShips.jeepney = false;
                         sounds.shipChange.play();
                         updateShipSelectionUI();
-                    } else if (e.key.toLowerCase() === 'z' && bossActive) {
+                    } else if (e.key.toLowerCase() === 'z' && (bossActive || waveTransitionActive)) {
                         // Select the option based on ship position
-                        selectBossOptionBasedOnPosition();
+                        selectOptionBasedOnPosition();
                     } else if (e.key.toLowerCase() === 't' && player.triviaLaser >= TRIVIA_LASER_MAX) {
                         // Fire trivia laser
                         fireTriviaLaser();
@@ -1562,11 +1612,33 @@
             document.getElementById('jeepneyShip').classList.toggle('available', player.availableShips.jeepney);
         }
         
-        // Update durability display
+        // Update durability display with icons
         function updateDurabilityDisplay() {
-            document.getElementById('defaultDurabilityCount').textContent = player.durability.default;
-            document.getElementById('bangkaDurabilityCount').textContent = player.durability.bangka;
-            document.getElementById('jeepneyDurabilityCount').textContent = player.durability.jeepney;
+            // Clear existing icons
+            document.getElementById('defaultDurabilityIcons').innerHTML = '';
+            document.getElementById('bangkaDurabilityIcons').innerHTML = '';
+            document.getElementById('jeepneyDurabilityIcons').innerHTML = '';
+            
+            // Add icons for default ship durability
+            for (let i = 0; i < player.durability.default; i++) {
+                const icon = document.createElement('div');
+                icon.className = 'durability-icon default';
+                document.getElementById('defaultDurabilityIcons').appendChild(icon);
+            }
+            
+            // Add icons for bangka ship durability
+            for (let i = 0; i < player.durability.bangka; i++) {
+                const icon = document.createElement('div');
+                icon.className = 'durability-icon bangka';
+                document.getElementById('bangkaDurabilityIcons').appendChild(icon);
+            }
+            
+            // Add icons for jeepney ship durability
+            for (let i = 0; i < player.durability.jeepney; i++) {
+                const icon = document.createElement('div');
+                icon.className = 'durability-icon jeepney';
+                document.getElementById('jeepneyDurabilityIcons').appendChild(icon);
+            }
             
             // Highlight active ship
             const defaultRow = document.querySelector('.ship-durability-row:nth-child(2)');
@@ -1652,6 +1724,7 @@
             document.getElementById('waveIndicator').style.display = 'none';
             document.getElementById('timerContainer').style.display = 'none';
             document.getElementById('triviaLaserHud').style.display = 'none';
+            document.getElementById('waveTransitionMessage').style.display = 'none';
             
             // Stop background music
             backgroundMusic.pause();
@@ -1742,6 +1815,8 @@
             enemiesDefeated = 0;
             waveDifficultyModifier = 1.0;
             quizCorrectAnswers = 0;
+            waveTransitionActive = false;
+            waveTransitionTimer = 0;
             
             // Show wave screen
             showWaveScreen();
@@ -1757,6 +1832,7 @@
             document.getElementById('bossHealthBar').style.display = 'none';
             document.getElementById('triviaContainer').style.display = 'none';
             document.getElementById('timerContainer').style.display = 'none';
+            document.getElementById('waveTransitionMessage').style.display = 'none';
             
             // Start background music
             backgroundMusic.currentTime = 0;
@@ -1770,8 +1846,8 @@
             
             // Special wave messages
             let subtitle = "GET READY!";
-            if (wave % BOSS_WAVE_INTERVAL === 0) {
-                subtitle = "BOSS WAVE!";
+            if (wave === BOSS_WAVE) {
+                subtitle = "FINAL BOSS!";
             } else if (wave > 1) {
                 subtitle = `WAVE ${wave}`;
             }
@@ -1806,7 +1882,7 @@
             enemyShootRate = Math.max(30, 120 - (wave * 5) * waveDifficultyModifier);
             
             // Check if boss wave
-            if (wave % BOSS_WAVE_INTERVAL === 0) {
+            if (wave === BOSS_WAVE) {
                 spawnBoss();
             }
         }
@@ -1889,6 +1965,7 @@
             document.getElementById('waveIndicator').style.display = 'none';
             document.getElementById('timerContainer').style.display = 'none';
             document.getElementById('triviaLaserHud').style.display = 'none';
+            document.getElementById('waveTransitionMessage').style.display = 'none';
         }
         
         // Spawn boss
@@ -1956,9 +2033,70 @@
             updateOptionHighlight();
         }
         
+        // Show wave transition message and question
+        function showWaveTransition() {
+            waveTransitionActive = true;
+            answerSelectionMode = true;
+            
+            // Show message
+            const message = document.getElementById('waveTransitionMessage');
+            message.textContent = `APPROACHING WAVE ${wave + 1}!`;
+            message.style.display = 'block';
+            
+            // Show timer
+            document.getElementById('timerContainer').style.display = 'block';
+            document.getElementById('timerBar').style.width = '100%';
+            
+            // Show trivia container
+            const triviaContainer = document.getElementById('triviaContainer');
+            triviaContainer.style.display = 'block';
+            
+            // Select a random question
+            currentQuestion = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
+            selectedOption = null;
+            
+            // Display question
+            document.getElementById('triviaQuestion').textContent = currentQuestion.question;
+            
+            // Display options
+            const optionsContainer = document.getElementById('triviaOptions');
+            optionsContainer.innerHTML = '';
+            
+            currentQuestion.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'triviaOption';
+                optionElement.textContent = option;
+                optionElement.dataset.index = index;
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            // Start timer
+            quizStartTime = Date.now();
+            quizTimer = quizTimeLimit;
+            
+            // Update timer every second
+            const timerInterval = setInterval(() => {
+                if (!waveTransitionActive) {
+                    clearInterval(timerInterval);
+                    return;
+                }
+                
+                const elapsed = Math.floor((Date.now() - quizStartTime) / 1000);
+                quizTimer = Math.max(0, quizTimeLimit - elapsed);
+                const percent = (quizTimer / quizTimeLimit) * 100;
+                document.getElementById('timerBar').style.width = `${percent}%`;
+                
+                if (quizTimer <= 0) {
+                    clearInterval(timerInterval);
+                    // Time's up - wrong answer
+                    checkWaveTransitionAnswer(-1);
+                }
+            }, 200);
+        }
+        
         // Update highlighted option based on player position
         function updateOptionHighlight() {
-            if (!bossActive || !currentQuestion) return;
+            if (!(bossActive || waveTransitionActive) || !currentQuestion) return;
             
             const options = document.querySelectorAll('#triviaOptions .triviaOption');
             const triviaContainer = document.getElementById('triviaContainer');
@@ -1991,8 +2129,8 @@
             }
         }
         
-        // Select boss option based on player position
-        function selectBossOptionBasedOnPosition() {
+        // Select option based on player position
+        function selectOptionBasedOnPosition() {
             if (selectedOption !== null) return; // Prevent multiple selections
             
             const options = document.querySelectorAll('#triviaOptions .triviaOption');
@@ -2019,7 +2157,11 @@
             });
             
             if (selectedIndex >= 0) {
-                selectBossOption(selectedIndex);
+                if (bossActive) {
+                    selectBossOption(selectedIndex);
+                } else if (waveTransitionActive) {
+                    checkWaveTransitionAnswer(selectedIndex);
+                }
             }
         }
         
@@ -2096,55 +2238,8 @@
             }
         }
         
-        // Show quiz between waves
-        function showQuiz() {
-            gameState = STATE_QUIZ;
-            document.getElementById('quizScreen').style.display = 'flex';
-            
-            // Select a random question
-            currentQuestion = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
-            
-            // Display question
-            document.getElementById('quizQuestion').textContent = currentQuestion.question;
-            
-            // Display options
-            const optionsContainer = document.getElementById('quizOptions');
-            optionsContainer.innerHTML = '';
-            
-            currentQuestion.options.forEach((option, index) => {
-                const optionElement = document.createElement('div');
-                optionElement.className = 'quiz-option';
-                optionElement.textContent = option;
-                optionElement.dataset.index = index;
-                optionsContainer.appendChild(optionElement);
-            });
-            
-            // Start timer
-            quizStartTime = Date.now();
-            quizTimer = quizTimeLimit;
-            document.getElementById('quizTimer').textContent = `TIME: ${quizTimer}s`;
-            
-            // Update timer every second
-            const timerInterval = setInterval(() => {
-                if (gameState !== STATE_QUIZ) {
-                    clearInterval(timerInterval);
-                    return;
-                }
-                
-                const elapsed = Math.floor((Date.now() - quizStartTime) / 1000);
-                quizTimer = Math.max(0, quizTimeLimit - elapsed);
-                document.getElementById('quizTimer').textContent = `TIME: ${quizTimer}s`;
-                
-                if (quizTimer <= 0) {
-                    clearInterval(timerInterval);
-                    // Time's up - wrong answer
-                    checkQuizAnswer(-1);
-                }
-            }, 200);
-        }
-        
-        // Check quiz answer
-        function checkQuizAnswer(index) {
+        // Check wave transition answer
+        function checkWaveTransitionAnswer(index) {
             const isCorrect = index === currentQuestion.answer;
             const answerTime = (Date.now() - quizStartTime) / 1000; // in seconds
             
@@ -2191,12 +2286,18 @@
                 enemyShootRate = Math.max(30, enemyShootRate * 0.8);
             }
             
-            // Hide quiz screen
-            document.getElementById('quizScreen').style.display = 'none';
+            // Hide trivia elements
+            document.getElementById('triviaContainer').style.display = 'none';
+            document.getElementById('timerContainer').style.display = 'none';
+            document.getElementById('waveTransitionMessage').style.display = 'none';
             
             // Move to next wave
             wave++;
-            showWaveScreen();
+            waveTransitionActive = false;
+            answerSelectionMode = false;
+            
+            // Start the next wave
+            startWave();
         }
         
         // Update HUD
@@ -2668,6 +2769,15 @@
                     document.body.style.backgroundColor = '#000';
                 }
             }
+            
+            // Update wave transition
+            if (waveTransitionActive) {
+                waveTransitionTimer--;
+                if (waveTransitionTimer <= 0) {
+                    // Time's up - wrong answer
+                    checkWaveTransitionAnswer(-1);
+                }
+            }
         }
         
         // Draw player ship
@@ -2987,12 +3097,19 @@
                 }
                 
                 // Update option highlight based on player position
-                if (bossActive && answerSelectionMode) {
+                if ((bossActive || waveTransitionActive) && answerSelectionMode) {
                     updateOptionHighlight();
                 }
                 
+                // Check if wave is complete (not in boss wave)
+                if (!bossActive && !waveTransitionActive && enemiesDefeated >= enemiesInWave) {
+                    // Start wave transition
+                    showWaveTransition();
+                    waveTransitionTimer = waveTransitionDuration;
+                }
+                
                 // Shoot
-                if (keys[' '] && bulletCooldown <= 0) {
+                if (keys[' '] && bulletCooldown <= 0 && !waveTransitionActive) {
                     bullets.push(new Bullet(player.x + player.width/2, player.y));
                     sounds.shoot.currentTime = 0; // Reset sound to start
                     sounds.shoot.play();
@@ -3003,8 +3120,8 @@
                     bulletCooldown--;
                 }
                 
-                // Spawn enemies if not in boss wave and wave not complete
-                if (!bossActive && enemiesDefeated < enemiesInWave) {
+                // Spawn enemies if not in boss wave, not in wave transition, and wave not complete
+                if (!bossActive && !waveTransitionActive && enemiesDefeated < enemiesInWave) {
                     enemySpawnTimer++;
                     if (enemySpawnTimer >= enemySpawnRate) {
                         enemySpawnTimer = 0;
@@ -3133,21 +3250,6 @@
                             if (enemy.hit()) {
                                 enemies.splice(j, 1);
                                 enemiesDefeated++;
-                                
-                                // Check if wave is complete
-                                if (!bossActive && enemiesDefeated >= enemiesInWave) {
-                                    sounds.waveComplete.play();
-                                    
-                                    // Show quiz between waves
-                                    setTimeout(() => {
-                                        showQuiz();
-                                    }, 1000);
-                                }
-                                
-                                // Add to combo
-                                comboCount++;
-                                comboTimeout = 60;
-                                updateHUD();
                                 
                                 // Different points for different enemies
                                 let points = 0;
