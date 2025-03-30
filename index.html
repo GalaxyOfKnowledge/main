@@ -32,7 +32,7 @@
         }
         
         /* Screens */
-        #menuScreen, #gameOverScreen, #highscoreScreen, #settingsScreen, #winScreen {
+        #menuScreen, #gameOverScreen, #highscoreScreen, #settingsScreen, #winScreen, #tutorialScreen {
             position: fixed;
             top: 0;
             left: 0;
@@ -53,54 +53,75 @@
             bottom: 20px;
             transform: translateX(-50%);
             width: 90%;
-            max-width: 600px;
+            max-width: 800px;
             z-index: 2;
             background-color: transparent;
-            padding: 10px;
+            padding: 15px;
             display: none;
             box-sizing: border-box;
             text-align: center;
         }
         
         #triviaQuestion {
-            font-size: 14px;
-            margin-bottom: 10px;
+            font-size: 16px;
+            margin-bottom: 15px;
             color: #FFD700;
             text-shadow: 2px 2px 0 #8B4513;
             line-height: 1.4;
-            background-color: rgba(0, 0, 20, 0.5);
-            padding: 8px;
+            background-color: rgba(0, 0, 20, 0.7);
+            padding: 12px;
+            border: 2px solid #FFD700;
         }
         
         #triviaOptions {
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
-            gap: 6px;
+            gap: 10px;
         }
         
         .triviaOption {
-            padding: 8px;
+            padding: 15px;
             margin: 0;
             background-color: rgba(0, 0, 20, 0.7);
             text-align: center;
             flex: 1;
-            min-width: 100px;
-            font-size: 12px;
+            min-width: 150px;
+            font-size: 14px;
             transition: all 0.1s;
             cursor: pointer;
             font-family: 'Press Start 2P', cursive;
             text-shadow: 1px 1px 0 #000;
             color: white;
+            border: 2px solid #555;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
         }
         
         .triviaOption.highlighted {
             background-color: rgba(85, 85, 85, 0.7);
-            box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+            border-color: #FFD700;
         }
         
         .triviaOption.selected {
             background: #2E7D32;
+            border-color: #4CAF50;
+        }
+        
+        .ship-indicator {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 20px;
+            background-color: rgba(255, 215, 0, 0.7);
+            border-radius: 4px;
+            display: none;
         }
         
         /* Rest of your existing CSS... */
@@ -143,6 +164,7 @@
         #playButton { background: #2E7D32; box-shadow: 4px 4px 0 #4CAF50; }
         #highscoreButton { background: #FF8F00; box-shadow: 4px 4px 0 #FFC107; color: black; }
         #settingsButton { background: #0D47A1; box-shadow: 4px 4px 0 #2196F3; }
+        #tutorialButton { background: #6A1B9A; box-shadow: 4px 4px 0 #9C27B0; }
         
         #hud {
             position: absolute;
@@ -164,6 +186,7 @@
             bottom: 10px;
             left: 10px;
             font-size: 12px;
+            color: white;
             background-color: rgba(0, 0, 0, 0.7);
             padding: 8px 12px;
             border-radius: 0;
@@ -237,6 +260,7 @@
             font-size: 14px;
             transition: all 0.1s;
             font-family: 'Press Start 2P', cursive;
+            cursor: pointer;
         }
         
         .ship-icon.available {
@@ -323,6 +347,7 @@
             margin-bottom: 10px;
             width: 200px;
             font-family: 'Press Start 2P', cursive;
+            text-align: center;
         }
         
         #nameInputContainer {
@@ -371,6 +396,130 @@
             font-family: 'Press Start 2P', cursive;
         }
         
+        /* Tutorial styles */
+        .tutorial-content {
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid #FFD700;
+        }
+        
+        .tutorial-section {
+            margin-bottom: 20px;
+        }
+        
+        .tutorial-title {
+            color: #FFD700;
+            font-size: 18px;
+            margin-bottom: 10px;
+            text-decoration: underline;
+        }
+        
+        .tutorial-text {
+            font-size: 12px;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+        
+        .tutorial-image {
+            width: 100%;
+            max-width: 200px;
+            margin: 10px auto;
+            display: block;
+            border: 2px solid #555;
+        }
+        
+        .tutorial-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .tutorial-key {
+            width: 40px;
+            height: 40px;
+            background-color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 15px;
+            border: 2px solid #555;
+        }
+        
+        .tutorial-ship {
+            width: 60px;
+            height: 40px;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 15px;
+            border: 2px solid #555;
+            position: relative;
+        }
+        
+        .tutorial-ship-default {
+            background-color: #4CAF50;
+        }
+        
+        .tutorial-ship-bangka {
+            background-color: #8B4513;
+        }
+        
+        .tutorial-ship-jeepney {
+            background-color: #FFD700;
+        }
+        
+        .tutorial-enemy {
+            width: 60px;
+            height: 40px;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 15px;
+            border: 2px solid #555;
+            position: relative;
+        }
+        
+        .tutorial-enemy-kapre {
+            background-color: #654321;
+        }
+        
+        .tutorial-enemy-aswang {
+            background-color: #800080;
+        }
+        
+        .tutorial-enemy-sarimanok {
+            background-color: #FFD700;
+        }
+        
+        .tutorial-powerup {
+            width: 40px;
+            height: 40px;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 15px;
+            border: 2px solid #555;
+            position: relative;
+        }
+        
+        .tutorial-powerup-shield {
+            background-color: blue;
+        }
+        
+        .tutorial-powerup-boost {
+            background-color: red;
+        }
+        
+        .tutorial-powerup-tinikling {
+            background-color: green;
+        }
+        
         @media (max-width: 768px) {
             #mobileControls {
                 display: flex;
@@ -393,13 +542,13 @@
             
             .triviaOption {
                 min-width: 80%;
-                margin: 3px auto;
+                margin: 5px auto;
                 font-size: 12px;
-                padding: 6px;
+                padding: 10px;
             }
             
             #triviaQuestion {
-                font-size: 12px;
+                font-size: 14px;
             }
             
             #hud, #powerupHud, #durabilityHud {
@@ -412,6 +561,19 @@
                 height: 50px;
                 margin: 0 10px;
                 font-size: 18px;
+            }
+            
+            .tutorial-content {
+                max-width: 90%;
+                font-size: 10px;
+            }
+            
+            .tutorial-title {
+                font-size: 14px;
+            }
+            
+            .tutorial-text {
+                font-size: 10px;
             }
         }
     </style>
@@ -451,11 +613,18 @@
         <div class="ship-icon" id="jeepneyShip" title="Jeepney Ship (V)">V</div>
     </div>
     
+    <div id="mobileControls">
+        <div class="mobile-btn" id="leftBtn">←</div>
+        <div class="mobile-btn" id="shootBtn">🔫</div>
+        <div class="mobile-btn" id="rightBtn">→</div>
+    </div>
+    
     <div id="menuScreen">
         <div class="title">PINOY QUIZ TRIVIA<br>SPACE INVADER</div>
         <button id="playButton" class="menu-button">PLAY</button>
         <button id="highscoreButton" class="menu-button">HIGHSCORE</button>
         <button id="settingsButton" class="menu-button">SETTINGS</button>
+        <button id="tutorialButton" class="menu-button">TUTORIAL</button>
     </div>
     
     <div id="gameOverScreen" style="display: none;">
@@ -472,6 +641,11 @@
     <div id="winScreen" style="display: none;">
         <div class="title">YOU WIN!</div>
         <div id="winScore" style="font-size: 20px; margin-bottom: 20px;"></div>
+        <div id="nameInputContainerWin">
+            <div style="margin-bottom: 10px; font-size: 14px;">ENTER YOUR NAME:</div>
+            <input type="text" id="nameInputWin" maxlength="10">
+            <button id="submitScoreWin" class="menu-button" style="background: #2E7D32; box-shadow: 4px 4px 0 #4CAF50;">SUBMIT</button>
+        </div>
         <button id="winContinueButton" class="menu-button" style="background: #0D47A1; box-shadow: 4px 4px 0 #2196F3;">CONTINUE</button>
     </div>
     
@@ -504,10 +678,132 @@
         <button id="settingsBackButton" class="menu-button" style="background: #B71C1C; box-shadow: 4px 4px 0 #F44336; margin-top: 30px;">BACK TO MENU</button>
     </div>
     
-    <div id="mobileControls">
-        <div class="mobile-btn" id="leftBtn">←</div>
-        <div class="mobile-btn" id="shootBtn">🔫</div>
-        <div class="mobile-btn" id="rightBtn">→</div>
+    <div id="tutorialScreen" style="display: none;">
+        <div class="title">HOW TO PLAY</div>
+        <div class="tutorial-content">
+            <div class="tutorial-section">
+                <div class="tutorial-title">CONTROLS</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">←</div>
+                    <div class="tutorial-text">Move Left</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">→</div>
+                    <div class="tutorial-text">Move Right</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">SPACE</div>
+                    <div class="tutorial-text">Shoot Bullets</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">X</div>
+                    <div class="tutorial-text">Switch to Default Ship</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">C</div>
+                    <div class="tutorial-text">Switch to Bangka Ship</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">V</div>
+                    <div class="tutorial-text">Switch to Jeepney Ship</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">Z</div>
+                    <div class="tutorial-text">Select Answer (Boss Fight)</div>
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">YOUR SHIPS</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-ship tutorial-ship-default"></div>
+                    <div class="tutorial-text">
+                        <strong>DEFAULT SHIP</strong><br>
+                        Balanced stats. Press X to switch.
+                    </div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-ship tutorial-ship-bangka"></div>
+                    <div class="tutorial-text">
+                        <strong>BANGKA SHIP</strong><br>
+                        Slower but takes less damage. Press C to switch.
+                    </div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-ship tutorial-ship-jeepney"></div>
+                    <div class="tutorial-text">
+                        <strong>JEEPNEY SHIP</strong><br>
+                        Faster but takes more damage. Press V to switch.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">ENEMIES</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-enemy tutorial-enemy-kapre"></div>
+                    <div class="tutorial-text">
+                        <strong>KAPRE</strong><br>
+                        Slow but tough (3 hits to kill). Worth 100 points.
+                    </div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-enemy tutorial-enemy-aswang"></div>
+                    <div class="tutorial-text">
+                        <strong>ASWANG</strong><br>
+                        Fast but weak (1 hit to kill). Worth 30 points.
+                    </div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-enemy tutorial-enemy-sarimanok"></div>
+                    <div class="tutorial-text">
+                        <strong>SARIMANOK</strong><br>
+                        Medium speed (2 hits to kill). Worth 50 points.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">POWER-UPS</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-powerup tutorial-powerup-shield"></div>
+                    <div class="tutorial-text">
+                        <strong>BARONG SHIELD</strong><br>
+                        Temporary invincibility for 5 seconds.
+                    </div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-powerup tutorial-powerup-boost"></div>
+                    <div class="tutorial-text">
+                        <strong>JEEPNEY BOOST</strong><br>
+                        Increased speed for 5 seconds.
+                    </div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-powerup tutorial-powerup-tinikling"></div>
+                    <div class="tutorial-text">
+                        <strong>TINIKLING MODE</strong><br>
+                        Faster shooting and double damage for 5 seconds.
+                    </div>
+                </div>
+                <div class="tutorial-text">
+                    <strong>SHIP POWER-UPS</strong><br>
+                    Collect ship icons to gain durability for that ship type.
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">BOSS FIGHT</div>
+                <div class="tutorial-text">
+                    When you reach 1000 points, you'll face a TIKBALANG boss!<br><br>
+                    Answer trivia questions correctly to damage the boss.<br>
+                    Wrong answers will damage your ship instead.<br>
+                    Use the arrow keys to highlight options and Z to select.<br>
+                    Defeat the boss to win the level!
+                </div>
+            </div>
+        </div>
+        <button id="tutorialBackButton" class="menu-button" style="background: #0D47A1; box-shadow: 4px 4px 0 #2196F3; margin-top: 20px;">BACK TO MENU</button>
     </div>
     
     <script>
@@ -522,6 +818,7 @@
         const STATE_HIGHSCORE = 3;
         const STATE_SETTINGS = 4;
         const STATE_WIN = 5;
+        const STATE_TUTORIAL = 6;
         
         // Initialize canvas
         const canvas = document.getElementById('gameCanvas');
@@ -538,7 +835,7 @@
             
             if (player) {
                 player.x = CANVAS_WIDTH/2 - player.width/2;
-                player.y = CANVAS_HEIGHT - player.height - 50; // Move player higher
+                player.y = CANVAS_HEIGHT - player.height - 50;
             }
             
             if (bossActive && boss) {
@@ -552,7 +849,7 @@
         let gameState = STATE_MENU;
         let player = {
             x: CANVAS_WIDTH / 2 - 25,
-            y: CANVAS_HEIGHT - 90, // Move player higher
+            y: CANVAS_HEIGHT - 90,
             width: 50,
             height: 30,
             speed: 5,
@@ -569,7 +866,7 @@
             },
             shipSkin: 'default',
             availableShips: {
-                default: true,  // Player starts with default ship available
+                default: true,
                 bangka: false,
                 jeepney: false
             }
@@ -577,14 +874,14 @@
         
         let bullets = [];
         let enemies = [];
-        let enemyBullets = []; // For enemy attacks
+        let enemyBullets = [];
         let powerups = [];
         let bulletCooldown = 0;
         let enemySpawnRate = 60;
         let enemySpawnTimer = 0;
         let enemySpeed = 1.0;
         let enemyShootTimer = 0;
-        let enemyShootRate = 120; // How often enemies shoot
+        let enemyShootRate = 120;
         let comboCount = 0;
         let comboTimeout = 0;
         let level = 1;
@@ -607,15 +904,15 @@
         let settings = {
             musicVolume: 0.5,
             soundEffects: true,
-            difficulty: 'normal' // easy, normal, hard
+            difficulty: 'normal'
         };
         
-        // Sound effects - Using direct links to audio files
+        // Sound effects - Using different audio sources
         const sounds = {
-            shoot: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-shot-1681.mp3'),
-            enemyShoot: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-laser-weapon-shot-1680.mp3'),
-            explosion: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-8-bit-explosion-1691.mp3'),
-            powerup: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3'),
+            shoot: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-short-laser-gun-shot-1670.mp3'),
+            enemyShoot: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arrow-whoosh-1491.mp3'),
+            explosion: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-explosion-impact-1684.mp3'),
+            powerup: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3'),
             correct: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3'),
             wrong: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3'),
             bossSpawn: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-monster-dinosaur-roar-1988.mp3'),
@@ -631,8 +928,8 @@
             sound.volume = settings.soundEffects ? 0.5 : 0;
         });
         
-        // Background music - 8-bit OPM music
-        const backgroundMusic = new Audio('https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-668.mp3');
+        // Background music - Different 8-bit music
+        const backgroundMusic = new Audio('https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3');
         backgroundMusic.volume = settings.musicVolume;
         backgroundMusic.loop = true;
         
@@ -724,7 +1021,7 @@
         
         // Add a new high score
         function addHighScore(name, score) {
-            highScores.push({ name, score });
+            highScores.push({ name: name.toUpperCase(), score });
             highScores.sort((a, b) => b.score - a.score);
             highScores = highScores.slice(0, MAX_HIGH_SCORES);
             saveHighScores();
@@ -787,6 +1084,7 @@
             document.getElementById('playButton').addEventListener('click', startGame);
             document.getElementById('highscoreButton').addEventListener('click', showHighScores);
             document.getElementById('settingsButton').addEventListener('click', showSettings);
+            document.getElementById('tutorialButton').addEventListener('click', showTutorial);
             document.getElementById('continueButton').addEventListener('click', returnToMenu);
             document.getElementById('winContinueButton').addEventListener('click', returnToMenu);
             document.getElementById('backButton').addEventListener('click', returnToMenu);
@@ -794,7 +1092,9 @@
                 saveSettings();
                 returnToMenu();
             });
+            document.getElementById('tutorialBackButton').addEventListener('click', returnToMenu);
             document.getElementById('submitScore').addEventListener('click', submitHighScore);
+            document.getElementById('submitScoreWin').addEventListener('click', submitHighScoreWin);
             
             // Settings controls
             document.getElementById('musicDown').addEventListener('click', () => {
@@ -836,6 +1136,34 @@
                 keys[' '] = false;
             });
             
+            // Ship selection buttons
+            document.getElementById('defaultShip').addEventListener('click', () => {
+                if (player.availableShips.default) {
+                    player.shipSkin = 'default';
+                    player.availableShips.default = false;
+                    sounds.shipChange.play();
+                    updateShipSelectionUI();
+                }
+            });
+            
+            document.getElementById('bangkaShip').addEventListener('click', () => {
+                if (player.availableShips.bangka) {
+                    player.shipSkin = 'bangka';
+                    player.availableShips.bangka = false;
+                    sounds.shipChange.play();
+                    updateShipSelectionUI();
+                }
+            });
+            
+            document.getElementById('jeepneyShip').addEventListener('click', () => {
+                if (player.availableShips.jeepney) {
+                    player.shipSkin = 'jeepney';
+                    player.availableShips.jeepney = false;
+                    sounds.shipChange.play();
+                    updateShipSelectionUI();
+                }
+            });
+            
             // Add click event listeners for trivia options
             document.getElementById('triviaOptions').addEventListener('click', (e) => {
                 if (gameState === STATE_PLAYING && bossActive && e.target.classList.contains('triviaOption')) {
@@ -874,9 +1202,15 @@
                 }
                 
                 // In game over screen, allow typing name
-                if (gameState === STATE_GAME_OVER && document.getElementById('nameInputContainer').style.display !== 'none') {
+                if ((gameState === STATE_GAME_OVER || gameState === STATE_WIN) && 
+                    (document.getElementById('nameInputContainer').style.display !== 'none' || 
+                     document.getElementById('nameInputContainerWin').style.display !== 'none')) {
                     if (e.key === 'Enter') {
-                        submitHighScore();
+                        if (gameState === STATE_GAME_OVER) {
+                            submitHighScore();
+                        } else {
+                            submitHighScoreWin();
+                        }
                     }
                 }
             });
@@ -943,6 +1277,7 @@
             document.getElementById('winScreen').style.display = 'none';
             document.getElementById('highscoreScreen').style.display = 'none';
             document.getElementById('settingsScreen').style.display = 'none';
+            document.getElementById('tutorialScreen').style.display = 'none';
             document.getElementById('menuScreen').style.display = 'flex';
             document.getElementById('gameOverCover').style.display = 'none';
             
@@ -960,17 +1295,37 @@
             backgroundMusic.pause();
         }
         
-        // Submit high score
+        // Submit high score from game over screen
         function submitHighScore() {
             const nameInput = document.getElementById('nameInput');
             const name = nameInput.value.trim();
             if (name !== '') {
-                addHighScore(name.toUpperCase(), player.score);
+                addHighScore(name, player.score);
                 nameInput.value = '';
                 document.getElementById('nameInputContainer').style.display = 'none';
                 document.getElementById('continueButton').style.display = 'block';
-                showHighScores(); // Show the updated high scores
+                showHighScores();
             }
+        }
+        
+        // Submit high score from win screen
+        function submitHighScoreWin() {
+            const nameInput = document.getElementById('nameInputWin');
+            const name = nameInput.value.trim();
+            if (name !== '') {
+                addHighScore(name, player.score);
+                nameInput.value = '';
+                document.getElementById('nameInputContainerWin').style.display = 'none';
+                document.getElementById('winContinueButton').style.display = 'block';
+                showHighScores();
+            }
+        }
+        
+        // Show tutorial
+        function showTutorial() {
+            gameState = STATE_TUTORIAL;
+            document.getElementById('menuScreen').style.display = 'none';
+            document.getElementById('tutorialScreen').style.display = 'flex';
         }
         
         // Start a new game
@@ -981,7 +1336,7 @@
             // Reset player
             player = {
                 x: CANVAS_WIDTH / 2 - 25,
-                y: CANVAS_HEIGHT - 90, // Move player higher
+                y: CANVAS_HEIGHT - 90,
                 width: 50,
                 height: 30,
                 speed: 5,
@@ -998,7 +1353,7 @@
                 },
                 shipSkin: 'default',
                 availableShips: {
-                    default: true,  // Player starts with default ship available
+                    default: true,
                     bangka: false,
                     jeepney: false
                 }
@@ -1096,7 +1451,21 @@
             gameState = STATE_WIN;
             document.getElementById('winScreen').style.display = 'flex';
             document.getElementById('winScore').textContent = `FINAL SCORE: ${player.score}`;
+            document.getElementById('gameOverCover').style.display = 'block';
             sounds.win.play();
+            
+            // Check if score qualifies for high score
+            const qualifiesForHighScore = highScores.length < MAX_HIGH_SCORES || 
+                                        player.score > highScores[highScores.length - 1].score;
+            
+            if (qualifiesForHighScore) {
+                document.getElementById('nameInputContainerWin').style.display = 'flex';
+                document.getElementById('winContinueButton').style.display = 'none';
+                document.getElementById('nameInputWin').focus();
+            } else {
+                document.getElementById('nameInputContainerWin').style.display = 'none';
+                document.getElementById('winContinueButton').style.display = 'block';
+            }
             
             // Hide all game elements
             document.getElementById('hud').style.display = 'none';
@@ -1168,6 +1537,12 @@
                 optionElement.className = 'triviaOption';
                 optionElement.textContent = option;
                 optionElement.dataset.index = index;
+                
+                // Add ship indicator
+                const shipIndicator = document.createElement('div');
+                shipIndicator.className = 'ship-indicator';
+                optionElement.appendChild(shipIndicator);
+                
                 optionsContainer.appendChild(optionElement);
             });
 
@@ -1179,6 +1554,12 @@
             const options = document.querySelectorAll('#triviaOptions .triviaOption');
             options.forEach((opt, index) => {
                 opt.classList.toggle('highlighted', index === highlightedOption);
+                
+                // Show ship indicator on highlighted option
+                const shipIndicator = opt.querySelector('.ship-indicator');
+                if (shipIndicator) {
+                    shipIndicator.style.display = index === highlightedOption ? 'block' : 'none';
+                }
             });
         }
         
@@ -1203,7 +1584,10 @@
             const options = document.querySelectorAll('#triviaOptions .triviaOption');
             
             // Highlight selected option
-            options.forEach(opt => opt.classList.remove('highlighted'));
+            options.forEach(opt => {
+                opt.classList.remove('highlighted');
+                opt.querySelector('.ship-indicator').style.display = 'none';
+            });
             options[index].classList.add('selected');
             
             if (index === currentQuestion.answer) {
@@ -1337,19 +1721,19 @@
                     this.height = 50;
                     this.health = 3;
                     this.speed = enemySpeed * 0.7;
-                    this.shootChance = 0.3; // 30% chance to shoot
+                    this.shootChance = 0.3;
                 } else if (this.type === 'aswang') {
                     this.width = 30;
                     this.height = 20;
                     this.health = 1;
                     this.speed = enemySpeed * 1.5;
-                    this.shootChance = 0.5; // 50% chance to shoot
+                    this.shootChance = 0.5;
                 } else { // sarimanok
                     this.width = 45;
                     this.height = 45;
                     this.health = 2;
                     this.speed = enemySpeed;
-                    this.shootChance = 0.4; // 40% chance to shoot
+                    this.shootChance = 0.4;
                 }
                 
                 this.x = Math.random() * (CANVAS_WIDTH - this.width);
@@ -1571,7 +1955,7 @@
         }
         
         // Power-up timers
-        const powerupDuration = 300; // 5 seconds at 60fps
+        const powerupDuration = 300;
         const powerupTimers = {
             barongShield: 0,
             jeepneyBoost: 0,
@@ -1748,7 +2132,7 @@
                 if (keys[' '] && bulletCooldown <= 0) {
                     bullets.push(new Bullet(player.x + player.width/2, player.y));
                     sounds.shoot.play();
-                    bulletCooldown = 15 / (player.powerups.tiniklingMode ? 2 : 1); // Faster shooting in tinikling mode
+                    bulletCooldown = 15 / (player.powerups.tiniklingMode ? 2 : 1);
                 }
                 
                 if (bulletCooldown > 0) {
@@ -1760,7 +2144,7 @@
                     enemySpawnTimer++;
                     if (enemySpawnTimer >= enemySpawnRate) {
                         enemySpawnTimer = 0;
-                        if (enemies.length < 5 + level) { // More enemies at higher levels
+                        if (enemies.length < 5 + level) {
                             enemies.push(new Enemy());
                         }
                         // Decrease spawn rate over time
@@ -1895,7 +2279,7 @@
                                 
                                 // Add to combo
                                 comboCount++;
-                                comboTimeout = 60; // 1 second to keep combo going
+                                comboTimeout = 60;
                                 updateHUD();
                                 
                                 // Different points for different enemies
@@ -1922,7 +2306,7 @@
                                 updateHUD();
                                 
                                 // Chance to drop power-up or ship
-                                if (Math.random() < 0.2 + (level * 0.02)) { // Higher chance at higher levels
+                                if (Math.random() < 0.2 + (level * 0.02)) {
                                     // 60% chance for regular power-up, 40% for ship
                                     if (Math.random() < 0.6) {
                                         powerups.push(new PowerUp(
