@@ -16,6 +16,7 @@
             overflow: hidden;
             touch-action: manipulation;
             image-rendering: pixelated;
+            transition: background-color 0.3s;
         }
         
         /* Fullscreen canvas */
@@ -32,7 +33,7 @@
         }
         
         /* Screens */
-        #menuScreen, #gameOverScreen, #highscoreScreen, #settingsScreen, #winScreen, #tutorialScreen {
+        #menuScreen, #gameOverScreen, #highscoreScreen, #settingsScreen, #winScreen, #tutorialScreen, #waveScreen, #quizScreen {
             position: fixed;
             top: 0;
             left: 0;
@@ -428,7 +429,7 @@
             font-family: 'Press Start 2P', cursive;
         }
         
-        #levelIndicator {
+        #waveIndicator {
             position: fixed;
             top: 50px;
             right: 20px;
@@ -567,6 +568,123 @@
             background-color: green;
         }
         
+        /* Wave screen styles */
+        #waveScreen {
+            display: none;
+        }
+        
+        .wave-title {
+            font-size: 48px;
+            color: #FFD700;
+            text-shadow: 4px 4px 0 #8B4513;
+            margin-bottom: 20px;
+            animation: wavePulse 1.5s infinite;
+        }
+        
+        @keyframes wavePulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Quiz screen styles */
+        #quizScreen {
+            display: none;
+        }
+        
+        .quiz-title {
+            font-size: 24px;
+            color: #FFD700;
+            text-shadow: 3px 3px 0 #8B4513;
+            margin-bottom: 30px;
+        }
+        
+        .quiz-question {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #FFD700;
+            text-shadow: 2px 2px 0 #8B4513;
+            line-height: 1.4;
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 80%;
+            max-width: 500px;
+        }
+        
+        .quiz-option {
+            padding: 15px;
+            background-color: rgba(0, 0, 20, 0.7);
+            text-align: center;
+            font-size: 14px;
+            cursor: pointer;
+            border: 2px solid #555;
+            transition: all 0.2s;
+        }
+        
+        .quiz-option:hover {
+            background-color: rgba(85, 85, 255, 0.7);
+            border-color: #FFD700;
+        }
+        
+        /* Timer styles */
+        #timerContainer {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid #444;
+            display: none;
+            z-index: 2;
+        }
+        
+        #timerBar {
+            height: 100%;
+            background: #FFD700;
+            width: 100%;
+            transition: width 0.1s;
+        }
+        
+        /* Trivia Laser UI */
+        #triviaLaserHud {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 12px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            border-radius: 0;
+            border: 2px solid #444;
+            display: none;
+            z-index: 2;
+            font-family: 'Press Start 2P', cursive;
+            text-shadow: 2px 2px 0 #000;
+        }
+        
+        #triviaLaserBar {
+            width: 100px;
+            height: 10px;
+            background-color: #333;
+            margin-top: 5px;
+            border: 1px solid #555;
+        }
+        
+        #triviaLaserFill {
+            height: 100%;
+            width: 0%;
+            background-color: #4CAF50;
+            transition: width 0.1s;
+        }
+        
         @media (max-width: 768px) {
             #mobileControls {
                 display: flex;
@@ -627,6 +745,22 @@
                 width: 120px;
                 font-size: 12px;
             }
+            
+            .wave-title {
+                font-size: 32px;
+            }
+            
+            .quiz-title {
+                font-size: 18px;
+            }
+            
+            .quiz-question {
+                font-size: 14px;
+            }
+            
+            .quiz-options {
+                width: 90%;
+            }
         }
     </style>
 </head>
@@ -667,12 +801,23 @@
         <div>POWERUPS: <span id="powerupStatus">NONE</span></div>
     </div>
     
+    <div id="triviaLaserHud">
+        <div>TRIVIA LASER:</div>
+        <div id="triviaLaserBar">
+            <div id="triviaLaserFill"></div>
+        </div>
+    </div>
+    
     <div id="bossHealthBar">
         <div id="bossHealth"></div>
     </div>
     
+    <div id="timerContainer">
+        <div id="timerBar"></div>
+    </div>
+    
     <div id="comboCounter"></div>
-    <div id="levelIndicator">LEVEL: <span id="levelNumber">1</span></div>
+    <div id="waveIndicator">WAVE: <span id="waveNumber">1</span></div>
     
     <div id="triviaContainer">
         <div id="triviaQuestion"></div>
@@ -865,23 +1010,52 @@
             </div>
             
             <div class="tutorial-section">
-                <div class="tutorial-title">BOSS FIGHT</div>
+                <div class="tutorial-title">TRIVIA LASER</div>
                 <div class="tutorial-text">
-                    When you reach 1000 points, you'll face a TIKBALANG boss!<br><br>
-                    Answer trivia questions correctly to damage the boss.<br>
-                    Wrong answers will damage your ship instead.<br>
-                    Move your ship to the answer you want to select and press Z.<br>
-                    Defeat the boss to win the level!
+                    Answering trivia questions correctly charges your "Trivia Laser".<br>
+                    Press "T" to fire a powerful laser that destroys all enemies on screen.<br>
+                    Wrong answers drain your laser charge.
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">TIME BONUSES</div>
+                <div class="tutorial-text">
+                    <strong>Fast Answers:</strong> Answer quickly for temporary invincibility or slow-mo.<br>
+                    <strong>Slow/Wrong Answers:</strong> Enemies become faster and shoot more often.
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">WAVE SYSTEM</div>
+                <div class="tutorial-text">
+                    The game progresses through waves of enemies.<br>
+                    After each wave, you'll face a trivia question.<br>
+                    Correct answers make the next wave easier, wrong answers make it harder.<br>
+                    Every 5 waves, you'll face a boss battle!
                 </div>
             </div>
         </div>
         <button id="tutorialBackButton" class="menu-button" style="background: #0D47A1; box-shadow: 4px 4px 0 #2196F3; margin-top: 20px;">BACK TO MENU</button>
     </div>
     
+    <div id="waveScreen" style="display: none;">
+        <div class="wave-title">WAVE <span id="waveDisplay">1</span></div>
+        <div id="waveSubtitle" style="font-size: 18px; margin-bottom: 30px; color: white;">GET READY!</div>
+        <button id="startWaveButton" class="menu-button" style="background: #2E7D32; box-shadow: 4px 4px 0 #4CAF50;">START WAVE</button>
+    </div>
+    
+    <div id="quizScreen" style="display: none;">
+        <div class="quiz-title">TRIVIA CHALLENGE</div>
+        <div class="quiz-question" id="quizQuestion"></div>
+        <div class="quiz-options" id="quizOptions"></div>
+        <div id="quizTimer" style="margin-top: 20px; font-size: 14px; color: #FFD700;"></div>
+    </div>
+    
     <script>
         // Game constants
-        const BOSS_SPAWN_SCORE = 1000;
-        const LEVEL_UP_SCORE = 500;
+        const BOSS_WAVE_INTERVAL = 5;
+        const TRIVIA_LASER_MAX = 100;
         
         // Game states
         const STATE_MENU = 0;
@@ -891,6 +1065,8 @@
         const STATE_SETTINGS = 4;
         const STATE_WIN = 5;
         const STATE_TUTORIAL = 6;
+        const STATE_WAVE = 7;
+        const STATE_QUIZ = 8;
         
         // Initialize canvas
         const canvas = document.getElementById('gameCanvas');
@@ -941,7 +1117,8 @@
                 default: true,
                 bangka: false,
                 jeepney: false
-            }
+            },
+            triviaLaser: 0
         };
         
         let bullets = [];
@@ -956,8 +1133,10 @@
         let enemyShootRate = 120;
         let comboCount = 0;
         let comboTimeout = 0;
-        let level = 1;
-        let lastScoreForLevel = 0;
+        let wave = 1;
+        let enemiesInWave = 0;
+        let enemiesDefeated = 0;
+        let waveDifficultyModifier = 1.0;
         
         // Boss variables
         let boss = null;
@@ -967,6 +1146,19 @@
         let currentQuestion = null;
         let selectedOption = null;
         let answerSelectionMode = false;
+        
+        // Quiz variables
+        let quizStartTime = 0;
+        let quizTimeLimit = 10; // seconds
+        let quizTimer = 0;
+        let quizCorrectAnswers = 0;
+        
+        // Time bonus variables
+        let timeBonusActive = false;
+        let timeBonusTimer = 0;
+        let timeBonusDuration = 5; // seconds
+        let slowMoActive = false;
+        let slowMoTimer = 0;
         
         // High scores
         let highScores = [];
@@ -991,10 +1183,12 @@
             shipChange: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3'),
             win: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3'),
             combo: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-extra-bonus-in-a-video-game-2045.mp3'),
-            levelUp: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3'),
+            waveComplete: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3'),
             hit: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-changing-tab-206.mp3'),
             menuSelect: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3'),
-            menuHover: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-horror-ambience-228.mp3')
+            menuHover: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-horror-ambience-228.mp3'),
+            laser: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-laser-weapon-shot-1671.mp3'),
+            slowmo: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3')
         };
         
         // Set volume for all sounds
@@ -1200,6 +1394,10 @@
                 sounds.menuSelect.play();
                 submitHighScoreWin();
             });
+            document.getElementById('startWaveButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                startWave();
+            });
             
             // Add hover sounds to menu buttons
             const menuButtons = document.querySelectorAll('.menu-button');
@@ -1284,6 +1482,14 @@
             // Remove click event listeners for trivia options
             document.getElementById('triviaOptions').innerHTML = '';
             
+            // Quiz option click handlers
+            document.getElementById('quizOptions').addEventListener('click', (e) => {
+                if (e.target.classList.contains('quiz-option')) {
+                    const index = Array.from(e.target.parentElement.children).indexOf(e.target);
+                    checkQuizAnswer(index);
+                }
+            });
+            
             // Keyboard controls
             window.addEventListener('keydown', (e) => {
                 if (e.key in keys) {
@@ -1310,6 +1516,9 @@
                     } else if (e.key.toLowerCase() === 'z' && bossActive) {
                         // Select the option based on ship position
                         selectBossOptionBasedOnPosition();
+                    } else if (e.key.toLowerCase() === 't' && player.triviaLaser >= TRIVIA_LASER_MAX) {
+                        // Fire trivia laser
+                        fireTriviaLaser();
                     }
                 }
                 
@@ -1342,7 +1551,8 @@
             ArrowLeft: false,
             ArrowRight: false,
             ' ': false,
-            'z': false
+            'z': false,
+            't': false
         };
         
         // Update ship selection UI
@@ -1379,6 +1589,45 @@
                 status.length > 0 ? status.join(", ") : "NONE";
         }
         
+        // Update trivia laser display
+        function updateTriviaLaserDisplay() {
+            const percent = (player.triviaLaser / TRIVIA_LASER_MAX) * 100;
+            document.getElementById('triviaLaserFill').style.width = `${percent}%`;
+        }
+        
+        // Fire trivia laser
+        function fireTriviaLaser() {
+            if (player.triviaLaser < TRIVIA_LASER_MAX) return;
+            
+            sounds.laser.play();
+            player.triviaLaser = 0;
+            updateTriviaLaserDisplay();
+            
+            // Destroy all enemies on screen
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
+                let points = 0;
+                
+                if (enemy.type === 'kapre') {
+                    points = 100 * wave;
+                } else if (enemy.type === 'sarimanok') {
+                    points = 50 * wave;
+                } else {
+                    points = 30 * wave;
+                }
+                
+                player.score += points;
+                enemies.splice(i, 1);
+                sounds.explosion.play();
+            }
+            
+            // Draw laser effect
+            ctx.fillStyle = 'rgba(0, 255, 255, 0.5)';
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            updateHUD();
+        }
+        
         // Return to menu from any screen
         function returnToMenu() {
             gameState = STATE_MENU;
@@ -1387,6 +1636,8 @@
             document.getElementById('highscoreScreen').style.display = 'none';
             document.getElementById('settingsScreen').style.display = 'none';
             document.getElementById('tutorialScreen').style.display = 'none';
+            document.getElementById('waveScreen').style.display = 'none';
+            document.getElementById('quizScreen').style.display = 'none';
             document.getElementById('menuScreen').style.display = 'flex';
             document.getElementById('gameOverCover').style.display = 'none';
             
@@ -1398,7 +1649,9 @@
             document.getElementById('triviaContainer').style.display = 'none';
             document.getElementById('shipSelection').style.display = 'none';
             document.getElementById('comboCounter').style.display = 'none';
-            document.getElementById('levelIndicator').style.display = 'none';
+            document.getElementById('waveIndicator').style.display = 'none';
+            document.getElementById('timerContainer').style.display = 'none';
+            document.getElementById('triviaLaserHud').style.display = 'none';
             
             // Stop background music
             backgroundMusic.pause();
@@ -1439,7 +1692,7 @@
         
         // Start a new game
         function startGame() {
-            gameState = STATE_PLAYING;
+            gameState = STATE_WAVE;
             document.getElementById('menuScreen').style.display = 'none';
             
             // Reset player
@@ -1465,7 +1718,8 @@
                     default: true,
                     bangka: false,
                     jeepney: false
-                }
+                },
+                triviaLaser: 0
             };
             
             // Reset game variables
@@ -1483,8 +1737,53 @@
             answerSelectionMode = false;
             comboCount = 0;
             comboTimeout = 0;
-            level = 1;
-            lastScoreForLevel = 0;
+            wave = 1;
+            enemiesInWave = 0;
+            enemiesDefeated = 0;
+            waveDifficultyModifier = 1.0;
+            quizCorrectAnswers = 0;
+            
+            // Show wave screen
+            showWaveScreen();
+            
+            // Update HUD
+            updateHUD();
+            updateDurabilityDisplay();
+            updatePowerupStatus();
+            updateShipSelectionUI();
+            updateTriviaLaserDisplay();
+            
+            // Hide boss elements
+            document.getElementById('bossHealthBar').style.display = 'none';
+            document.getElementById('triviaContainer').style.display = 'none';
+            document.getElementById('timerContainer').style.display = 'none';
+            
+            // Start background music
+            backgroundMusic.currentTime = 0;
+            backgroundMusic.play().catch(e => console.log("Autoplay prevented:", e));
+        }
+        
+        // Show wave screen
+        function showWaveScreen() {
+            gameState = STATE_WAVE;
+            document.getElementById('waveDisplay').textContent = wave;
+            
+            // Special wave messages
+            let subtitle = "GET READY!";
+            if (wave % BOSS_WAVE_INTERVAL === 0) {
+                subtitle = "BOSS WAVE!";
+            } else if (wave > 1) {
+                subtitle = `WAVE ${wave}`;
+            }
+            
+            document.getElementById('waveSubtitle').textContent = subtitle;
+            document.getElementById('waveScreen').style.display = 'flex';
+        }
+        
+        // Start the current wave
+        function startWave() {
+            gameState = STATE_PLAYING;
+            document.getElementById('waveScreen').style.display = 'none';
             
             // Show game elements
             document.getElementById('hud').style.display = 'block';
@@ -1492,22 +1791,24 @@
             document.getElementById('powerupHud').style.display = 'block';
             document.getElementById('shipSelection').style.display = 'flex';
             document.getElementById('comboCounter').style.display = 'none';
-            document.getElementById('levelIndicator').style.display = 'block';
-            document.getElementById('levelNumber').textContent = level;
+            document.getElementById('waveIndicator').style.display = 'block';
+            document.getElementById('waveNumber').textContent = wave;
+            document.getElementById('triviaLaserHud').style.display = 'block';
             
-            // Update HUD
-            updateHUD();
-            updateDurabilityDisplay();
-            updatePowerupStatus();
-            updateShipSelectionUI();
+            // Reset wave counters
+            enemiesDefeated = 0;
             
-            // Hide boss elements
-            document.getElementById('bossHealthBar').style.display = 'none';
-            document.getElementById('triviaContainer').style.display = 'none';
+            // Calculate enemies for this wave
+            enemiesInWave = 5 + Math.floor(wave * 1.5);
             
-            // Start background music
-            backgroundMusic.currentTime = 0;
-            backgroundMusic.play().catch(e => console.log("Autoplay prevented:", e));
+            // Adjust difficulty based on modifier
+            enemySpeed = 1.0 * waveDifficultyModifier;
+            enemyShootRate = Math.max(30, 120 - (wave * 5) * waveDifficultyModifier);
+            
+            // Check if boss wave
+            if (wave % BOSS_WAVE_INTERVAL === 0) {
+                spawnBoss();
+            }
         }
         
         // Show high scores
@@ -1585,7 +1886,9 @@
             document.getElementById('triviaContainer').style.display = 'none';
             document.getElementById('shipSelection').style.display = 'none';
             document.getElementById('comboCounter').style.display = 'none';
-            document.getElementById('levelIndicator').style.display = 'none';
+            document.getElementById('waveIndicator').style.display = 'none';
+            document.getElementById('timerContainer').style.display = 'none';
+            document.getElementById('triviaLaserHud').style.display = 'none';
         }
         
         // Spawn boss
@@ -1598,7 +1901,7 @@
                 width: 150,
                 height: 120,
                 speed: 1,
-                health: 20 + (level * 5)
+                health: 20 + (wave * 5)
             };
             bossMaxHealth = boss.health;
             
@@ -1741,7 +2044,7 @@
                 
                 if (boss.health <= 0) {
                     // Boss defeated - player wins
-                    player.score += 1000 * level;
+                    player.score += 1000 * wave;
                     updateHUD();
                     bossActive = false;
                     answerSelectionMode = false;
@@ -1793,38 +2096,115 @@
             }
         }
         
+        // Show quiz between waves
+        function showQuiz() {
+            gameState = STATE_QUIZ;
+            document.getElementById('quizScreen').style.display = 'flex';
+            
+            // Select a random question
+            currentQuestion = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
+            
+            // Display question
+            document.getElementById('quizQuestion').textContent = currentQuestion.question;
+            
+            // Display options
+            const optionsContainer = document.getElementById('quizOptions');
+            optionsContainer.innerHTML = '';
+            
+            currentQuestion.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'quiz-option';
+                optionElement.textContent = option;
+                optionElement.dataset.index = index;
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            // Start timer
+            quizStartTime = Date.now();
+            quizTimer = quizTimeLimit;
+            document.getElementById('quizTimer').textContent = `TIME: ${quizTimer}s`;
+            
+            // Update timer every second
+            const timerInterval = setInterval(() => {
+                if (gameState !== STATE_QUIZ) {
+                    clearInterval(timerInterval);
+                    return;
+                }
+                
+                const elapsed = Math.floor((Date.now() - quizStartTime) / 1000);
+                quizTimer = Math.max(0, quizTimeLimit - elapsed);
+                document.getElementById('quizTimer').textContent = `TIME: ${quizTimer}s`;
+                
+                if (quizTimer <= 0) {
+                    clearInterval(timerInterval);
+                    // Time's up - wrong answer
+                    checkQuizAnswer(-1);
+                }
+            }, 200);
+        }
+        
+        // Check quiz answer
+        function checkQuizAnswer(index) {
+            const isCorrect = index === currentQuestion.answer;
+            const answerTime = (Date.now() - quizStartTime) / 1000; // in seconds
+            
+            if (isCorrect) {
+                sounds.correct.play();
+                quizCorrectAnswers++;
+                
+                // Calculate time bonus (faster answers give better bonuses)
+                const timeBonus = Math.max(1, quizTimeLimit - answerTime);
+                
+                // Add to trivia laser
+                player.triviaLaser = Math.min(TRIVIA_LASER_MAX, player.triviaLaser + 25);
+                updateTriviaLaserDisplay();
+                
+                // Apply time bonus
+                if (timeBonus >= quizTimeLimit * 0.7) {
+                    // Slow-mo for very fast answers
+                    slowMoActive = true;
+                    slowMoTimer = timeBonusDuration;
+                    sounds.slowmo.play();
+                    document.body.style.backgroundColor = 'rgba(0, 0, 100, 0.5)';
+                } else if (timeBonus >= quizTimeLimit * 0.3) {
+                    // Temporary invincibility for fast answers
+                    timeBonusActive = true;
+                    timeBonusTimer = timeBonusDuration;
+                    player.powerups.barongShield = true;
+                    updatePowerupStatus();
+                }
+                
+                // Make next wave easier
+                waveDifficultyModifier = Math.max(0.5, waveDifficultyModifier * 0.9);
+            } else {
+                sounds.wrong.play();
+                
+                // Drain trivia laser
+                player.triviaLaser = Math.max(0, player.triviaLaser - 15);
+                updateTriviaLaserDisplay();
+                
+                // Make next wave harder
+                waveDifficultyModifier = Math.min(2.0, waveDifficultyModifier * 1.2);
+                
+                // Speed up enemies temporarily
+                enemySpeed *= 1.2;
+                enemyShootRate = Math.max(30, enemyShootRate * 0.8);
+            }
+            
+            // Hide quiz screen
+            document.getElementById('quizScreen').style.display = 'none';
+            
+            // Move to next wave
+            wave++;
+            showWaveScreen();
+        }
+        
         // Update HUD
         function updateHUD() {
             document.getElementById('scoreDisplay').textContent = player.score;
             document.getElementById('comboCount').textContent = `${comboCount}x`;
             updateDurabilityDisplay();
             updatePowerupStatus();
-            
-            // Check for level up
-            if (player.score >= lastScoreForLevel + LEVEL_UP_SCORE) {
-                levelUp();
-            }
-        }
-        
-        // Level up the player
-        function levelUp() {
-            level++;
-            lastScoreForLevel = player.score;
-            document.getElementById('levelNumber').textContent = level;
-            
-            // Show level up effect
-            const levelUpText = document.getElementById('comboCounter');
-            levelUpText.textContent = `LEVEL ${level}!`;
-            levelUpText.style.display = 'block';
-            levelUpText.style.color = '#FFD700';
-            levelUpText.style.fontSize = '24px';
-            
-            sounds.levelUp.play();
-            
-            // Hide after 2 seconds
-            setTimeout(() => {
-                levelUpText.style.display = 'none';
-            }, 2000);
         }
         
         // Show combo effect
@@ -1883,7 +2263,7 @@
             }
             
             update() {
-                this.y += this.speed;
+                this.y += this.speed * (slowMoActive ? 0.5 : 1);
             }
             
             draw() {
@@ -2022,7 +2402,7 @@
                         y: this.y + this.height,
                         width: 5,
                         height: 10,
-                        speed: 3
+                        speed: 3 * (slowMoActive ? 0.5 : 1)
                     });
                     sounds.enemyShoot.play();
                 }
@@ -2035,7 +2415,7 @@
                 this.x = x;
                 this.y = y;
                 this.radius = 5;
-                this.speed = 7;
+                this.speed = 7 * (slowMoActive ? 1.5 : 1);
                 this.damage = player.powerups.tiniklingMode ? 2 : 1;
             }
             
@@ -2071,7 +2451,7 @@
                 this.y = y;
                 this.width = 40;
                 this.height = 40;
-                this.speed = 2;
+                this.speed = 2 * (slowMoActive ? 0.5 : 1);
                 this.type = type;
                 this.rotation = 0;
                 this.rotationSpeed = Math.random() * 0.02 - 0.01;
@@ -2158,7 +2538,7 @@
                 this.y = y;
                 this.width = 30;
                 this.height = 30;
-                this.speed = 2;
+                this.speed = 2 * (slowMoActive ? 0.5 : 1);
                 this.type = type || ['barongShield', 'jeepneyBoost', 'tiniklingMode'][Math.floor(Math.random() * 3)];
                 this.rotation = 0;
                 this.rotationSpeed = Math.random() * 0.02 - 0.01;
@@ -2267,6 +2647,25 @@
                         player.powerups[type] = false;
                         updateHUD();
                     }
+                }
+            }
+            
+            // Update time bonus
+            if (timeBonusActive) {
+                timeBonusTimer--;
+                if (timeBonusTimer <= 0) {
+                    timeBonusActive = false;
+                    player.powerups.barongShield = false;
+                    updateHUD();
+                }
+            }
+            
+            // Update slow-mo
+            if (slowMoActive) {
+                slowMoTimer--;
+                if (slowMoTimer <= 0) {
+                    slowMoActive = false;
+                    document.body.style.backgroundColor = '#000';
                 }
             }
         }
@@ -2579,11 +2978,11 @@
                 
                 // Move player
                 if (keys.ArrowLeft) {
-                    player.x -= player.speed * (player.powerups.jeepneyBoost ? 1.5 : 1);
+                    player.x -= player.speed * (player.powerups.jeepneyBoost ? 1.5 : 1) * (slowMoActive ? 1.5 : 1);
                     if (player.x < 0) player.x = 0;
                 }
                 if (keys.ArrowRight) {
-                    player.x += player.speed * (player.powerups.jeepneyBoost ? 1.5 : 1);
+                    player.x += player.speed * (player.powerups.jeepneyBoost ? 1.5 : 1) * (slowMoActive ? 1.5 : 1);
                     if (player.x > CANVAS_WIDTH - player.width) player.x = CANVAS_WIDTH - player.width;
                 }
                 
@@ -2604,21 +3003,12 @@
                     bulletCooldown--;
                 }
                 
-                // Spawn enemies if boss is not active
-                if (!bossActive) {
+                // Spawn enemies if not in boss wave and wave not complete
+                if (!bossActive && enemiesDefeated < enemiesInWave) {
                     enemySpawnTimer++;
                     if (enemySpawnTimer >= enemySpawnRate) {
                         enemySpawnTimer = 0;
-                        if (enemies.length < 5 + level) {
-                            enemies.push(new Enemy());
-                        }
-                        // Decrease spawn rate over time
-                        enemySpawnRate = Math.max(20, enemySpawnRate - 0.1);
-                    }
-                    
-                    // Check if should spawn boss
-                    if (player.score >= BOSS_SPAWN_SCORE * level) {
-                        spawnBoss();
+                        enemies.push(new Enemy());
                     }
                 }
                 
@@ -2676,7 +3066,7 @@
                         
                         if (boss.health <= 0) {
                             // Boss defeated
-                            player.score += 1000 * level;
+                            player.score += 1000 * wave;
                             updateHUD();
                             bossActive = false;
                             answerSelectionMode = false;
@@ -2742,6 +3132,17 @@
                             
                             if (enemy.hit()) {
                                 enemies.splice(j, 1);
+                                enemiesDefeated++;
+                                
+                                // Check if wave is complete
+                                if (!bossActive && enemiesDefeated >= enemiesInWave) {
+                                    sounds.waveComplete.play();
+                                    
+                                    // Show quiz between waves
+                                    setTimeout(() => {
+                                        showQuiz();
+                                    }, 1000);
+                                }
                                 
                                 // Add to combo
                                 comboCount++;
@@ -2751,11 +3152,11 @@
                                 // Different points for different enemies
                                 let points = 0;
                                 if (enemy.type === 'kapre') {
-                                    points = 100 * level;
+                                    points = 100 * wave;
                                 } else if (enemy.type === 'sarimanok') {
-                                    points = 50 * level;
+                                    points = 50 * wave;
                                 } else {
-                                    points = 30 * level;
+                                    points = 30 * wave;
                                 }
                                 
                                 // Combo multiplier
@@ -2772,7 +3173,7 @@
                                 updateHUD();
                                 
                                 // Chance to drop power-up or ship
-                                if (Math.random() < 0.2 + (level * 0.02)) {
+                                if (Math.random() < 0.2 + (wave * 0.02)) {
                                     // 60% chance for regular power-up, 40% for ship
                                     if (Math.random() < 0.6) {
                                         powerups.push(new PowerUp(
@@ -2849,7 +3250,7 @@
                 // Move boss if active
                 if (bossActive) {
                     // Simple side-to-side movement
-                    boss.x += boss.speed;
+                    boss.x += boss.speed * (slowMoActive ? 0.5 : 1);
                     if (boss.x <= 0 || boss.x + boss.width >= CANVAS_WIDTH) {
                         boss.speed *= -1;
                     }
