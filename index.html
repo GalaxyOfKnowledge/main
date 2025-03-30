@@ -103,7 +103,7 @@
         }
         
         .triviaOption.highlighted {
-            background-color: rgba(85, 85, 85, 0.7);
+            background-color: rgba(85, 85, 255, 0.7);
             box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
             border-color: #FFD700;
         }
@@ -184,6 +184,40 @@
             z-index: 2;
             font-family: 'Press Start 2P', cursive;
             text-shadow: 2px 2px 0 #000;
+        }
+        
+        .durability-ships {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .durability-title {
+            font-size: 12px;
+            margin-right: 5px;
+        }
+        
+        .ship-durability {
+            display: flex;
+            gap: 3px;
+        }
+        
+        .ship-icon-small {
+            width: 15px;
+            height: 15px;
+            border-radius: 0;
+        }
+        
+        .ship-icon-small.default {
+            background-color: #4CAF50;
+        }
+        
+        .ship-icon-small.bangka {
+            background-color: #8B4513;
+        }
+        
+        .ship-icon-small.jeepney {
+            background-color: #FFD700;
         }
         
         #powerupHud {
@@ -583,7 +617,12 @@
     </div>
     
     <div id="durabilityHud">
-        DURABILITY: <span id="durabilityDisplay"></span>
+        <div class="durability-ships">
+            <div class="durability-title">DURABILITY:</div>
+            <div class="ship-durability" id="defaultDurability"></div>
+            <div class="ship-durability" id="bangkaDurability"></div>
+            <div class="ship-durability" id="jeepneyDurability"></div>
+        </div>
     </div>
     
     <div id="powerupHud">
@@ -904,7 +943,7 @@
         
         // Sound effects - Using different audio sources
         const sounds = {
-            shoot: new Audio('zapsplat_multimedia_game_sound_retro_arcade_style_zap_shoot_002_108849.mp3'),
+            shoot: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-short-laser-gun-shot-1670.mp3'),
             enemyShoot: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arrow-whoosh-1491.mp3'),
             explosion: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-explosion-impact-1684.mp3'),
             powerup: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3'),
@@ -917,7 +956,7 @@
             levelUp: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3'),
             hit: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-changing-tab-206.mp3'),
             menuSelect: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3'),
-            menuHover: new Audio('170143__timgormly__8-bit-blip.aiff')
+            menuHover: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-horror-ambience-228.mp3')
         };
         
         // Set volume for all sounds
@@ -1277,21 +1316,29 @@
         
         // Update durability display
         function updateDurabilityDisplay() {
-            let displayText = '';
+            // Clear existing icons
+            document.getElementById('defaultDurability').innerHTML = '';
+            document.getElementById('bangkaDurability').innerHTML = '';
+            document.getElementById('jeepneyDurability').innerHTML = '';
             
-            // Show durability for each ship type
-            if (player.durability.default > 0) {
-                displayText += `${player.durability.default} DEFAULT `;
-            }
-            if (player.durability.bangka > 0) {
-                displayText += `${player.durability.bangka} BANGKA `;
-            }
-            if (player.durability.jeepney > 0) {
-                displayText += `${player.durability.jeepney} JEEPNEY `;
+            // Add icons for each durability point
+            for (let i = 0; i < player.durability.default; i++) {
+                const icon = document.createElement('div');
+                icon.className = 'ship-icon-small default';
+                document.getElementById('defaultDurability').appendChild(icon);
             }
             
-            document.getElementById('durabilityDisplay').textContent = 
-                displayText.trim() || 'NONE';
+            for (let i = 0; i < player.durability.bangka; i++) {
+                const icon = document.createElement('div');
+                icon.className = 'ship-icon-small bangka';
+                document.getElementById('bangkaDurability').appendChild(icon);
+            }
+            
+            for (let i = 0; i < player.durability.jeepney; i++) {
+                const icon = document.createElement('div');
+                icon.className = 'ship-icon-small jeepney';
+                document.getElementById('jeepneyDurability').appendChild(icon);
+            }
         }
         
         // Update power-up status display
@@ -1586,10 +1633,15 @@
             const options = document.querySelectorAll('#triviaOptions .triviaOption');
             const triviaContainer = document.getElementById('triviaContainer');
             const containerRect = triviaContainer.getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            // Calculate player position relative to trivia container
+            const playerCenterX = player.x + player.width/2;
+            const playerScreenX = canvasRect.left + playerCenterX;
+            const playerRelativeX = playerScreenX - containerRect.left;
             
             // Find which option the player is over
             let selectedIndex = -1;
-            const playerCenter = player.x + player.width / 2;
             
             options.forEach((opt, index) => {
                 const optRect = opt.getBoundingClientRect();
@@ -1598,7 +1650,7 @@
                 
                 opt.classList.remove('highlighted');
                 
-                if (playerCenter >= optLeft && playerCenter <= optRight) {
+                if (playerRelativeX >= optLeft && playerRelativeX <= optRight) {
                     selectedIndex = index;
                 }
             });
@@ -1616,17 +1668,22 @@
             const options = document.querySelectorAll('#triviaOptions .triviaOption');
             const triviaContainer = document.getElementById('triviaContainer');
             const containerRect = triviaContainer.getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            // Calculate player position relative to trivia container
+            const playerCenterX = player.x + player.width/2;
+            const playerScreenX = canvasRect.left + playerCenterX;
+            const playerRelativeX = playerScreenX - containerRect.left;
             
             // Find which option the player is over
             let selectedIndex = -1;
-            const playerCenter = player.x + player.width / 2;
             
             options.forEach((opt, index) => {
                 const optRect = opt.getBoundingClientRect();
                 const optLeft = optRect.left - containerRect.left;
                 const optRight = optRect.right - containerRect.left;
                 
-                if (playerCenter >= optLeft && playerCenter <= optRight) {
+                if (playerRelativeX >= optLeft && playerRelativeX <= optRight) {
                     selectedIndex = index;
                 }
             });
@@ -2346,67 +2403,123 @@
             ctx.save();
             ctx.globalCompositeOperation = 'source-over';
             
-            // Draw tikbalang boss (horse-like creature)
-            ctx.fillStyle = '#654321';
+            // Draw tikbalang boss - more scary version
+            ctx.fillStyle = '#222';
             ctx.beginPath();
-            ctx.moveTo(Math.round(boss.x + boss.width/2), Math.round(boss.y));
-            ctx.lineTo(Math.round(boss.x), Math.round(boss.y + boss.height));
-            ctx.lineTo(Math.round(boss.x + boss.width), Math.round(boss.y + boss.height));
+            // Body
+            ctx.moveTo(boss.x + boss.width/2, boss.y + 20);
+            ctx.lineTo(boss.x + 10, boss.y + boss.height);
+            ctx.lineTo(boss.x + boss.width - 10, boss.y + boss.height);
             ctx.closePath();
             ctx.fill();
             
-            // Head
-            ctx.fillStyle = '#8B4513';
+            // Head - more demonic
+            ctx.fillStyle = '#111';
             ctx.beginPath();
             ctx.arc(
-                Math.round(boss.x + boss.width/2),
-                Math.round(boss.y - 15),
-                20, 0, Math.PI * 2
+                boss.x + boss.width/2,
+                boss.y,
+                25, 0, Math.PI * 2
             );
             ctx.fill();
             
-            // Eyes
+            // Glowing red eyes with slit pupils
             ctx.fillStyle = 'red';
             ctx.beginPath();
+            // Left eye
             ctx.arc(
-                Math.round(boss.x + boss.width/2 - 10),
-                Math.round(boss.y - 20),
-                3, 0, Math.PI * 2
+                boss.x + boss.width/2 - 15,
+                boss.y - 5,
+                5, 0, Math.PI * 2
             );
+            ctx.fill();
+            // Right eye
             ctx.arc(
-                Math.round(boss.x + boss.width/2 + 10),
-                Math.round(boss.y - 20),
-                3, 0, Math.PI * 2
+                boss.x + boss.width/2 + 15,
+                boss.y - 5,
+                5, 0, Math.PI * 2
             );
             ctx.fill();
             
-            // Mouth
-            ctx.strokeStyle = 'red';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(
-                Math.round(boss.x + boss.width/2),
-                Math.round(boss.y - 10),
-                8, 0.1 * Math.PI, 0.9 * Math.PI
-            );
-            ctx.stroke();
-            
-            // Legs
-            ctx.fillStyle = '#654321';
-            ctx.fillRect(
-                Math.round(boss.x + 10),
-                Math.round(boss.y + boss.height),
-                15, 30
-            );
-            ctx.fillRect(
-                Math.round(boss.x + boss.width - 25),
-                Math.round(boss.y + boss.height),
-                15, 30
-            );
-            
-            // Add glow effect
+            // Add glow effect to eyes
             ctx.shadowColor = 'red';
             ctx.shadowBlur = 15;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            // Slit pupils
+            ctx.fillStyle = 'black';
+            ctx.fillRect(boss.x + boss.width/2 - 17, boss.y - 7, 4, 10);
+            ctx.fillRect(boss.x + boss.width/2 + 13, boss.y - 7, 4, 10);
+            
+            // Horns
+            ctx.fillStyle = '#444';
+            ctx.beginPath();
+            // Left horn
+            ctx.moveTo(boss.x + boss.width/2 - 15, boss.y - 20);
+            ctx.lineTo(boss.x + boss.width/2 - 25, boss.y - 40);
+            ctx.lineTo(boss.x + boss.width/2 - 20, boss.y - 35);
+            ctx.closePath();
+            ctx.fill();
+            // Right horn
+            ctx.moveTo(boss.x + boss.width/2 + 15, boss.y - 20);
+            ctx.lineTo(boss.x + boss.width/2 + 25, boss.y - 40);
+            ctx.lineTo(boss.x + boss.width/2 + 20, boss.y - 35);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Mouth with sharp teeth
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(
+                boss.x + boss.width/2,
+                boss.y + 10,
+                15, 0.2 * Math.PI, 0.8 * Math.PI, true
+            );
+            ctx.fill();
+            
+            // Teeth
+            ctx.fillStyle = 'white';
+            for (let i = 0; i < 7; i++) {
+                ctx.beginPath();
+                ctx.moveTo(
+                    boss.x + boss.width/2 - 12 + i*4,
+                    boss.y + 10
+                );
+                ctx.lineTo(
+                    boss.x + boss.width/2 - 14 + i*4,
+                    boss.y + 20
+                );
+                ctx.lineTo(
+                    boss.x + boss.width/2 - 10 + i*4,
+                    boss.y + 20
+                );
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            // Arms with claws
+            ctx.fillStyle = '#222';
+            // Left arm
+            ctx.beginPath();
+            ctx.moveTo(boss.x + 15, boss.y + 40);
+            ctx.lineTo(boss.x, boss.y + 60);
+            ctx.lineTo(boss.x - 10, boss.y + 55);
+            ctx.lineTo(boss.x + 5, boss.y + 45);
+            ctx.closePath();
+            ctx.fill();
+            // Right arm
+            ctx.beginPath();
+            ctx.moveTo(boss.x + boss.width - 15, boss.y + 40);
+            ctx.lineTo(boss.x + boss.width, boss.y + 60);
+            ctx.lineTo(boss.x + boss.width + 10, boss.y + 55);
+            ctx.lineTo(boss.x + boss.width - 5, boss.y + 45);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Add overall shadow effect
+            ctx.shadowColor = 'rgba(255, 0, 0, 0.5)';
+            ctx.shadowBlur = 20;
             ctx.fill();
             ctx.shadowBlur = 0;
             
@@ -2455,6 +2568,7 @@
                 // Shoot
                 if (keys[' '] && bulletCooldown <= 0) {
                     bullets.push(new Bullet(player.x + player.width/2, player.y));
+                    sounds.shoot.currentTime = 0; // Reset sound to start
                     sounds.shoot.play();
                     bulletCooldown = 15 / (player.powerups.tiniklingMode ? 2 : 1);
                 }
