@@ -78,6 +78,7 @@
             justify-content: center;
             flex-wrap: wrap;
             gap: 10px;
+            position: relative;
         }
         
         .triviaOption {
@@ -110,18 +111,6 @@
         .triviaOption.selected {
             background: #2E7D32;
             border-color: #4CAF50;
-        }
-        
-        .ship-indicator {
-            position: absolute;
-            top: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 40px;
-            height: 20px;
-            background-color: rgba(255, 215, 0, 0.7);
-            border-radius: 4px;
-            display: none;
         }
         
         /* Rest of your existing CSS... */
@@ -804,7 +793,7 @@
                     When you reach 1000 points, you'll face a TIKBALANG boss!<br><br>
                     Answer trivia questions correctly to damage the boss.<br>
                     Wrong answers will damage your ship instead.<br>
-                    Use the arrow keys to highlight options and Z to select.<br>
+                    Move your ship to the answer you want to select and press Z.<br>
                     Defeat the boss to win the level!
                 </div>
             </div>
@@ -900,7 +889,6 @@
         let bossMaxHealth = 0;
         let currentQuestion = null;
         let selectedOption = null;
-        let highlightedOption = null;
         let answerSelectionMode = false;
         
         // High scores
@@ -916,7 +904,7 @@
         
         // Sound effects - Using different audio sources
         const sounds = {
-            shoot: new Audio('https://freesound.org/people/Leszek_Szary/sounds/146725/download/146725__leszek_szary__laser.wav'),
+            shoot: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-short-laser-gun-shot-1670.mp3'),
             enemyShoot: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arrow-whoosh-1491.mp3'),
             explosion: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-explosion-impact-1684.mp3'),
             powerup: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3'),
@@ -927,7 +915,9 @@
             win: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3'),
             combo: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-extra-bonus-in-a-video-game-2045.mp3'),
             levelUp: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3'),
-            hit: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-changing-tab-206.mp3')
+            hit: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-changing-tab-206.mp3'),
+            menuSelect: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3'),
+            menuHover: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-hover-click-notification-235.mp3')
         };
         
         // Set volume for all sounds
@@ -1088,35 +1078,78 @@
             resizeGame();
             
             // Set up event listeners
-            document.getElementById('playButton').addEventListener('click', startGame);
-            document.getElementById('highscoreButton').addEventListener('click', showHighScores);
-            document.getElementById('settingsButton').addEventListener('click', showSettings);
-            document.getElementById('tutorialButton').addEventListener('click', showTutorial);
-            document.getElementById('continueButton').addEventListener('click', returnToMenu);
-            document.getElementById('winContinueButton').addEventListener('click', returnToMenu);
-            document.getElementById('backButton').addEventListener('click', returnToMenu);
+            document.getElementById('playButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                startGame();
+            });
+            document.getElementById('highscoreButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                showHighScores();
+            });
+            document.getElementById('settingsButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                showSettings();
+            });
+            document.getElementById('tutorialButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                showTutorial();
+            });
+            document.getElementById('continueButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                returnToMenu();
+            });
+            document.getElementById('winContinueButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                returnToMenu();
+            });
+            document.getElementById('backButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                returnToMenu();
+            });
             document.getElementById('settingsBackButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
                 saveSettings();
                 returnToMenu();
             });
-            document.getElementById('tutorialBackButton').addEventListener('click', returnToMenu);
-            document.getElementById('submitScore').addEventListener('click', submitHighScore);
-            document.getElementById('submitScoreWin').addEventListener('click', submitHighScoreWin);
+            document.getElementById('tutorialBackButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                returnToMenu();
+            });
+            document.getElementById('submitScore').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                submitHighScore();
+            });
+            document.getElementById('submitScoreWin').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                submitHighScoreWin();
+            });
+            
+            // Add hover sounds to menu buttons
+            const menuButtons = document.querySelectorAll('.menu-button');
+            menuButtons.forEach(button => {
+                button.addEventListener('mouseenter', () => {
+                    sounds.menuHover.play();
+                });
+            });
             
             // Settings controls
             document.getElementById('musicDown').addEventListener('click', () => {
+                sounds.menuSelect.play();
                 settings.musicVolume = Math.max(0, settings.musicVolume - 0.1);
                 updateSettingsUI();
             });
             document.getElementById('musicUp').addEventListener('click', () => {
+                sounds.menuSelect.play();
                 settings.musicVolume = Math.min(1, settings.musicVolume + 0.1);
                 updateSettingsUI();
             });
             document.getElementById('toggleSound').addEventListener('click', () => {
+                sounds.menuSelect.play();
                 settings.soundEffects = !settings.soundEffects;
                 updateSettingsUI();
             });
             document.getElementById('changeDifficulty').addEventListener('click', () => {
+                sounds.menuSelect.play();
                 const difficulties = ['easy', 'normal', 'hard'];
                 const currentIndex = difficulties.indexOf(settings.difficulty);
                 settings.difficulty = difficulties[(currentIndex + 1) % difficulties.length];
@@ -1197,9 +1230,9 @@
                         player.availableShips.jeepney = false;
                         sounds.shipChange.play();
                         updateShipSelectionUI();
-                    } else if (e.key.toLowerCase() === 'z' && bossActive && highlightedOption !== null) {
-                        // Select highlighted trivia option
-                        selectBossOption(highlightedOption);
+                    } else if (e.key.toLowerCase() === 'z' && bossActive) {
+                        // Select the option based on ship position
+                        selectBossOptionBasedOnPosition();
                     }
                 }
                 
@@ -1372,7 +1405,7 @@
             enemyShootTimer = 0;
             boss = null;
             bossActive = false;
-            highlightedOption = null;
+            selectedOption = null;
             answerSelectionMode = false;
             comboCount = 0;
             comboTimeout = 0;
@@ -1526,7 +1559,6 @@
         function showBossQuestion() {
             currentQuestion = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
             selectedOption = null;
-            highlightedOption = 0; // Start with first option highlighted
             
             // Display question with larger font
             const questionElement = document.getElementById('triviaQuestion');
@@ -1541,30 +1573,67 @@
                 optionElement.className = 'triviaOption';
                 optionElement.textContent = option;
                 optionElement.dataset.index = index;
-                
-                // Add ship indicator
-                const shipIndicator = document.createElement('div');
-                shipIndicator.className = 'ship-indicator';
-                optionElement.appendChild(shipIndicator);
-                
                 optionsContainer.appendChild(optionElement);
             });
 
             updateOptionHighlight();
         }
         
-        // Update highlighted option
+        // Update highlighted option based on player position
         function updateOptionHighlight() {
+            if (!bossActive || !currentQuestion) return;
+            
             const options = document.querySelectorAll('#triviaOptions .triviaOption');
+            const triviaContainer = document.getElementById('triviaContainer');
+            const containerRect = triviaContainer.getBoundingClientRect();
+            
+            // Find which option the player is over
+            let selectedIndex = -1;
+            const playerCenter = player.x + player.width / 2;
+            
             options.forEach((opt, index) => {
-                opt.classList.toggle('highlighted', index === highlightedOption);
+                const optRect = opt.getBoundingClientRect();
+                const optLeft = optRect.left - containerRect.left;
+                const optRight = optRect.right - containerRect.left;
                 
-                // Show ship indicator on highlighted option
-                const shipIndicator = opt.querySelector('.ship-indicator');
-                if (shipIndicator) {
-                    shipIndicator.style.display = index === highlightedOption ? 'block' : 'none';
+                opt.classList.remove('highlighted');
+                
+                if (playerCenter >= optLeft && playerCenter <= optRight) {
+                    selectedIndex = index;
                 }
             });
+            
+            // Highlight the option the player is over
+            if (selectedIndex >= 0) {
+                options[selectedIndex].classList.add('highlighted');
+            }
+        }
+        
+        // Select boss option based on player position
+        function selectBossOptionBasedOnPosition() {
+            if (selectedOption !== null) return; // Prevent multiple selections
+            
+            const options = document.querySelectorAll('#triviaOptions .triviaOption');
+            const triviaContainer = document.getElementById('triviaContainer');
+            const containerRect = triviaContainer.getBoundingClientRect();
+            
+            // Find which option the player is over
+            let selectedIndex = -1;
+            const playerCenter = player.x + player.width / 2;
+            
+            options.forEach((opt, index) => {
+                const optRect = opt.getBoundingClientRect();
+                const optLeft = optRect.left - containerRect.left;
+                const optRight = optRect.right - containerRect.left;
+                
+                if (playerCenter >= optLeft && playerCenter <= optRight) {
+                    selectedIndex = index;
+                }
+            });
+            
+            if (selectedIndex >= 0) {
+                selectBossOption(selectedIndex);
+            }
         }
         
         // Select boss option
@@ -1575,10 +1644,7 @@
             const options = document.querySelectorAll('#triviaOptions .triviaOption');
             
             // Highlight selected option
-            options.forEach(opt => {
-                opt.classList.remove('highlighted');
-                opt.querySelector('.ship-indicator').style.display = 'none';
-            });
+            options.forEach(opt => opt.classList.remove('highlighted'));
             options[index].classList.add('selected');
             
             if (index === currentQuestion.answer) {
@@ -1741,32 +1807,52 @@
                 ctx.globalCompositeOperation = 'source-over';
                 
                 if (this.type === 'kapre') {
-                    // Draw kapre (big, dark enemy)
-                    ctx.fillStyle = '#654321';
+                    // Draw kapre (big, dark enemy) - scarier version
+                    ctx.fillStyle = '#222';
                     ctx.fillRect(Math.round(this.x), Math.round(this.y), Math.round(this.width), Math.round(this.height));
                     
-                    // Face details
-                    ctx.fillStyle = '#8B4513';
+                    // Face details - more menacing
+                    ctx.fillStyle = '#111';
                     ctx.beginPath();
                     ctx.arc(Math.round(this.x + this.width/2), Math.round(this.y + 20), 15, 0, Math.PI * 2);
                     ctx.fill();
                     
-                    // Eyes
+                    // Glowing red eyes
                     ctx.fillStyle = 'red';
                     ctx.beginPath();
-                    ctx.arc(Math.round(this.x + this.width/2 - 10), Math.round(this.y + 15), 3, 0, Math.PI * 2);
-                    ctx.arc(Math.round(this.x + this.width/2 + 10), Math.round(this.y + 15), 3, 0, Math.PI * 2);
+                    ctx.arc(Math.round(this.x + this.width/2 - 10), Math.round(this.y + 15), 5, 0, Math.PI * 2);
+                    ctx.arc(Math.round(this.x + this.width/2 + 10), Math.round(this.y + 15), 5, 0, Math.PI * 2);
                     ctx.fill();
                     
-                    // Mouth
-                    ctx.strokeStyle = 'red';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.arc(Math.round(this.x + this.width/2), Math.round(this.y + 25), 8, 0.1 * Math.PI, 0.9 * Math.PI);
-                    ctx.stroke();
+                    // Add glow effect to eyes
+                    ctx.shadowColor = 'red';
+                    ctx.shadowBlur = 10;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    
+                    // Sharp teeth
+                    ctx.fillStyle = 'white';
+                    for (let i = 0; i < 5; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(Math.round(this.x + this.width/2 - 15 + i*5), Math.round(this.y + 25));
+                        ctx.lineTo(Math.round(this.x + this.width/2 - 12 + i*5), Math.round(this.y + 35));
+                        ctx.lineTo(Math.round(this.x + this.width/2 - 18 + i*5), Math.round(this.y + 35));
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                    
+                    // Smoke from cigar
+                    ctx.fillStyle = 'rgba(200, 200, 200, 0.7)';
+                    for (let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.arc(Math.round(this.x + this.width/2 + 15 + i*5), 
+                               Math.round(this.y + 15 - i*3), 
+                               3 + i, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
                 } else if (this.type === 'aswang') {
-                    // Draw aswang (small, fast enemy)
-                    ctx.fillStyle = '#800080';
+                    // Draw aswang (small, fast enemy) - scarier version
+                    ctx.fillStyle = '#400040';
                     ctx.beginPath();
                     ctx.moveTo(Math.round(this.x + this.width/2), Math.round(this.y));
                     ctx.lineTo(Math.round(this.x), Math.round(this.y + this.height));
@@ -1774,14 +1860,29 @@
                     ctx.closePath();
                     ctx.fill();
                     
-                    // Eyes
+                    // Glowing white eyes
                     ctx.fillStyle = 'white';
                     ctx.beginPath();
-                    ctx.arc(Math.round(this.x + this.width/3), Math.round(this.y + this.height/2), 3, 0, Math.PI * 2);
-                    ctx.arc(Math.round(this.x + this.width*2/3), Math.round(this.y + this.height/2), 3, 0, Math.PI * 2);
+                    ctx.arc(Math.round(this.x + this.width/3), Math.round(this.y + this.height/2), 4, 0, Math.PI * 2);
+                    ctx.arc(Math.round(this.x + this.width*2/3), Math.round(this.y + this.height/2), 4, 0, Math.PI * 2);
                     ctx.fill();
+                    
+                    // Blood dripping from mouth
+                    ctx.fillStyle = 'red';
+                    ctx.beginPath();
+                    ctx.moveTo(Math.round(this.x + this.width/2), Math.round(this.y + this.height - 5));
+                    ctx.lineTo(Math.round(this.x + this.width/2 - 5), Math.round(this.y + this.height + 5));
+                    ctx.lineTo(Math.round(this.x + this.width/2 + 5), Math.round(this.y + this.height + 5));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Add glow effect
+                    ctx.shadowColor = '#800080';
+                    ctx.shadowBlur = 10;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
                 } else { // sarimanok
-                    // Draw sarimanok (colorful bird-like enemy)
+                    // Draw sarimanok (colorful bird-like enemy) - more menacing
                     ctx.fillStyle = '#FFD700';
                     ctx.beginPath();
                     ctx.moveTo(Math.round(this.x + this.width/2), Math.round(this.y));
@@ -1790,20 +1891,32 @@
                     ctx.closePath();
                     ctx.fill();
                     
-                    // Colorful details
-                    ctx.fillStyle = 'red';
+                    // Sharp beak
+                    ctx.fillStyle = '#FF4500';
                     ctx.beginPath();
-                    ctx.arc(Math.round(this.x + this.width/2), Math.round(this.y + 10), 5, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    // Tail feathers
-                    ctx.fillStyle = 'green';
-                    ctx.beginPath();
-                    ctx.moveTo(Math.round(this.x + this.width/2), Math.round(this.y + this.height - 5));
-                    ctx.lineTo(Math.round(this.x), Math.round(this.y + this.height + 10));
-                    ctx.lineTo(Math.round(this.x + this.width), Math.round(this.y + this.height + 10));
+                    ctx.moveTo(Math.round(this.x + this.width/2), Math.round(this.y + 10));
+                    ctx.lineTo(Math.round(this.x + this.width/2 - 5), Math.round(this.y + 20));
+                    ctx.lineTo(Math.round(this.x + this.width/2 + 5), Math.round(this.y + 20));
                     ctx.closePath();
                     ctx.fill();
+                    
+                    // Angry eyes
+                    ctx.fillStyle = 'red';
+                    ctx.beginPath();
+                    ctx.arc(Math.round(this.x + this.width/3), Math.round(this.y + 15), 3, 0, Math.PI * 2);
+                    ctx.arc(Math.round(this.x + this.width*2/3), Math.round(this.y + 15), 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Sharp tail feathers
+                    ctx.fillStyle = '#FF0000';
+                    for (let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(Math.round(this.x + this.width/2), Math.round(this.y + this.height - 5));
+                        ctx.lineTo(Math.round(this.x + this.width/2 - 10 + i*10), Math.round(this.y + this.height + 15));
+                        ctx.lineTo(Math.round(this.x + this.width/2 - 5 + i*10), Math.round(this.y + this.height + 15));
+                        ctx.closePath();
+                        ctx.fill();
+                    }
                 }
                 
                 ctx.restore();
@@ -2328,27 +2441,15 @@
                 if (keys.ArrowLeft) {
                     player.x -= player.speed * (player.powerups.jeepneyBoost ? 1.5 : 1);
                     if (player.x < 0) player.x = 0;
-                    
-                    // Move selection in answer mode
-                    if (answerSelectionMode && bossActive) {
-                        if (highlightedOption > 0) {
-                            highlightedOption--;
-                            updateOptionHighlight();
-                        }
-                    }
                 }
                 if (keys.ArrowRight) {
                     player.x += player.speed * (player.powerups.jeepneyBoost ? 1.5 : 1);
                     if (player.x > CANVAS_WIDTH - player.width) player.x = CANVAS_WIDTH - player.width;
-                    
-                    // Move selection in answer mode
-                    if (answerSelectionMode && bossActive) {
-                        const options = document.querySelectorAll('#triviaOptions .triviaOption');
-                        if (highlightedOption < options.length - 1) {
-                            highlightedOption++;
-                            updateOptionHighlight();
-                        }
-                    }
+                }
+                
+                // Update option highlight based on player position
+                if (bossActive && answerSelectionMode) {
+                    updateOptionHighlight();
                 }
                 
                 // Shoot
