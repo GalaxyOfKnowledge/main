@@ -335,7 +335,7 @@
         
         .ship-icon.available {
             border-color: #FFD700;
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+            box-shadow: 0 0 5px rgba(255, 215, 0, 0.7);
             animation: pulse 1s infinite;
             background-color: rgba(255, 215, 0, 0.2);
         }
@@ -443,17 +443,13 @@
             position: fixed;
             top: 50px;
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translateX(-50%);
             font-size: 20px;
             color: #FFD700;
             text-shadow: 3px 3px 0 #8B4513;
             display: none;
             z-index: 2;
             font-family: 'Press Start 2P', cursive;
-            text-align: center;
-            background-color: rgba(0, 0, 0, 0.7);
-            padding: 20px;
-            border: 2px solid #FFD700;
         }
         
         #waveIndicator {
@@ -730,31 +726,6 @@
             transition: width 0.1s;
         }
         
-        /* Wave countdown timer */
-        #waveCountdown {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 48px;
-            color: #FFD700;
-            text-shadow: 4px 4px 0 #8B4513;
-            display: none;
-            z-index: 20;
-            font-family: 'Press Start 2P', cursive;
-        }
-        
-        /* Enhanced ship glow effects */
-        .ship-glow {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            opacity: 0.7;
-            filter: blur(5px);
-            z-index: -1;
-        }
-        
         @media (max-width: 768px) {
             #mobileControls {
                 display: flex;
@@ -836,19 +807,12 @@
                 font-size: 18px;
                 width: 90%;
             }
-            
-            #waveCountdown {
-                font-size: 32px;
-            }
         }
     </style>
 </head>
 <body>
     <div id="gameOverCover"></div>
     <canvas id="gameCanvas"></canvas>
-    
-    <!-- Wave countdown timer -->
-    <div id="waveCountdown"></div>
     
     <div id="hud">
         <div>SCORE: <span id="scoreDisplay">0</span></div>
@@ -917,85 +881,81 @@
         <div class="mobile-btn" id="rightBtn">→</div>
     </div>
     
-    <!-- Menu Screen -->
     <div id="menuScreen">
-        <h1 class="title">PINOY QUIZ TRIVIA SPACE INVADER</h1>
+        <div class="title">PINOY QUIZ TRIVIA<br>SPACE INVADER</div>
         <button id="playButton" class="menu-button">PLAY</button>
-        <button id="highscoreButton" class="menu-button">HIGH SCORES</button>
+        <button id="highscoreButton" class="menu-button">HIGHSCORE</button>
         <button id="settingsButton" class="menu-button">SETTINGS</button>
         <button id="tutorialButton" class="menu-button">TUTORIAL</button>
     </div>
     
-    <!-- Game Over Screen -->
     <div id="gameOverScreen" style="display: none;">
-        <h1 class="title">GAME OVER</h1>
-        <div id="finalScore">FINAL SCORE: 0</div>
+        <div class="title">GAME OVER</div>
+        <div id="finalScore" style="font-size: 20px; margin-bottom: 20px;"></div>
         <div id="nameInputContainer">
-            <input type="text" id="nameInput" placeholder="ENTER YOUR NAME" maxlength="10">
-            <button id="submitScore" class="menu-button">SUBMIT SCORE</button>
+            <div style="margin-bottom: 10px; font-size: 14px;">ENTER YOUR NAME:</div>
+            <input type="text" id="nameInput" maxlength="10">
+            <button id="submitScore" class="menu-button" style="background: #2E7D32; box-shadow: 4px 4px 0 #4CAF50;">SUBMIT</button>
         </div>
-        <button id="continueButton" class="menu-button">CONTINUE</button>
+        <button id="continueButton" class="menu-button" style="background: #0D47A1; box-shadow: 4px 4px 0 #2196F3;">CONTINUE</button>
     </div>
     
-    <!-- Win Screen -->
     <div id="winScreen" style="display: none;">
-        <h1 class="title">YOU WIN!</h1>
-        <div id="winScore">FINAL SCORE: 0</div>
+        <div class="title">YOU WIN!</div>
+        <div id="winScore" style="font-size: 20px; margin-bottom: 20px;"></div>
         <div id="nameInputContainerWin">
-            <input type="text" id="nameInputWin" placeholder="ENTER YOUR NAME" maxlength="10">
-            <button id="submitScoreWin" class="menu-button">SUBMIT SCORE</button>
+            <div style="margin-bottom: 10px; font-size: 14px;">ENTER YOUR NAME:</div>
+            <input type="text" id="nameInputWin" maxlength="10">
+            <button id="submitScoreWin" class="menu-button" style="background: #2E7D32; box-shadow: 4px 4px 0 #4CAF50;">SUBMIT</button>
         </div>
-        <button id="winContinueButton" class="menu-button">CONTINUE</button>
+        <button id="winContinueButton" class="menu-button" style="background: #0D47A1; box-shadow: 4px 4px 0 #2196F3;">CONTINUE</button>
     </div>
     
-    <!-- High Scores Screen -->
     <div id="highscoreScreen" style="display: none;">
-        <h1 class="title">HIGH SCORES</h1>
-        <div id="highscoreList"></div>
-        <button id="backButton" class="menu-button">BACK</button>
+        <div class="title">HIGH SCORES</div>
+        <div id="highscoreList" style="margin-bottom: 30px; font-size: 14px;"></div>
+        <button id="backButton" class="menu-button" style="background: #0D47A1; box-shadow: 4px 4px 0 #2196F3;">BACK</button>
     </div>
     
-    <!-- Settings Screen -->
     <div id="settingsScreen" style="display: none;">
-        <h1 class="title">SETTINGS</h1>
+        <div class="title">SETTINGS</div>
+        
         <div class="settings-row">
-            <span>MUSIC VOLUME:</span>
+            <div>MUSIC VOLUME:</div>
             <button id="musicDown" class="settings-button">-</button>
-            <span id="musicVolume" class="settings-value">50%</span>
+            <div id="musicVolume" class="settings-value">50%</div>
             <button id="musicUp" class="settings-button">+</button>
         </div>
+        
         <div class="settings-row">
-            <span>SOUND EFFECTS:</span>
-            <button id="toggleSound" class="settings-button">ON</button>
+            <div>SOUND EFFECTS:</div>
+            <button id="toggleSound" class="settings-button" style="width: 60px;">ON</button>
         </div>
+        
         <div class="settings-row">
-            <span>DIFFICULTY:</span>
-            <button id="changeDifficulty" class="settings-button">NORMAL</button>
+            <div>DIFFICULTY:</div>
+            <button id="changeDifficulty" class="settings-button" style="width: 80px;">NORMAL</button>
         </div>
-        <button id="settingsBackButton" class="menu-button">BACK</button>
+        
+        <button id="settingsBackButton" class="menu-button" style="background: #B71C1C; box-shadow: 4px 4px 0 #F44336; margin-top: 30px;">BACK TO MENU</button>
     </div>
     
-    <!-- Tutorial Screen -->
     <div id="tutorialScreen" style="display: none;">
-        <h1 class="title">TUTORIAL</h1>
+        <div class="title">HOW TO PLAY</div>
         <div class="tutorial-content">
-            <div class="tutorial-section">
-                <div class="tutorial-title">HOW TO PLAY</div>
-                <div class="tutorial-text">
-                    Defeat waves of enemies by shooting them and answering trivia questions correctly.
-                    Each correct answer damages the boss or gives you advantages in the next wave.
-                </div>
-            </div>
-            
             <div class="tutorial-section">
                 <div class="tutorial-title">CONTROLS</div>
                 <div class="tutorial-row">
-                    <div class="tutorial-key">← →</div>
-                    <div class="tutorial-text">Move left and right</div>
+                    <div class="tutorial-key">←</div>
+                    <div class="tutorial-text">Move Left</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">→</div>
+                    <div class="tutorial-text">Move Right</div>
                 </div>
                 <div class="tutorial-row">
                     <div class="tutorial-key">SPACE</div>
-                    <div class="tutorial-text">Shoot bullets</div>
+                    <div class="tutorial-text">Shoot Bullets</div>
                 </div>
                 <div class="tutorial-row">
                     <div class="tutorial-key">X</div>
@@ -1011,27 +971,32 @@
                 </div>
                 <div class="tutorial-row">
                     <div class="tutorial-key">Z</div>
-                    <div class="tutorial-text">Select answer (position ship over option)</div>
-                </div>
-                <div class="tutorial-row">
-                    <div class="tutorial-key">T</div>
-                    <div class="tutorial-text">Fire Trivia Laser (when charged)</div>
+                    <div class="tutorial-text">Select Answer (Boss Fight)</div>
                 </div>
             </div>
             
             <div class="tutorial-section">
-                <div class="tutorial-title">SHIPS</div>
+                <div class="tutorial-title">YOUR SHIPS</div>
                 <div class="tutorial-row">
-                    <div class="tutorial-ship tutorial-ship-default">X</div>
-                    <div class="tutorial-text">DEFAULT SHIP - Balanced stats</div>
+                    <div class="tutorial-ship tutorial-ship-default"></div>
+                    <div class="tutorial-text">
+                        <strong>DEFAULT SHIP</strong><br>
+                        Balanced stats. Press X to switch.
+                    </div>
                 </div>
                 <div class="tutorial-row">
-                    <div class="tutorial-ship tutorial-ship-bangka">C</div>
-                    <div class="tutorial-text">BANGKA SHIP - Slower but more durable</div>
+                    <div class="tutorial-ship tutorial-ship-bangka"></div>
+                    <div class="tutorial-text">
+                        <strong>BANGKA SHIP</strong><br>
+                        Slower but takes less damage. Press C to switch.
+                    </div>
                 </div>
                 <div class="tutorial-row">
-                    <div class="tutorial-ship tutorial-ship-jeepney">V</div>
-                    <div class="tutorial-text">JEEPNEY SHIP - Faster but less durable</div>
+                    <div class="tutorial-ship tutorial-ship-jeepney"></div>
+                    <div class="tutorial-text">
+                        <strong>JEEPNEY SHIP</strong><br>
+                        Faster but takes more damage. Press V to switch.
+                    </div>
                 </div>
             </div>
             
@@ -1039,15 +1004,24 @@
                 <div class="tutorial-title">ENEMIES</div>
                 <div class="tutorial-row">
                     <div class="tutorial-enemy tutorial-enemy-kapre"></div>
-                    <div class="tutorial-text">KAPRE - Tough and slow</div>
+                    <div class="tutorial-text">
+                        <strong>KAPRE</strong><br>
+                        Slow but tough (3 hits to kill). Worth 100 points.
+                    </div>
                 </div>
                 <div class="tutorial-row">
                     <div class="tutorial-enemy tutorial-enemy-aswang"></div>
-                    <div class="tutorial-text">ASWANG - Fast but fragile</div>
+                    <div class="tutorial-text">
+                        <strong>ASWANG</strong><br>
+                        Fast but weak (1 hit to kill). Worth 30 points.
+                    </div>
                 </div>
                 <div class="tutorial-row">
                     <div class="tutorial-enemy tutorial-enemy-sarimanok"></div>
-                    <div class="tutorial-text">SARIMANOK - Balanced</div>
+                    <div class="tutorial-text">
+                        <strong>SARIMANOK</strong><br>
+                        Medium speed (2 hits to kill). Worth 50 points.
+                    </div>
                 </div>
             </div>
             
@@ -1055,40 +1029,78 @@
                 <div class="tutorial-title">POWER-UPS</div>
                 <div class="tutorial-row">
                     <div class="tutorial-powerup tutorial-powerup-shield"></div>
-                    <div class="tutorial-text">BARONG SHIELD - Temporary invincibility</div>
+                    <div class="tutorial-text">
+                        <strong>BARONG SHIELD</strong><br>
+                        Temporary invincibility for 5 seconds.
+                    </div>
                 </div>
                 <div class="tutorial-row">
                     <div class="tutorial-powerup tutorial-powerup-boost"></div>
-                    <div class="tutorial-text">JEEPNEY BOOST - Increased speed</div>
+                    <div class="tutorial-text">
+                        <strong>JEEPNEY BOOST</strong><br>
+                        Increased speed for 5 seconds.
+                    </div>
                 </div>
                 <div class="tutorial-row">
                     <div class="tutorial-powerup tutorial-powerup-tinikling"></div>
-                    <div class="tutorial-text">TINIKLING MODE - Faster shooting</div>
+                    <div class="tutorial-text">
+                        <strong>TINIKLING MODE</strong><br>
+                        Faster shooting and double damage for 5 seconds.
+                    </div>
+                </div>
+                <div class="tutorial-text">
+                    <strong>SHIP POWER-UPS</strong><br>
+                    Collect ship icons to gain durability for that ship type.
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">TRIVIA LASER</div>
+                <div class="tutorial-text">
+                    Answering trivia questions correctly charges your "Trivia Laser".<br>
+                    Press "T" to fire a powerful laser that destroys all enemies on screen.<br>
+                    Wrong answers drain your laser charge.
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">TIME BONUSES</div>
+                <div class="tutorial-text">
+                    <strong>Fast Answers:</strong> Answer quickly for temporary invincibility or slow-mo.<br>
+                    <strong>Slow/Wrong Answers:</strong> Enemies become faster and shoot more often.
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">WAVE SYSTEM</div>
+                <div class="tutorial-text">
+                    The game progresses through waves of enemies.<br>
+                    After each wave, you'll face a trivia question.<br>
+                    Correct answers make the next wave easier, wrong answers make it harder.<br>
+                    At wave 15, you'll face the final boss battle!
                 </div>
             </div>
         </div>
-        <button id="tutorialBackButton" class="menu-button">BACK</button>
+        <button id="tutorialBackButton" class="menu-button" style="background: #0D47A1; box-shadow: 4px 4px 0 #2196F3; margin-top: 20px;">BACK TO MENU</button>
     </div>
     
-    <!-- Wave Screen -->
     <div id="waveScreen" style="display: none;">
-        <h1 class="wave-title">WAVE <span id="waveDisplay">1</span></h1>
-        <div id="waveSubtitle" class="title">GET READY!</div>
-        <button id="startWaveButton" class="menu-button">START WAVE</button>
+        <div class="wave-title">WAVE <span id="waveDisplay">1</span></div>
+        <div id="waveSubtitle" style="font-size: 18px; margin-bottom: 30px; color: white;">GET READY!</div>
+        <button id="startWaveButton" class="menu-button" style="background: #2E7D32; box-shadow: 4px 4px 0 #4CAF50;">START WAVE</button>
     </div>
     
-    <!-- Quiz Screen -->
     <div id="quizScreen" style="display: none;">
-        <h1 class="quiz-title">TRIVIA CHALLENGE</h1>
+        <div class="quiz-title">TRIVIA CHALLENGE</div>
         <div class="quiz-question" id="quizQuestion"></div>
         <div class="quiz-options" id="quizOptions"></div>
+        <div id="quizTimer" style="margin-top: 20px; font-size: 14px; color: #FFD700;"></div>
     </div>
-
+    
     <script>
         // Game constants
         const BOSS_WAVE = 15; // Boss appears at wave 15
         const TRIVIA_LASER_MAX = 100;
-        const WAVE_TRANSITION_DURATION = 10; // 10 seconds for wave transition
         
         // Game states
         const STATE_MENU = 0;
@@ -1198,11 +1210,6 @@
         let waveTransitionTimer = 0;
         let waveTransitionDuration = 120; // frames
         
-        // Wave countdown variables
-        let waveCountdownActive = false;
-        let waveCountdownTimer = WAVE_TRANSITION_DURATION;
-        let waveCountdownInterval = null;
-        
         // High scores
         let highScores = [];
         const MAX_HIGH_SCORES = 10;
@@ -1231,8 +1238,7 @@
             menuSelect: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3'),
             menuHover: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-horror-ambience-228.mp3'),
             laser: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-laser-weapon-shot-1671.mp3'),
-            slowmo: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3'),
-            countdown: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-complete-or-approved-mission-205.mp3')
+            slowmo: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3')
         };
         
         // Set volume for all sounds
@@ -1719,16 +1725,9 @@
             document.getElementById('timerContainer').style.display = 'none';
             document.getElementById('triviaLaserHud').style.display = 'none';
             document.getElementById('waveTransitionMessage').style.display = 'none';
-            document.getElementById('waveCountdown').style.display = 'none';
             
             // Stop background music
             backgroundMusic.pause();
-            
-            // Clear any active countdown
-            if (waveCountdownInterval) {
-                clearInterval(waveCountdownInterval);
-                waveCountdownInterval = null;
-            }
         }
         
         // Submit high score from game over screen
@@ -1834,7 +1833,6 @@
             document.getElementById('triviaContainer').style.display = 'none';
             document.getElementById('timerContainer').style.display = 'none';
             document.getElementById('waveTransitionMessage').style.display = 'none';
-            document.getElementById('waveCountdown').style.display = 'none';
             
             // Start background music
             backgroundMusic.currentTime = 0;
@@ -1968,13 +1966,6 @@
             document.getElementById('timerContainer').style.display = 'none';
             document.getElementById('triviaLaserHud').style.display = 'none';
             document.getElementById('waveTransitionMessage').style.display = 'none';
-            document.getElementById('waveCountdown').style.display = 'none';
-            
-            // Clear any active countdown
-            if (waveCountdownInterval) {
-                clearInterval(waveCountdownInterval);
-                waveCountdownInterval = null;
-            }
         }
         
         // Spawn boss
@@ -2101,43 +2092,6 @@
                     checkWaveTransitionAnswer(-1);
                 }
             }, 200);
-        }
-        
-        // Start wave countdown
-        function startWaveCountdown() {
-            waveCountdownActive = true;
-            waveCountdownTimer = WAVE_TRANSITION_DURATION;
-            document.getElementById('waveCountdown').style.display = 'block';
-            
-            // Clear any existing interval
-            if (waveCountdownInterval) {
-                clearInterval(waveCountdownInterval);
-            }
-            
-            waveCountdownInterval = setInterval(() => {
-                waveCountdownTimer--;
-                document.getElementById('waveCountdown').textContent = waveCountdownTimer;
-                
-                // Play countdown sound on last 3 seconds
-                if (waveCountdownTimer <= 3) {
-                    sounds.countdown.currentTime = 0;
-                    sounds.countdown.play();
-                }
-                
-                if (waveCountdownTimer <= 0) {
-                    clearInterval(waveCountdownInterval);
-                    waveCountdownInterval = null;
-                    document.getElementById('waveCountdown').style.display = 'none';
-                    
-                    // Move to next wave
-                    wave++;
-                    waveTransitionActive = false;
-                    answerSelectionMode = false;
-                    
-                    // Start the next wave
-                    startWave();
-                }
-            }, 1000);
         }
         
         // Update highlighted option based on player position
@@ -2337,8 +2291,13 @@
             document.getElementById('timerContainer').style.display = 'none';
             document.getElementById('waveTransitionMessage').style.display = 'none';
             
-            // Start wave countdown
-            startWaveCountdown();
+            // Move to next wave
+            wave++;
+            waveTransitionActive = false;
+            answerSelectionMode = false;
+            
+            // Start the next wave
+            startWave();
         }
         
         // Update HUD
@@ -2597,14 +2556,11 @@
                 this.type = type;
                 this.rotation = 0;
                 this.rotationSpeed = Math.random() * 0.02 - 0.01;
-                this.pulse = 0;
-                this.pulseSpeed = 0.05;
             }
             
             update() {
                 this.y += this.speed;
                 this.rotation += this.rotationSpeed;
-                this.pulse += this.pulseSpeed;
             }
             
             draw() {
@@ -2613,18 +2569,8 @@
                 ctx.translate(Math.round(this.x + this.width/2), Math.round(this.y + this.height/2));
                 ctx.rotate(this.rotation);
                 
-                // Create pulsing glow effect
-                const pulseSize = 5 + Math.sin(this.pulse) * 5;
-                
                 if (this.type === 'default') {
-                    // Enhanced default ship power-up
-                    // Glow effect
-                    ctx.fillStyle = `rgba(76, 175, 80, ${0.3 + Math.sin(this.pulse) * 0.2})`;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, Math.round(this.width/2 + pulseSize), 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    // Ship shape
+                    // Mini default ship
                     ctx.fillStyle = '#4CAF50';
                     ctx.beginPath();
                     ctx.moveTo(0, Math.round(-this.height/2));
@@ -2633,29 +2579,13 @@
                     ctx.closePath();
                     ctx.fill();
                     
-                    // Details
+                    // Cockpit
                     ctx.fillStyle = '#87CEEB';
                     ctx.beginPath();
                     ctx.arc(0, Math.round(-this.height/4), 5, 0, Math.PI * 2);
                     ctx.fill();
-                    
-                    // Engine glow
-                    ctx.fillStyle = 'yellow';
-                    ctx.beginPath();
-                    ctx.moveTo(Math.round(-this.width/4), Math.round(this.height/2));
-                    ctx.lineTo(Math.round(this.width/4), Math.round(this.height/2));
-                    ctx.lineTo(0, Math.round(this.height/2 + 5));
-                    ctx.closePath();
-                    ctx.fill();
                 } else if (this.type === 'bangka') {
-                    // Enhanced bangka ship power-up
-                    // Glow effect
-                    ctx.fillStyle = `rgba(139, 69, 19, ${0.3 + Math.sin(this.pulse) * 0.2})`;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, Math.round(this.width/2 + pulseSize), 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    // Boat shape
+                    // Mini bangka ship
                     ctx.fillStyle = '#8B4513';
                     ctx.fillRect(Math.round(-this.width/2), Math.round(-this.height/4), Math.round(this.width), Math.round(this.height/2));
                     
@@ -2663,7 +2593,7 @@
                     ctx.fillRect(Math.round(-this.width/2 - 10), 0, 10, 4);
                     ctx.fillRect(Math.round(this.width/2), 0, 10, 4);
                     
-                    // Sail with pattern
+                    // Sail
                     ctx.fillStyle = 'white';
                     ctx.beginPath();
                     ctx.moveTo(0, Math.round(-this.height/4));
@@ -2671,38 +2601,10 @@
                     ctx.lineTo(Math.round(this.width/4), Math.round(this.height/4));
                     ctx.closePath();
                     ctx.fill();
-                    
-                    // Sail details
-                    ctx.strokeStyle = '#8B4513';
-                    ctx.lineWidth = 1;
-                    for (let i = 0; i < 3; i++) {
-                        ctx.beginPath();
-                        ctx.moveTo(0, Math.round(-this.height/4 + i*5));
-                        ctx.lineTo(Math.round(-this.width/4 + i*3), Math.round(this.height/4 - i*5));
-                        ctx.stroke();
-                        
-                        ctx.beginPath();
-                        ctx.moveTo(0, Math.round(-this.height/4 + i*5));
-                        ctx.lineTo(Math.round(this.width/4 - i*3), Math.round(this.height/4 - i*5));
-                        ctx.stroke();
-                    }
                 } else if (this.type === 'jeepney') {
-                    // Enhanced jeepney ship power-up
-                    // Glow effect
-                    ctx.fillStyle = `rgba(255, 215, 0, ${0.3 + Math.sin(this.pulse) * 0.2})`;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, Math.round(this.width/2 + pulseSize), 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    // Jeepney body
+                    // Mini jeepney ship
                     ctx.fillStyle = '#FFD700';
                     ctx.fillRect(Math.round(-this.width/2), Math.round(-this.height/2), Math.round(this.width), Math.round(this.height));
-                    
-                    // Decorative stripes
-                    ctx.fillStyle = 'red';
-                    for (let i = 0; i < 3; i++) {
-                        ctx.fillRect(Math.round(-this.width/2), Math.round(-this.height/2 + i*10), Math.round(this.width), 3);
-                    }
                     
                     // Windows
                     ctx.fillStyle = '#87CEEB';
@@ -2713,19 +2615,13 @@
                     ctx.fillStyle = 'white';
                     ctx.fillRect(Math.round(-this.width/2), Math.round(-this.height/4), 5, 5);
                     ctx.fillRect(Math.round(this.width/2 - 5), Math.round(-this.height/4), 5, 5);
-                    
-                    // Grill
-                    ctx.fillStyle = '#333';
-                    for (let i = 0; i < 3; i++) {
-                        ctx.fillRect(Math.round(-this.width/4 + i*5), Math.round(-this.height/2 + 15), 3, 3);
-                    }
                 }
                 
                 // Add glow effect
                 ctx.shadowColor = this.type === 'default' ? '#4CAF50' : 
                                  this.type === 'bangka' ? '#8B4513' : '#FFD700';
                 ctx.shadowBlur = 10;
-                ctx.fill();
+                ctx.fillRect(Math.round(-this.width/2), Math.round(-this.height/2), Math.round(this.width), Math.round(this.height));
                 ctx.shadowBlur = 0;
                 
                 ctx.restore();
@@ -2747,14 +2643,11 @@
                 this.type = type || ['barongShield', 'jeepneyBoost', 'tiniklingMode'][Math.floor(Math.random() * 3)];
                 this.rotation = 0;
                 this.rotationSpeed = Math.random() * 0.02 - 0.01;
-                this.pulse = 0;
-                this.pulseSpeed = 0.05;
             }
             
             update() {
                 this.y += this.speed;
                 this.rotation += this.rotationSpeed;
-                this.pulse += this.pulseSpeed;
             }
             
             draw() {
@@ -2763,90 +2656,64 @@
                 ctx.translate(Math.round(this.x + this.width/2), Math.round(this.y + this.height/2));
                 ctx.rotate(this.rotation);
                 
-                // Create pulsing glow effect
-                const pulseSize = 5 + Math.sin(this.pulse) * 5;
-                
                 if (this.type === 'barongShield') {
-                    // Shield power-up with enhanced visuals
-                    // Outer glow
-                    ctx.fillStyle = `rgba(0, 0, 255, ${0.3 + Math.sin(this.pulse) * 0.2})`;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, Math.round(this.width/2 + pulseSize), 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    // Shield base
+                    // Shield power-up
                     ctx.fillStyle = 'blue';
                     ctx.beginPath();
                     ctx.arc(0, 0, Math.round(this.width/2), 0, Math.PI * 2);
                     ctx.fill();
                     
-                    // Shield pattern
-                    ctx.strokeStyle = 'white';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, Math.round(this.width/2 - 5), 0, Math.PI * 2);
-                    ctx.stroke();
-                    
-                    // Cross pattern
+                    ctx.fillStyle = 'white';
                     ctx.beginPath();
                     ctx.moveTo(0, Math.round(-this.height/2 + 5));
+                    ctx.lineTo(Math.round(-this.width/2 + 5), 0);
                     ctx.lineTo(0, Math.round(this.height/2 - 5));
-                    ctx.stroke();
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(Math.round(-this.width/2 + 5), 0);
                     ctx.lineTo(Math.round(this.width/2 - 5), 0);
-                    ctx.stroke();
-                } else if (this.type === 'jeepneyBoost') {
-                    // Boost power-up with enhanced visuals
-                    // Outer glow
-                    ctx.fillStyle = `rgba(255, 0, 0, ${0.3 + Math.sin(this.pulse) * 0.2})`;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, Math.round(this.width/2 + pulseSize), 0, Math.PI * 2);
+                    ctx.closePath();
                     ctx.fill();
-                    
-                    // Base
+                } else if (this.type === 'jeepneyBoost') {
+                    // Boost power-up
                     ctx.fillStyle = 'red';
                     ctx.beginPath();
                     ctx.arc(0, 0, Math.round(this.width/2), 0, Math.PI * 2);
                     ctx.fill();
                     
-                    // Lightning bolt
                     ctx.fillStyle = 'yellow';
                     ctx.beginPath();
                     ctx.moveTo(0, Math.round(-this.height/2 + 5));
-                    ctx.lineTo(Math.round(-this.width/4), 0);
-                    ctx.lineTo(0, Math.round(this.height/4));
-                    ctx.lineTo(Math.round(this.width/4), 0);
+                    ctx.lineTo(Math.round(-this.width/4), Math.round(-this.height/4));
+                    ctx.lineTo(Math.round(-this.width/2 + 5), 0);
+                    ctx.lineTo(Math.round(-this.width/4), Math.round(this.height/4));
                     ctx.lineTo(0, Math.round(this.height/2 - 5));
+                    ctx.lineTo(Math.round(this.width/4), Math.round(this.height/4));
+                    ctx.lineTo(Math.round(this.width/2 - 5), 0);
+                    ctx.lineTo(Math.round(this.width/4), Math.round(-this.height/4));
                     ctx.closePath();
                     ctx.fill();
                 } else if (this.type === 'tiniklingMode') {
-                    // Tinikling power-up with enhanced visuals
-                    // Outer glow
-                    ctx.fillStyle = `rgba(0, 255, 0, ${0.3 + Math.sin(this.pulse) * 0.2})`;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, Math.round(this.width/2 + pulseSize), 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    // Base
+                    // Tinikling power-up
                     ctx.fillStyle = 'green';
                     ctx.beginPath();
                     ctx.arc(0, 0, Math.round(this.width/2), 0, Math.PI * 2);
                     ctx.fill();
                     
-                    // Bamboo pattern
-                    ctx.strokeStyle = '#8B4513';
-                    ctx.lineWidth = 3;
+                    ctx.fillStyle = 'white';
                     ctx.beginPath();
                     ctx.moveTo(Math.round(-this.width/4), Math.round(-this.height/4));
+                    ctx.lineTo(Math.round(this.width/4), Math.round(-this.height/4));
                     ctx.lineTo(Math.round(this.width/4), Math.round(this.height/4));
-                    ctx.stroke();
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(Math.round(this.width/4), Math.round(-this.height/4));
                     ctx.lineTo(Math.round(-this.width/4), Math.round(this.height/4));
-                    ctx.stroke();
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.fillStyle = 'green';
+                    ctx.beginPath();
+                    ctx.moveTo(Math.round(-this.width/8), Math.round(-this.height/8));
+                    ctx.lineTo(Math.round(this.width/8), Math.round(-this.height/8));
+                    ctx.lineTo(Math.round(this.width/8), Math.round(this.height/8));
+                    ctx.lineTo(Math.round(-this.width/8), Math.round(this.height/8));
+                    ctx.closePath();
+                    ctx.fill();
                 }
                 
                 // Add glow effect
@@ -2913,13 +2780,12 @@
             }
         }
         
-        // Draw player ship with enhanced visuals
+        // Draw player ship
         function drawPlayer() {
             ctx.save();
             ctx.globalCompositeOperation = 'source-over';
             
-            // Draw shield if active (except for jeepney)
-            if (player.powerups.barongShield && player.shipSkin !== 'jeepney') {
+            if (player.powerups.barongShield) {
                 ctx.strokeStyle = 'blue';
                 ctx.lineWidth = 3;
                 ctx.beginPath();
@@ -2939,7 +2805,7 @@
             }
             
             if (player.shipSkin === 'default') {
-                // Enhanced default ship
+                // Default ship - balanced stats
                 ctx.fillStyle = '#4CAF50';
                 ctx.beginPath();
                 ctx.moveTo(Math.round(player.x + player.width/2), Math.round(player.y));
@@ -2948,7 +2814,7 @@
                 ctx.closePath();
                 ctx.fill();
                 
-                // Cockpit with depth
+                // Cockpit
                 ctx.fillStyle = '#87CEEB';
                 ctx.beginPath();
                 ctx.arc(
@@ -2958,10 +2824,9 @@
                 );
                 ctx.fill();
                 
-                // Engine glow when moving
+                // Add engine glow when moving
                 if (keys.ArrowLeft || keys.ArrowRight) {
-                    const engineIntensity = Math.random() * 0.5 + 0.5;
-                    ctx.fillStyle = `rgba(255, 255, 0, ${engineIntensity})`;
+                    ctx.fillStyle = 'yellow';
                     ctx.beginPath();
                     ctx.moveTo(Math.round(player.x + player.width/2 - 5), Math.round(player.y + player.height));
                     ctx.lineTo(Math.round(player.x + player.width/2 + 5), Math.round(player.y + player.height));
@@ -2974,22 +2839,8 @@
                     ctx.fill();
                     ctx.shadowBlur = 0;
                 }
-                
-                // Wing details
-                ctx.strokeStyle = '#2E7D32';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(Math.round(player.x + player.width/2), Math.round(player.y + player.height/3));
-                ctx.lineTo(Math.round(player.x + player.width/4), Math.round(player.y + player.height*2/3));
-                ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.moveTo(Math.round(player.x + player.width/2), Math.round(player.y + player.height/3));
-                ctx.lineTo(Math.round(player.x + player.width*3/4), Math.round(player.y + player.height*2/3));
-                ctx.stroke();
             } else if (player.shipSkin === 'bangka') {
-                // Enhanced bangka (outrigger boat)
-                // Hull
+                // Bangka (outrigger boat) - slower but takes less damage
                 ctx.fillStyle = '#8B4513';
                 ctx.fillRect(
                     Math.round(player.x),
@@ -2998,7 +2849,7 @@
                     Math.round(player.height/2)
                 );
                 
-                // Outriggers with wave effect
+                // Outriggers
                 ctx.fillRect(
                     Math.round(player.x - 15),
                     Math.round(player.y + player.height/2),
@@ -3010,22 +2861,7 @@
                     15, 5
                 );
                 
-                // Water splash effect when moving
-                if (keys.ArrowLeft || keys.ArrowRight) {
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-                    for (let i = 0; i < 3; i++) {
-                        ctx.beginPath();
-                        ctx.arc(
-                            Math.round(player.x + (i * player.width/2)),
-                            Math.round(player.y + player.height),
-                            2 + Math.random() * 3,
-                            0, Math.PI * 2
-                        );
-                        ctx.fill();
-                    }
-                }
-                
-                // Sail with pattern
+                // Sail
                 ctx.fillStyle = 'white';
                 ctx.beginPath();
                 ctx.moveTo(
@@ -3042,36 +2878,8 @@
                 );
                 ctx.closePath();
                 ctx.fill();
-                
-                // Sail details
-                ctx.strokeStyle = '#8B4513';
-                ctx.lineWidth = 1;
-                for (let i = 0; i < 3; i++) {
-                    ctx.beginPath();
-                    ctx.moveTo(
-                        Math.round(player.x + player.width/2),
-                        Math.round(player.y + player.height/3 + i*5)
-                    );
-                    ctx.lineTo(
-                        Math.round(player.x + player.width/4 + i*5),
-                        Math.round(player.y + player.height - i*3)
-                    );
-                    ctx.stroke();
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(
-                        Math.round(player.x + player.width/2),
-                        Math.round(player.y + player.height/3 + i*5)
-                    );
-                    ctx.lineTo(
-                        Math.round(player.x + player.width*3/4 - i*5),
-                        Math.round(player.y + player.height - i*3)
-                    );
-                    ctx.stroke();
-                }
             } else if (player.shipSkin === 'jeepney') {
-                // Enhanced jeepney - more detailed with decorations
-                // Main body
+                // Jeepney - faster but takes more damage
                 ctx.fillStyle = '#FFD700';
                 ctx.fillRect(
                     Math.round(player.x),
@@ -3080,16 +2888,14 @@
                     Math.round(player.height)
                 );
                 
-                // Body stripes
+                // Body details
                 ctx.fillStyle = 'red';
-                for (let i = 0; i < 3; i++) {
-                    ctx.fillRect(
-                        Math.round(player.x),
-                        Math.round(player.y + i*10),
-                        Math.round(player.width),
-                        3
-                    );
-                }
+                ctx.fillRect(
+                    Math.round(player.x + 5),
+                    Math.round(player.y + 5),
+                    Math.round(player.width - 10),
+                    Math.round(player.height - 10)
+                );
                 
                 // Windows
                 ctx.fillStyle = '#87CEEB';
@@ -3104,95 +2910,26 @@
                     10, 10
                 );
                 
-                // Headlights with glow effect when moving
-                if (keys.ArrowLeft || keys.ArrowRight) {
-                    ctx.fillStyle = 'white';
-                    ctx.beginPath();
-                    ctx.arc(
-                        Math.round(player.x + 5),
-                        Math.round(player.y + 15),
-                        3, 0, Math.PI * 2
-                    );
-                    ctx.fill();
-                    
-                    ctx.beginPath();
-                    ctx.arc(
-                        Math.round(player.x + player.width - 5),
-                        Math.round(player.y + 15),
-                        3, 0, Math.PI * 2
-                    );
-                    ctx.fill();
-                    
-                    ctx.shadowColor = 'white';
-                    ctx.shadowBlur = 5;
-                    ctx.fill();
-                    ctx.shadowBlur = 0;
-                } else {
-                    ctx.fillStyle = 'white';
-                    ctx.fillRect(
-                        Math.round(player.x),
-                        Math.round(player.y + 15),
-                        5, 5
-                    );
-                    ctx.fillRect(
-                        Math.round(player.x + player.width - 5),
-                        Math.round(player.y + 15),
-                        5, 5
-                    );
-                }
-                
-                // Grill
-                ctx.fillStyle = '#333';
-                for (let i = 0; i < 3; i++) {
-                    ctx.fillRect(
-                        Math.round(player.x + player.width/4 + i*5),
-                        Math.round(player.y + 15),
-                        3, 3
-                    );
-                }
-                
-                // Side mirrors
-                ctx.fillStyle = '#FFD700';
+                // Headlights
+                ctx.fillStyle = 'white';
                 ctx.fillRect(
-                    Math.round(player.x - 5),
-                    Math.round(player.y + 5),
+                    Math.round(player.x),
+                    Math.round(player.y + 15),
                     5, 5
                 );
                 ctx.fillRect(
-                    Math.round(player.x + player.width),
-                    Math.round(player.y + 5),
+                    Math.round(player.x + player.width - 5),
+                    Math.round(player.y + 15),
                     5, 5
                 );
-                
-                // Draw shield if active (special version for jeepney without white glow)
-                if (player.powerups.barongShield) {
-                    ctx.strokeStyle = 'rgba(0, 0, 255, 0.7)';
-                    ctx.lineWidth = 3;
-                    ctx.beginPath();
-                    ctx.rect(
-                        Math.round(player.x - 5),
-                        Math.round(player.y - 5),
-                        Math.round(player.width + 10),
-                        Math.round(player.height + 10)
-                    );
-                    ctx.stroke();
-                    
-                    // Add subtle shield glow
-                    ctx.shadowColor = 'blue';
-                    ctx.shadowBlur = 5;
-                    ctx.stroke();
-                    ctx.shadowBlur = 0;
-                }
             }
             
-            // Add ship glow (except when shield is active on jeepney)
-            if (!(player.shipSkin === 'jeepney' && player.powerups.barongShield)) {
-                ctx.shadowColor = player.shipSkin === 'default' ? '#4CAF50' : 
-                                player.shipSkin === 'bangka' ? '#8B4513' : '#FFD700';
-                ctx.shadowBlur = 10;
-                ctx.fill();
-                ctx.shadowBlur = 0;
-            }
+            // Add ship glow
+            ctx.shadowColor = player.shipSkin === 'default' ? '#4CAF50' : 
+                            player.shipSkin === 'bangka' ? '#8B4513' : '#FFD700';
+            ctx.shadowBlur = 10;
+            ctx.fill();
+            ctx.shadowBlur = 0;
             
             ctx.restore();
         }
@@ -3665,3 +3402,4 @@
     </script>
 </body>
 </html>
+
