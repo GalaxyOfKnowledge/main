@@ -335,14 +335,14 @@
         
         .ship-icon.available {
             border-color: #FFD700;
-            box-shadow: 0 0 5px rgba(255, 215, 0, 0.7);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
             animation: pulse 1s infinite;
             background-color: rgba(255, 215, 0, 0.2);
         }
         
         @keyframes pulse {
             0% { box-shadow: 0 0 2px rgba(255, 215, 0, 0.7); }
-            50% { box-shadow: 0 0 8px rgba(255, 215, 0, 0.9); }
+            50% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.9); }
             100% { box-shadow: 0 0 2px rgba(255, 215, 0, 0.7); }
         }
         
@@ -726,6 +726,20 @@
             transition: width 0.1s;
         }
         
+        /* Wave transition timer */
+        #waveTransitionTimer {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            color: #FFD700;
+            text-shadow: 3px 3px 0 #8B4513;
+            display: none;
+            z-index: 2;
+            font-family: 'Press Start 2P', cursive;
+        }
+        
         @media (max-width: 768px) {
             #mobileControls {
                 display: flex;
@@ -807,6 +821,11 @@
                 font-size: 18px;
                 width: 90%;
             }
+            
+            #waveTransitionTimer {
+                font-size: 18px;
+                top: 10px;
+            }
         }
     </style>
 </head>
@@ -860,6 +879,7 @@
     </div>
     
     <div id="waveTransitionMessage"></div>
+    <div id="waveTransitionTimer"></div>
     
     <div id="comboCounter"></div>
     <div id="waveIndicator">WAVE: <span id="waveNumber">1</span></div>
@@ -1208,7 +1228,8 @@
         // Wave transition variables
         let waveTransitionActive = false;
         let waveTransitionTimer = 0;
-        let waveTransitionDuration = 120; // frames
+        let waveTransitionDuration = 600; // frames (10 seconds at 60fps)
+        let waveTransitionCountdown = 10; // seconds
         
         // High scores
         let highScores = [];
@@ -1725,6 +1746,7 @@
             document.getElementById('timerContainer').style.display = 'none';
             document.getElementById('triviaLaserHud').style.display = 'none';
             document.getElementById('waveTransitionMessage').style.display = 'none';
+            document.getElementById('waveTransitionTimer').style.display = 'none';
             
             // Stop background music
             backgroundMusic.pause();
@@ -1817,6 +1839,7 @@
             quizCorrectAnswers = 0;
             waveTransitionActive = false;
             waveTransitionTimer = 0;
+            waveTransitionCountdown = 10;
             
             // Show wave screen
             showWaveScreen();
@@ -1833,6 +1856,7 @@
             document.getElementById('triviaContainer').style.display = 'none';
             document.getElementById('timerContainer').style.display = 'none';
             document.getElementById('waveTransitionMessage').style.display = 'none';
+            document.getElementById('waveTransitionTimer').style.display = 'none';
             
             // Start background music
             backgroundMusic.currentTime = 0;
@@ -1966,6 +1990,7 @@
             document.getElementById('timerContainer').style.display = 'none';
             document.getElementById('triviaLaserHud').style.display = 'none';
             document.getElementById('waveTransitionMessage').style.display = 'none';
+            document.getElementById('waveTransitionTimer').style.display = 'none';
         }
         
         // Spawn boss
@@ -2047,6 +2072,10 @@
             document.getElementById('timerContainer').style.display = 'block';
             document.getElementById('timerBar').style.width = '100%';
             
+            // Show countdown timer
+            document.getElementById('waveTransitionTimer').textContent = waveTransitionCountdown;
+            document.getElementById('waveTransitionTimer').style.display = 'block';
+            
             // Show trivia container
             const triviaContainer = document.getElementById('triviaContainer');
             triviaContainer.style.display = 'block';
@@ -2085,6 +2114,10 @@
                 quizTimer = Math.max(0, quizTimeLimit - elapsed);
                 const percent = (quizTimer / quizTimeLimit) * 100;
                 document.getElementById('timerBar').style.width = `${percent}%`;
+                
+                // Update countdown timer
+                waveTransitionCountdown = Math.max(0, 10 - elapsed);
+                document.getElementById('waveTransitionTimer').textContent = waveTransitionCountdown;
                 
                 if (quizTimer <= 0) {
                     clearInterval(timerInterval);
@@ -2290,6 +2323,10 @@
             document.getElementById('triviaContainer').style.display = 'none';
             document.getElementById('timerContainer').style.display = 'none';
             document.getElementById('waveTransitionMessage').style.display = 'none';
+            document.getElementById('waveTransitionTimer').style.display = 'none';
+            
+            // Reset countdown
+            waveTransitionCountdown = 10;
             
             // Move to next wave
             wave++;
@@ -2556,11 +2593,14 @@
                 this.type = type;
                 this.rotation = 0;
                 this.rotationSpeed = Math.random() * 0.02 - 0.01;
+                this.pulse = 0;
+                this.pulseSpeed = Math.random() * 0.05 + 0.02;
             }
             
             update() {
                 this.y += this.speed;
                 this.rotation += this.rotationSpeed;
+                this.pulse += this.pulseSpeed;
             }
             
             draw() {
@@ -2569,13 +2609,20 @@
                 ctx.translate(Math.round(this.x + this.width/2), Math.round(this.y + this.height/2));
                 ctx.rotate(this.rotation);
                 
+                // Pulse effect
+                const pulseScale = 1 + Math.sin(this.pulse) * 0.1;
+                ctx.scale(pulseScale, pulseScale);
+                
                 if (this.type === 'default') {
-                    // Mini default ship
+                    // Mini default ship - enhanced design
                     ctx.fillStyle = '#4CAF50';
                     ctx.beginPath();
+                    // Main body
                     ctx.moveTo(0, Math.round(-this.height/2));
-                    ctx.lineTo(Math.round(-this.width/2), Math.round(this.height/2));
-                    ctx.lineTo(Math.round(this.width/2), Math.round(this.height/2));
+                    ctx.lineTo(Math.round(-this.width/2), Math.round(this.height/4));
+                    ctx.lineTo(Math.round(-this.width/4), Math.round(this.height/2));
+                    ctx.lineTo(Math.round(this.width/4), Math.round(this.height/2));
+                    ctx.lineTo(Math.round(this.width/2), Math.round(this.height/4));
                     ctx.closePath();
                     ctx.fill();
                     
@@ -2584,10 +2631,32 @@
                     ctx.beginPath();
                     ctx.arc(0, Math.round(-this.height/4), 5, 0, Math.PI * 2);
                     ctx.fill();
+                    
+                    // Engine glow
+                    ctx.fillStyle = 'rgba(255, 255, 0, 0.7)';
+                    ctx.beginPath();
+                    ctx.moveTo(Math.round(-this.width/4), Math.round(this.height/2));
+                    ctx.lineTo(0, Math.round(this.height/2 + 5));
+                    ctx.lineTo(Math.round(this.width/4), Math.round(this.height/2));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Add glow effect
+                    ctx.shadowColor = '#4CAF50';
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
                 } else if (this.type === 'bangka') {
-                    // Mini bangka ship
+                    // Mini bangka ship - enhanced design
+                    // Hull
                     ctx.fillStyle = '#8B4513';
-                    ctx.fillRect(Math.round(-this.width/2), Math.round(-this.height/4), Math.round(this.width), Math.round(this.height/2));
+                    ctx.beginPath();
+                    ctx.moveTo(Math.round(-this.width/2), Math.round(this.height/4));
+                    ctx.lineTo(Math.round(-this.width/3), Math.round(this.height/2));
+                    ctx.lineTo(Math.round(this.width/3), Math.round(this.height/2));
+                    ctx.lineTo(Math.round(this.width/2), Math.round(this.height/4));
+                    ctx.closePath();
+                    ctx.fill();
                     
                     // Outriggers
                     ctx.fillRect(Math.round(-this.width/2 - 10), 0, 10, 4);
@@ -2601,28 +2670,54 @@
                     ctx.lineTo(Math.round(this.width/4), Math.round(this.height/4));
                     ctx.closePath();
                     ctx.fill();
+                    
+                    // Sail details
+                    ctx.strokeStyle = '#8B4513';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(0, Math.round(-this.height/4));
+                    ctx.lineTo(0, Math.round(this.height/4));
+                    ctx.stroke();
+                    
+                    // Add glow effect
+                    ctx.shadowColor = '#8B4513';
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
                 } else if (this.type === 'jeepney') {
-                    // Mini jeepney ship
+                    // Mini jeepney ship - enhanced design
+                    // Body
                     ctx.fillStyle = '#FFD700';
                     ctx.fillRect(Math.round(-this.width/2), Math.round(-this.height/2), Math.round(this.width), Math.round(this.height));
                     
+                    // Body details
+                    ctx.fillStyle = '#FF0000';
+                    ctx.fillRect(Math.round(-this.width/2 + 5), Math.round(-this.height/2 + 5), Math.round(this.width - 10), Math.round(this.height - 10));
+                    
                     // Windows
                     ctx.fillStyle = '#87CEEB';
-                    ctx.fillRect(Math.round(-this.width/2 + 5), Math.round(-this.height/2 + 5), 10, 10);
-                    ctx.fillRect(Math.round(this.width/2 - 15), Math.round(-this.height/2 + 5), 10, 10);
+                    ctx.fillRect(Math.round(-this.width/2 + 10), Math.round(-this.height/2 + 10), 10, 10);
+                    ctx.fillRect(Math.round(this.width/2 - 20), Math.round(-this.height/2 + 10), 10, 10);
                     
                     // Headlights
                     ctx.fillStyle = 'white';
-                    ctx.fillRect(Math.round(-this.width/2), Math.round(-this.height/4), 5, 5);
-                    ctx.fillRect(Math.round(this.width/2 - 5), Math.round(-this.height/4), 5, 5);
+                    ctx.beginPath();
+                    ctx.arc(Math.round(-this.width/2 + 5), Math.round(-this.height/4), 3, 0, Math.PI * 2);
+                    ctx.arc(Math.round(this.width/2 - 5), Math.round(-this.height/4), 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Decorative stripes
+                    ctx.fillStyle = '#FFD700';
+                    for (let i = 0; i < 3; i++) {
+                        ctx.fillRect(Math.round(-this.width/2 + 5), Math.round(-this.height/2 + 20 + i*8), Math.round(this.width - 10), 3);
+                    }
+                    
+                    // Add glow effect
+                    ctx.shadowColor = '#FFD700';
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
                 }
-                
-                // Add glow effect
-                ctx.shadowColor = this.type === 'default' ? '#4CAF50' : 
-                                 this.type === 'bangka' ? '#8B4513' : '#FFD700';
-                ctx.shadowBlur = 10;
-                ctx.fillRect(Math.round(-this.width/2), Math.round(-this.height/2), Math.round(this.width), Math.round(this.height));
-                ctx.shadowBlur = 0;
                 
                 ctx.restore();
             }
@@ -2643,11 +2738,14 @@
                 this.type = type || ['barongShield', 'jeepneyBoost', 'tiniklingMode'][Math.floor(Math.random() * 3)];
                 this.rotation = 0;
                 this.rotationSpeed = Math.random() * 0.02 - 0.01;
+                this.pulse = 0;
+                this.pulseSpeed = Math.random() * 0.05 + 0.02;
             }
             
             update() {
                 this.y += this.speed;
                 this.rotation += this.rotationSpeed;
+                this.pulse += this.pulseSpeed;
             }
             
             draw() {
@@ -2656,14 +2754,18 @@
                 ctx.translate(Math.round(this.x + this.width/2), Math.round(this.y + this.height/2));
                 ctx.rotate(this.rotation);
                 
+                // Pulse effect
+                const pulseScale = 1 + Math.sin(this.pulse) * 0.2;
+                ctx.scale(pulseScale, pulseScale);
+                
                 if (this.type === 'barongShield') {
-                    // Shield power-up
-                    ctx.fillStyle = 'blue';
+                    // Shield power-up - enhanced design
+                    ctx.fillStyle = 'rgba(0, 0, 255, 0.8)';
                     ctx.beginPath();
                     ctx.arc(0, 0, Math.round(this.width/2), 0, Math.PI * 2);
                     ctx.fill();
                     
-                    ctx.fillStyle = 'white';
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
                     ctx.beginPath();
                     ctx.moveTo(0, Math.round(-this.height/2 + 5));
                     ctx.lineTo(Math.round(-this.width/2 + 5), 0);
@@ -2671,14 +2773,26 @@
                     ctx.lineTo(Math.round(this.width/2 - 5), 0);
                     ctx.closePath();
                     ctx.fill();
+                    
+                    // Inner circle
+                    ctx.fillStyle = 'rgba(0, 0, 200, 0.8)';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, Math.round(this.width/4), 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Add glow effect
+                    ctx.shadowColor = 'blue';
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
                 } else if (this.type === 'jeepneyBoost') {
-                    // Boost power-up
-                    ctx.fillStyle = 'red';
+                    // Boost power-up - enhanced design
+                    ctx.fillStyle = 'rgba(255, 0, 0, 0.8)';
                     ctx.beginPath();
                     ctx.arc(0, 0, Math.round(this.width/2), 0, Math.PI * 2);
                     ctx.fill();
                     
-                    ctx.fillStyle = 'yellow';
+                    ctx.fillStyle = 'rgba(255, 255, 0, 0.9)';
                     ctx.beginPath();
                     ctx.moveTo(0, Math.round(-this.height/2 + 5));
                     ctx.lineTo(Math.round(-this.width/4), Math.round(-this.height/4));
@@ -2690,14 +2804,26 @@
                     ctx.lineTo(Math.round(this.width/4), Math.round(-this.height/4));
                     ctx.closePath();
                     ctx.fill();
+                    
+                    // Inner circle
+                    ctx.fillStyle = 'rgba(200, 0, 0, 0.8)';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, Math.round(this.width/4), 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Add glow effect
+                    ctx.shadowColor = 'red';
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
                 } else if (this.type === 'tiniklingMode') {
-                    // Tinikling power-up
-                    ctx.fillStyle = 'green';
+                    // Tinikling power-up - enhanced design
+                    ctx.fillStyle = 'rgba(0, 255, 0, 0.8)';
                     ctx.beginPath();
                     ctx.arc(0, 0, Math.round(this.width/2), 0, Math.PI * 2);
                     ctx.fill();
                     
-                    ctx.fillStyle = 'white';
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
                     ctx.beginPath();
                     ctx.moveTo(Math.round(-this.width/4), Math.round(-this.height/4));
                     ctx.lineTo(Math.round(this.width/4), Math.round(-this.height/4));
@@ -2706,7 +2832,8 @@
                     ctx.closePath();
                     ctx.fill();
                     
-                    ctx.fillStyle = 'green';
+                    // Inner square
+                    ctx.fillStyle = 'rgba(0, 200, 0, 0.8)';
                     ctx.beginPath();
                     ctx.moveTo(Math.round(-this.width/8), Math.round(-this.height/8));
                     ctx.lineTo(Math.round(this.width/8), Math.round(-this.height/8));
@@ -2714,14 +2841,13 @@
                     ctx.lineTo(Math.round(-this.width/8), Math.round(this.height/8));
                     ctx.closePath();
                     ctx.fill();
+                    
+                    // Add glow effect
+                    ctx.shadowColor = 'green';
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
                 }
-                
-                // Add glow effect
-                ctx.shadowColor = this.type === 'barongShield' ? 'blue' :
-                                  this.type === 'jeepneyBoost' ? 'red' : 'green';
-                ctx.shadowBlur = 10;
-                ctx.fill();
-                ctx.shadowBlur = 0;
                 
                 ctx.restore();
             }
@@ -2786,7 +2912,8 @@
             ctx.globalCompositeOperation = 'source-over';
             
             if (player.powerups.barongShield) {
-                ctx.strokeStyle = 'blue';
+                // Draw shield around player - fixed for all ship types
+                ctx.strokeStyle = 'rgba(0, 0, 255, 0.7)';
                 ctx.lineWidth = 3;
                 ctx.beginPath();
                 ctx.arc(
@@ -2799,18 +2926,28 @@
                 
                 // Add shield glow
                 ctx.shadowColor = 'blue';
-                ctx.shadowBlur = 10;
+                ctx.shadowBlur = 15;
                 ctx.stroke();
                 ctx.shadowBlur = 0;
             }
             
             if (player.shipSkin === 'default') {
-                // Default ship - balanced stats
+                // Default ship - enhanced design
                 ctx.fillStyle = '#4CAF50';
                 ctx.beginPath();
-                ctx.moveTo(Math.round(player.x + player.width/2), Math.round(player.y));
-                ctx.lineTo(Math.round(player.x), Math.round(player.y + player.height));
-                ctx.lineTo(Math.round(player.x + player.width), Math.round(player.y + player.height));
+                // Main body
+                ctx.moveTo(
+                    Math.round(player.x + player.width/2),
+                    Math.round(player.y)
+                );
+                ctx.lineTo(
+                    Math.round(player.x),
+                    Math.round(player.y + player.height)
+                );
+                ctx.lineTo(
+                    Math.round(player.x + player.width),
+                    Math.round(player.y + player.height)
+                );
                 ctx.closePath();
                 ctx.fill();
                 
@@ -2826,28 +2963,57 @@
                 
                 // Add engine glow when moving
                 if (keys.ArrowLeft || keys.ArrowRight) {
-                    ctx.fillStyle = 'yellow';
+                    ctx.fillStyle = 'rgba(255, 255, 0, 0.7)';
                     ctx.beginPath();
-                    ctx.moveTo(Math.round(player.x + player.width/2 - 5), Math.round(player.y + player.height));
-                    ctx.lineTo(Math.round(player.x + player.width/2 + 5), Math.round(player.y + player.height));
-                    ctx.lineTo(Math.round(player.x + player.width/2), Math.round(player.y + player.height + 10));
+                    ctx.moveTo(
+                        Math.round(player.x + player.width/2 - 5),
+                        Math.round(player.y + player.height)
+                    );
+                    ctx.lineTo(
+                        Math.round(player.x + player.width/2 + 5),
+                        Math.round(player.y + player.height)
+                    );
+                    ctx.lineTo(
+                        Math.round(player.x + player.width/2),
+                        Math.round(player.y + player.height + 10)
+                    );
                     ctx.closePath();
                     ctx.fill();
                     
                     ctx.shadowColor = 'yellow';
-                    ctx.shadowBlur = 5;
+                    ctx.shadowBlur = 10;
                     ctx.fill();
                     ctx.shadowBlur = 0;
                 }
+                
+                // Add ship glow
+                ctx.shadowColor = '#4CAF50';
+                ctx.shadowBlur = 15;
+                ctx.fill();
+                ctx.shadowBlur = 0;
             } else if (player.shipSkin === 'bangka') {
-                // Bangka (outrigger boat) - slower but takes less damage
+                // Bangka (outrigger boat) - enhanced design
+                // Hull
                 ctx.fillStyle = '#8B4513';
-                ctx.fillRect(
+                ctx.beginPath();
+                ctx.moveTo(
                     Math.round(player.x),
-                    Math.round(player.y + player.height/3),
-                    Math.round(player.width),
-                    Math.round(player.height/2)
+                    Math.round(player.y + player.height/3)
                 );
+                ctx.lineTo(
+                    Math.round(player.x + player.width/3),
+                    Math.round(player.y + player.height)
+                );
+                ctx.lineTo(
+                    Math.round(player.x + player.width*2/3),
+                    Math.round(player.y + player.height)
+                );
+                ctx.lineTo(
+                    Math.round(player.x + player.width),
+                    Math.round(player.y + player.height/3)
+                );
+                ctx.closePath();
+                ctx.fill();
                 
                 // Outriggers
                 ctx.fillRect(
@@ -2878,8 +3044,29 @@
                 );
                 ctx.closePath();
                 ctx.fill();
+                
+                // Sail details
+                ctx.strokeStyle = '#8B4513';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(
+                    Math.round(player.x + player.width/2),
+                    Math.round(player.y + player.height/3)
+                );
+                ctx.lineTo(
+                    Math.round(player.x + player.width/2),
+                    Math.round(player.y + player.height)
+                );
+                ctx.stroke();
+                
+                // Add ship glow
+                ctx.shadowColor = '#8B4513';
+                ctx.shadowBlur = 15;
+                ctx.fill();
+                ctx.shadowBlur = 0;
             } else if (player.shipSkin === 'jeepney') {
-                // Jeepney - faster but takes more damage
+                // Jeepney - enhanced design
+                // Body
                 ctx.fillStyle = '#FFD700';
                 ctx.fillRect(
                     Math.round(player.x),
@@ -2889,7 +3076,7 @@
                 );
                 
                 // Body details
-                ctx.fillStyle = 'red';
+                ctx.fillStyle = '#FF0000';
                 ctx.fillRect(
                     Math.round(player.x + 5),
                     Math.round(player.y + 5),
@@ -2912,24 +3099,36 @@
                 
                 // Headlights
                 ctx.fillStyle = 'white';
-                ctx.fillRect(
-                    Math.round(player.x),
+                ctx.beginPath();
+                ctx.arc(
+                    Math.round(player.x + 5),
                     Math.round(player.y + 15),
-                    5, 5
+                    3, 0, Math.PI * 2
                 );
-                ctx.fillRect(
+                ctx.arc(
                     Math.round(player.x + player.width - 5),
                     Math.round(player.y + 15),
-                    5, 5
+                    3, 0, Math.PI * 2
                 );
+                ctx.fill();
+                
+                // Decorative stripes
+                ctx.fillStyle = '#FFD700';
+                for (let i = 0; i < 3; i++) {
+                    ctx.fillRect(
+                        Math.round(player.x + 5),
+                        Math.round(player.y + 20 + i*8),
+                        Math.round(player.width - 10),
+                        3
+                    );
+                }
+                
+                // Add ship glow
+                ctx.shadowColor = '#FFD700';
+                ctx.shadowBlur = 15;
+                ctx.fill();
+                ctx.shadowBlur = 0;
             }
-            
-            // Add ship glow
-            ctx.shadowColor = player.shipSkin === 'default' ? '#4CAF50' : 
-                            player.shipSkin === 'bangka' ? '#8B4513' : '#FFD700';
-            ctx.shadowBlur = 10;
-            ctx.fill();
-            ctx.shadowBlur = 0;
             
             ctx.restore();
         }
@@ -3402,4 +3601,3 @@
     </script>
 </body>
 </html>
-
