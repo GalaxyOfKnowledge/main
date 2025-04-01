@@ -307,8 +307,8 @@
         
         #shipSelection {
             position: fixed;
-            bottom: 80px;
-            left: 20px; /* Changed from right to left */
+            bottom: 120px;
+            left: 20px;
             display: flex;
             flex-direction: column;
             gap: 8px;
@@ -777,6 +777,61 @@
             transition: height 0.1s;
         }
         
+        /* Special ability key */
+        .special-key {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 32px;
+            height: 32px;
+            border: 2px solid #555;
+            border-radius: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: normal;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 14px;
+            transition: all 0.1s;
+            font-family: 'Press Start 2P', cursive;
+            z-index: 2;
+            display: none;
+        }
+        
+        .special-key.available {
+            border-color: #FFD700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+            animation: pulse 1s infinite;
+            background-color: rgba(255, 215, 0, 0.2);
+        }
+        
+        .special-key .cooldown {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0%;
+            background-color: rgba(0, 0, 0, 0.7);
+            transition: height 0.1s;
+        }
+        
+        /* Laser beam effect */
+        .laser-beam {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, 
+                rgba(0, 255, 255, 0.8) 0%, 
+                rgba(0, 255, 255, 0.2) 100%);
+            z-index: 3;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
         @media (max-width: 768px) {
             #mobileControls {
                 display: flex;
@@ -872,6 +927,7 @@
 </head>
 <body>
     <div id="gameOverCover"></div>
+    <div class="laser-beam" id="laserBeam"></div>
     <canvas id="gameCanvas"></canvas>
     
     <div id="hud">
@@ -936,10 +992,13 @@
         <div class="ship-icon" id="jeepneyShip" title="Jeepney Ship (V)">V</div>
     </div>
     
+    <div class="special-key" id="specialKey">B</div>
+    
     <div id="mobileControls">
         <div class="mobile-btn" id="leftBtn">←</div>
         <div class="mobile-btn" id="shootBtn">🔫</div>
         <div class="mobile-btn" id="rightBtn">→</div>
+        <div class="mobile-btn" id="specialBtn">B</div>
     </div>
     
     <div id="menuScreen">
@@ -954,15 +1013,12 @@
     <div id="objectivesScreen" style="display: none;">
         <div class="title">MISSION OBJECTIVES</div>
         <div class="objectives-content">
-            <div class="objective-item">DEFEAT ALL ENEMIES IN EACH WAVE TO PROGRESS</div>
-            <div class="objective-item">ANSWER TRIVIA QUESTIONS CORRECTLY TO CHARGE YOUR TRIVIA LASER</div>
-            <div class="objective-item">DEFEAT THE FINAL BOSS AT WAVE 15 TO WIN THE GAME</div>
-            <div class="objective-item">USE SPECIAL ABILITIES:</div>
-            <div class="objective-item" style="margin-left: 20px;">- DEFAULT SHIP (X): TEMPORARY SHIELD (PRESS A)</div>
-            <div class="objective-item" style="margin-left: 20px;">- BANGKA SHIP (C): HEAL 1 DURABILITY (PRESS S)</div>
-            <div class="objective-item" style="margin-left: 20px;">- JEEPNEY SHIP (V): SPEED BOOST (PRESS D)</div>
-            <div class="objective-item">COLLECT POWER-UPS TO GAIN SPECIAL ABILITIES</div>
-            <div class="objective-item">SWITCH SHIPS TO ADAPT TO DIFFERENT SITUATIONS</div>
+            <div class="objective-item">DEFEAT ALL ENEMIES IN EACH WAVE</div>
+            <div class="objective-item">ANSWER TRIVIA QUESTIONS TO CHARGE LASER</div>
+            <div class="objective-item">DEFEAT THE FINAL BOSS AT WAVE 15</div>
+            <div class="objective-item">USE SPECIAL ABILITIES WITH [B] KEY</div>
+            <div class="objective-item">COLLECT POWER-UPS FOR SPECIAL ABILITIES</div>
+            <div class="objective-item">SWITCH SHIPS TO ADAPT TO SITUATIONS</div>
         </div>
         <button id="continueFromObjectives" class="menu-button" style="background: #2E7D32; box-shadow: 4px 4px 0 #4CAF50;">START GAME</button>
     </div>
@@ -1052,16 +1108,8 @@
                     <div class="tutorial-text">Select Answer (Boss Fight)</div>
                 </div>
                 <div class="tutorial-row">
-                    <div class="tutorial-key">A</div>
-                    <div class="tutorial-text">Default Ship Special: Shield</div>
-                </div>
-                <div class="tutorial-row">
-                    <div class="tutorial-key">S</div>
-                    <div class="tutorial-text">Bangka Ship Special: Heal</div>
-                </div>
-                <div class="tutorial-row">
-                    <div class="tutorial-key">D</div>
-                    <div class="tutorial-text">Jeepney Ship Special: Speed Boost</div>
+                    <div class="tutorial-key">B</div>
+                    <div class="tutorial-text">Special Ability (All Ships)</div>
                 </div>
                 <div class="tutorial-row">
                     <div class="tutorial-key">T</div>
@@ -1069,7 +1117,69 @@
                 </div>
             </div>
             
-            <!-- Rest of your tutorial content... -->
+            <div class="tutorial-section">
+                <div class="tutorial-title">SHIPS</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-ship tutorial-ship-default"></div>
+                    <div class="tutorial-text">DEFAULT SHIP: Balanced stats</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-ship tutorial-ship-bangka"></div>
+                    <div class="tutorial-text">BANGKA SHIP: Strong but slow</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-ship tutorial-ship-jeepney"></div>
+                    <div class="tutorial-text">JEEPNEY SHIP: Fast but weak</div>
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">ENEMIES</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-enemy tutorial-enemy-kapre"></div>
+                    <div class="tutorial-text">KAPRE: Tough, slow-moving</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-enemy tutorial-enemy-aswang"></div>
+                    <div class="tutorial-text">ASWANG: Fast but fragile</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-enemy tutorial-enemy-sarimanok"></div>
+                    <div class="tutorial-text">SARIMANOK: Balanced enemy</div>
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">POWER-UPS</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-powerup tutorial-powerup-shield"></div>
+                    <div class="tutorial-text">SHIELD: Temporary protection</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-powerup tutorial-powerup-boost"></div>
+                    <div class="tutorial-text">BOOST: Increased speed</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-powerup tutorial-powerup-tinikling"></div>
+                    <div class="tutorial-text">TINIKLING: Faster shooting</div>
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">SPECIAL ABILITIES</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">B</div>
+                    <div class="tutorial-text">DEFAULT SHIP: Temporary shield</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">B</div>
+                    <div class="tutorial-text">BANGKA SHIP: Heal durability</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">B</div>
+                    <div class="tutorial-text">JEEPNEY SHIP: Speed boost</div>
+                </div>
+            </div>
         </div>
         <button id="tutorialBackButton" class="menu-button" style="background: #0D47A1; box-shadow: 4px 4px 0 #2196F3; margin-top: 20px;">BACK TO MENU</button>
     </div>
@@ -1514,6 +1624,12 @@
             document.getElementById('shootBtn').addEventListener('touchend', () => {
                 keys[' '] = false;
             });
+            document.getElementById('specialBtn').addEventListener('touchstart', () => {
+                keys['b'] = true;
+            });
+            document.getElementById('specialBtn').addEventListener('touchend', () => {
+                keys['b'] = false;
+            });
             
             // Ship selection buttons
             document.getElementById('defaultShip').addEventListener('click', () => {
@@ -1583,15 +1699,9 @@
                     } else if (e.key.toLowerCase() === 't' && player.triviaLaser >= TRIVIA_LASER_MAX) {
                         // Fire trivia laser
                         fireTriviaLaser();
-                    } else if (e.key.toLowerCase() === 'a' && player.shipSkin === 'default') {
-                        // Default ship special ability
-                        activateDefaultShipSpecial();
-                    } else if (e.key.toLowerCase() === 's' && player.shipSkin === 'bangka') {
-                        // Bangka ship special ability
-                        activateBangkaShipSpecial();
-                    } else if (e.key.toLowerCase() === 'd' && player.shipSkin === 'jeepney') {
-                        // Jeepney ship special ability
-                        activateJeepneyShipSpecial();
+                    } else if (e.key.toLowerCase() === 'b') {
+                        // Special ability for current ship
+                        activateSpecialAbility();
                     }
                 }
                 
@@ -1626,59 +1736,64 @@
             ' ': false,
             'z': false,
             't': false,
-            'a': false,
-            's': false,
-            'd': false
+            'b': false
         };
         
-        // Show objectives screen
-        function showObjectives() {
-            gameState = STATE_OBJECTIVES;
-            document.getElementById('menuScreen').style.display = 'none';
-            document.getElementById('objectivesScreen').style.display = 'flex';
-        }
-        
-        // Activate default ship special ability
-        function activateDefaultShipSpecial() {
-            const ability = player.specialAbilities.default;
+        // Activate special ability based on current ship
+        function activateSpecialAbility() {
+            const ability = player.specialAbilities[player.shipSkin];
             
             if (ability.cooldown <= 0) {
-                // Activate temporary shield
-                player.powerups.barongShield = true;
-                powerupTimers.barongShield = 180; // 3 seconds
-                ability.cooldown = ability.maxCooldown;
-                updatePowerupStatus();
-                updateShipSelectionUI();
-                sounds.shield.play();
+                switch (player.shipSkin) {
+                    case 'default':
+                        // Activate temporary shield
+                        player.powerups.barongShield = true;
+                        powerupTimers.barongShield = 180; // 3 seconds
+                        ability.cooldown = ability.maxCooldown;
+                        updatePowerupStatus();
+                        updateSpecialKeyUI();
+                        sounds.shield.play();
+                        break;
+                    case 'bangka':
+                        // Heal 1 durability point for bangka ship if not at max
+                        if (player.durability.bangka < 3) {
+                            player.durability.bangka = Math.min(3, player.durability.bangka + 1);
+                            ability.cooldown = ability.maxCooldown;
+                            updateDurabilityDisplay();
+                            updateSpecialKeyUI();
+                            sounds.heal.play();
+                        }
+                        break;
+                    case 'jeepney':
+                        // Activate speed boost
+                        player.powerups.jeepneyBoost = true;
+                        powerupTimers.jeepneyBoost = 120; // 2 seconds
+                        ability.cooldown = ability.maxCooldown;
+                        updatePowerupStatus();
+                        updateSpecialKeyUI();
+                        sounds.powerup.play();
+                        break;
+                }
             }
         }
         
-        // Activate bangka ship special ability
-        function activateBangkaShipSpecial() {
-            const ability = player.specialAbilities.bangka;
+        // Update special key UI
+        function updateSpecialKeyUI() {
+            const specialKey = document.getElementById('specialKey');
+            const ability = player.specialAbilities[player.shipSkin];
             
-            if (ability.cooldown <= 0) {
-                // Heal 1 durability point for bangka ship
-                player.durability.bangka = Math.min(3, player.durability.bangka + 1);
-                ability.cooldown = ability.maxCooldown;
-                updateDurabilityDisplay();
-                updateShipSelectionUI();
-                sounds.heal.play();
+            // Remove existing cooldown element if any
+            const existingCooldown = specialKey.querySelector('.cooldown');
+            if (existingCooldown) {
+                specialKey.removeChild(existingCooldown);
             }
-        }
-        
-        // Activate jeepney ship special ability
-        function activateJeepneyShipSpecial() {
-            const ability = player.specialAbilities.jeepney;
             
-            if (ability.cooldown <= 0) {
-                // Activate speed boost
-                player.powerups.jeepneyBoost = true;
-                powerupTimers.jeepneyBoost = 120; // 2 seconds
-                ability.cooldown = ability.maxCooldown;
-                updatePowerupStatus();
-                updateShipSelectionUI();
-                sounds.powerup.play();
+            if (ability.cooldown > 0) {
+                const cooldownElement = document.createElement('div');
+                cooldownElement.className = 'cooldown';
+                const cooldownPercent = (ability.cooldown / ability.maxCooldown) * 100;
+                cooldownElement.style.height = `${cooldownPercent}%`;
+                specialKey.appendChild(cooldownElement);
             }
         }
         
@@ -1692,27 +1807,8 @@
             bangkaShip.classList.toggle('available', player.availableShips.bangka);
             jeepneyShip.classList.toggle('available', player.availableShips.jeepney);
             
-            // Update cooldown indicators
-            updateCooldownIndicator(defaultShip, player.specialAbilities.default);
-            updateCooldownIndicator(bangkaShip, player.specialAbilities.bangka);
-            updateCooldownIndicator(jeepneyShip, player.specialAbilities.jeepney);
-        }
-        
-        // Update cooldown indicator for a ship
-        function updateCooldownIndicator(shipElement, ability) {
-            // Remove existing cooldown element if any
-            const existingCooldown = shipElement.querySelector('.cooldown');
-            if (existingCooldown) {
-                shipElement.removeChild(existingCooldown);
-            }
-            
-            if (ability.cooldown > 0) {
-                const cooldownElement = document.createElement('div');
-                cooldownElement.className = 'cooldown';
-                const cooldownPercent = (ability.cooldown / ability.maxCooldown) * 100;
-                cooldownElement.style.height = `${cooldownPercent}%`;
-                shipElement.appendChild(cooldownElement);
-            }
+            // Update special key UI
+            updateSpecialKeyUI();
         }
         
         // Update durability display with icons
@@ -1778,6 +1874,13 @@
             player.triviaLaser = 0;
             updateTriviaLaserDisplay();
             
+            // Show laser beam effect
+            const laserBeam = document.getElementById('laserBeam');
+            laserBeam.style.opacity = '1';
+            setTimeout(() => {
+                laserBeam.style.opacity = '0';
+            }, 300);
+            
             // Destroy all enemies on screen
             for (let i = enemies.length - 1; i >= 0; i--) {
                 const enemy = enemies[i];
@@ -1796,9 +1899,8 @@
                 sounds.explosion.play();
             }
             
-            // Draw laser effect
-            ctx.fillStyle = 'rgba(0, 255, 255, 0.5)';
-            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            // Also destroy enemy bullets
+            enemyBullets = [];
             
             updateHUD();
         }
@@ -1830,6 +1932,7 @@
             document.getElementById('triviaLaserHud').style.display = 'none';
             document.getElementById('waveTransitionMessage').style.display = 'none';
             document.getElementById('waveTransitionTimer').style.display = 'none';
+            document.getElementById('specialKey').style.display = 'none';
             
             // Stop background music
             backgroundMusic.pause();
@@ -1988,6 +2091,7 @@
             document.getElementById('durabilityHud').style.display = 'block';
             document.getElementById('powerupHud').style.display = 'block';
             document.getElementById('shipSelection').style.display = 'flex';
+            document.getElementById('specialKey').style.display = 'flex';
             document.getElementById('comboCounter').style.display = 'none';
             document.getElementById('waveIndicator').style.display = 'block';
             document.getElementById('waveNumber').textContent = wave;
@@ -2089,6 +2193,7 @@
             document.getElementById('triviaLaserHud').style.display = 'none';
             document.getElementById('waveTransitionMessage').style.display = 'none';
             document.getElementById('waveTransitionTimer').style.display = 'none';
+            document.getElementById('specialKey').style.display = 'none';
         }
         
         // Spawn boss
@@ -2760,7 +2865,7 @@
                     ctx.fillRect(Math.round(-this.width/2 - 10), 0, 10, 4);
                     ctx.fillRect(Math.round(this.width/2), 0, 10, 4);
                     
-                    // Sail
+                    // Sail (positioned higher)
                     ctx.fillStyle = 'white';
                     ctx.beginPath();
                     ctx.moveTo(0, Math.round(-this.height/4));
@@ -2979,7 +3084,7 @@
             for (const shipType in player.specialAbilities) {
                 if (player.specialAbilities[shipType].cooldown > 0) {
                     player.specialAbilities[shipType].cooldown--;
-                    updateShipSelectionUI();
+                    updateSpecialKeyUI();
                 }
             }
             
@@ -3133,7 +3238,7 @@
                     15, 5
                 );
                 
-                // Sail
+                // Sail (positioned higher)
                 ctx.fillStyle = 'white';
                 ctx.beginPath();
                 ctx.moveTo(
