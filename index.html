@@ -55,7 +55,7 @@
             transform: translateX(-50%);
             width: 90%;
             max-width: 800px;
-            z-index: 2;
+            z-index: 3; /* Increased z-index to be above the ship */
             background-color: transparent;
             padding: 15px;
             display: none;
@@ -1016,7 +1016,7 @@
         <div class="objectives-content">
             <div class="objective-item">DEFEAT ALL ENEMIES IN EACH WAVE</div>
             <div class="objective-item">ANSWER TRIVIA QUESTIONS TO CHARGE LASER</div>
-            <div class="objective-item">DEFEAT THE FINAL BOSS AT WAVE 15</div>
+            <div class="objective-item">DEFEAT THE FINAL BOSS AT WAVE 10</div>
             <div class="objective-item">USE SPECIAL ABILITIES WITH [B] KEY</div>
             <div class="objective-item">COLLECT POWER-UPS FOR SPECIAL ABILITIES</div>
             <div class="objective-item">SWITCH SHIPS TO ADAPT TO SITUATIONS</div>
@@ -1200,7 +1200,7 @@
     
     <script>
         // Game constants
-        const BOSS_WAVE = 15; // Boss appears at wave 15
+        const BOSS_WAVE = 10; // Boss appears at wave 10 (changed from 15)
         const TRIVIA_LASER_MAX = 100;
         
         // Game states
@@ -1340,19 +1340,19 @@
         
         // Sound effects - Using different audio sources
         const sounds = {
-            shoot: new Audio('mixkit-short-laser-gun-shot-1670 (1).wav'),
-            enemyShoot: new Audio('mixkit-arrow-whoosh-1491.wav'),
-            explosion: new Audio('mixkit-arcade-game-explosion-1699.wav'),
+            shoot: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-short-laser-gun-shot-1670.mp3'),
+            enemyShoot: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arrow-whoosh-1491.mp3'),
+            explosion: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-explosion-impact-1684.mp3'),
             powerup: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3'),
             correct: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3'),
             wrong: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3'),
-            bossSpawn: new Audio('mixkit-dinosaur-monster-roar-1976.wav'),
-            shipChange: new Audio('mixkit-arcade-retro-jump-223 (1).wav'),
-            win: new Audio('mixkit-winning-chimes-2015.wav'),
+            bossSpawn: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-monster-dinosaur-roar-1988.mp3'),
+            shipChange: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3'),
+            win: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3'),
             combo: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-extra-bonus-in-a-video-game-2045.mp3'),
-            waveComplete: new Audio('mixkit-arcade-bonus-alert-767.wav'),
+            waveComplete: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3'),
             hit: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-changing-tab-206.mp3'),
-            menuSelect: new Audio('mixkit-gear-fast-lock-tap-2857.wav'),
+            menuSelect: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3'),
             menuHover: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-horror-ambience-228.mp3'),
             laser: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-laser-weapon-shot-1671.mp3'),
             slowmo: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3'),
@@ -2647,9 +2647,9 @@
                     ctx.fillStyle = 'white';
                     for (let i = 0; i < 5; i++) {
                         ctx.beginPath();
-                        ctx.moveTo(Math.round(this.x + this.width/2 - 15 + i*5), Math.round(this.y + 25));
-                        ctx.lineTo(Math.round(this.x + this.width/2 - 12 + i*5), Math.round(this.y + 35));
-                        ctx.lineTo(Math.round(this.x + this.width/2 - 18 + i*5), Math.round(this.y + 35));
+                        ctx.moveTo(Math.round(this.x + this.width/2 - 12 + i*5), Math.round(this.y + 25));
+                        ctx.lineTo(Math.round(this.x + this.width/2 - 14 + i*5), Math.round(this.y + 35));
+                        ctx.lineTo(Math.round(this.x + this.width/2 - 10 + i*5), Math.round(this.y + 35));
                         ctx.closePath();
                         ctx.fill();
                     }
@@ -2859,36 +2859,36 @@
                     ctx.shadowBlur = 0;
                 } else if (this.type === 'bangka') {
                     // Mini bangka ship - enhanced design
-                    // Hull
+                    // Hull (boat shape)
                     ctx.fillStyle = '#8B4513';
                     ctx.beginPath();
-                    ctx.moveTo(Math.round(-this.width/2), Math.round(this.height/4));
-                    ctx.lineTo(Math.round(-this.width/3), Math.round(this.height/2));
-                    ctx.lineTo(Math.round(this.width/3), Math.round(this.height/2));
-                    ctx.lineTo(Math.round(this.width/2), Math.round(this.height/4));
+                    ctx.moveTo(0, Math.round(-this.height/3));
+                    ctx.lineTo(Math.round(-this.width/2), Math.round(this.height/3));
+                    ctx.lineTo(Math.round(this.width/2), Math.round(this.height/3));
                     ctx.closePath();
                     ctx.fill();
                     
-                    // Outriggers
-                    ctx.fillRect(Math.round(-this.width/2 - 10), 0, 10, 4);
-                    ctx.fillRect(Math.round(this.width/2), 0, 10, 4);
-                    
-                    // Sail (positioned higher)
+                    // Sail (triangular shape)
                     ctx.fillStyle = 'white';
                     ctx.beginPath();
-                    ctx.moveTo(0, Math.round(-this.height/4));
+                    ctx.moveTo(0, Math.round(-this.height/3));
                     ctx.lineTo(Math.round(-this.width/4), Math.round(this.height/4));
                     ctx.lineTo(Math.round(this.width/4), Math.round(this.height/4));
                     ctx.closePath();
                     ctx.fill();
                     
-                    // Sail details
+                    // Sail details (lines)
                     ctx.strokeStyle = '#8B4513';
                     ctx.lineWidth = 1;
                     ctx.beginPath();
-                    ctx.moveTo(0, Math.round(-this.height/4));
+                    ctx.moveTo(0, Math.round(-this.height/3));
                     ctx.lineTo(0, Math.round(this.height/4));
                     ctx.stroke();
+                    
+                    // Outriggers (small rectangles)
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(Math.round(-this.width/2 - 8), Math.round(-this.height/6), 8, 4);
+                    ctx.fillRect(Math.round(this.width/2), Math.round(-this.height/6), 8, 4);
                     
                     // Add glow effect
                     ctx.shadowColor = '#8B4513';
@@ -2899,28 +2899,59 @@
                     // Mini jeepney ship - enhanced design
                     // Body
                     ctx.fillStyle = '#FFD700';
-                    ctx.fillRect(Math.round(-this.width/2), Math.round(-this.height/2), Math.round(this.width), Math.round(this.height));
+                    ctx.fillRect(
+                        Math.round(-this.width/2),
+                        Math.round(-this.height/2),
+                        Math.round(this.width),
+                        Math.round(this.height)
+                    );
                     
                     // Body details
                     ctx.fillStyle = '#FF0000';
-                    ctx.fillRect(Math.round(-this.width/2 + 5), Math.round(-this.height/2 + 5), Math.round(this.width - 10), Math.round(this.height - 10));
+                    ctx.fillRect(
+                        Math.round(-this.width/2 + 5),
+                        Math.round(-this.height/2 + 5),
+                        Math.round(this.width - 10),
+                        Math.round(this.height - 10)
+                    );
                     
                     // Windows
                     ctx.fillStyle = '#87CEEB';
-                    ctx.fillRect(Math.round(-this.width/2 + 10), Math.round(-this.height/2 + 10), 10, 10);
-                    ctx.fillRect(Math.round(this.width/2 - 20), Math.round(-this.height/2 + 10), 10, 10);
+                    ctx.fillRect(
+                        Math.round(-this.width/2 + 10),
+                        Math.round(-this.height/2 + 10),
+                        10, 10
+                    );
+                    ctx.fillRect(
+                        Math.round(this.width/2 - 20),
+                        Math.round(-this.height/2 + 10),
+                        10, 10
+                    );
                     
                     // Headlights
                     ctx.fillStyle = 'white';
                     ctx.beginPath();
-                    ctx.arc(Math.round(-this.width/2 + 5), Math.round(-this.height/4), 3, 0, Math.PI * 2);
-                    ctx.arc(Math.round(this.width/2 - 5), Math.round(-this.height/4), 3, 0, Math.PI * 2);
+                    ctx.arc(
+                        Math.round(-this.width/2 + 5),
+                        Math.round(-this.height/4),
+                        3, 0, Math.PI * 2
+                    );
+                    ctx.arc(
+                        Math.round(this.width/2 - 5),
+                        Math.round(-this.height/4),
+                        3, 0, Math.PI * 2
+                    );
                     ctx.fill();
                     
                     // Decorative stripes
                     ctx.fillStyle = '#FFD700';
                     for (let i = 0; i < 3; i++) {
-                        ctx.fillRect(Math.round(-this.width/2 + 5), Math.round(-this.height/2 + 20 + i*8), Math.round(this.width - 10), 3);
+                        ctx.fillRect(
+                            Math.round(-this.width/2 + 5),
+                            Math.round(-this.height/2 + 20 + i*8),
+                            Math.round(this.width - 10),
+                            3
+                        );
                     }
                     
                     // Add glow effect
@@ -3230,8 +3261,8 @@
                 ctx.fill();
                 ctx.shadowBlur = 0;
             } else if (player.shipSkin === 'bangka') {
-                // Bangka (outrigger boat) - enhanced design to match power-up
-                // Hull
+                // Bangka (outrigger boat) - enhanced design
+                // Hull (boat shape)
                 ctx.fillStyle = '#8B4513';
                 ctx.beginPath();
                 ctx.moveTo(
@@ -3249,19 +3280,7 @@
                 ctx.closePath();
                 ctx.fill();
                 
-                // Outriggers
-                ctx.fillRect(
-                    Math.round(player.x - 15),
-                    Math.round(player.y + player.height/2),
-                    15, 5
-                );
-                ctx.fillRect(
-                    Math.round(player.x + player.width),
-                    Math.round(player.y + player.height/2),
-                    15, 5
-                );
-                
-                // Sail (positioned higher)
+                // Sail (triangular shape)
                 ctx.fillStyle = 'white';
                 ctx.beginPath();
                 ctx.moveTo(
@@ -3279,7 +3298,7 @@
                 ctx.closePath();
                 ctx.fill();
                 
-                // Sail details
+                // Sail details (lines)
                 ctx.strokeStyle = '#8B4513';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
@@ -3292,6 +3311,19 @@
                     Math.round(player.y + player.height)
                 );
                 ctx.stroke();
+                
+                // Outriggers (small rectangles)
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(
+                    Math.round(player.x - 15),
+                    Math.round(player.y + player.height/2),
+                    15, 5
+                );
+                ctx.fillRect(
+                    Math.round(player.x + player.width),
+                    Math.round(player.y + player.height/2),
+                    15, 5
+                );
                 
                 // Add ship glow
                 ctx.shadowColor = '#8B4513';
