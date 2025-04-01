@@ -2494,8 +2494,8 @@
                 // Calculate time bonus (faster answers give better bonuses)
                 const timeBonus = Math.max(1, quizTimeLimit - answerTime);
                 
-                // Add to trivia laser
-                player.triviaLaser = Math.min(TRIVIA_LASER_MAX, player.triviaLaser + 25);
+                // Add to trivia laser (33% per correct answer to reach 100% in 3 answers)
+                player.triviaLaser = Math.min(TRIVIA_LASER_MAX, player.triviaLaser + 33);
                 updateTriviaLaserDisplay();
                 
                 // Apply time bonus
@@ -3130,7 +3130,26 @@
             ctx.save();
             ctx.globalCompositeOperation = 'source-over';
             
-            if (player.powerups.barongShield) {
+            // Make player invincible during trivia questions
+            if (bossActive || waveTransitionActive) {
+                // Draw shield around player - fixed for all ship types
+                ctx.strokeStyle = 'rgba(0, 255, 255, 0.7)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(
+                    Math.round(player.x + player.width/2),
+                    Math.round(player.y + player.height/2),
+                    Math.round((player.width + player.height)/2) + 8,
+                    0, Math.PI * 2
+                );
+                ctx.stroke();
+                
+                // Add shield glow
+                ctx.shadowColor = 'cyan';
+                ctx.shadowBlur = 15;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            } else if (player.powerups.barongShield) {
                 // Draw shield around player - fixed for all ship types
                 ctx.strokeStyle = 'rgba(0, 0, 255, 0.7)';
                 ctx.lineWidth = 3;
@@ -3211,7 +3230,7 @@
                 ctx.fill();
                 ctx.shadowBlur = 0;
             } else if (player.shipSkin === 'bangka') {
-                // Bangka (outrigger boat) - enhanced design
+                // Bangka (outrigger boat) - enhanced design to match power-up
                 // Hull
                 ctx.fillStyle = '#8B4513';
                 ctx.beginPath();
@@ -3554,8 +3573,9 @@
                 for (let i = enemyBullets.length - 1; i >= 0; i--) {
                     enemyBullets[i].y += enemyBullets[i].speed;
                     
-                    // Check if enemy bullet hits player
-                    if (player.x < enemyBullets[i].x + enemyBullets[i].width &&
+                    // Check if enemy bullet hits player (only if not in trivia question mode)
+                    if (!bossActive && !waveTransitionActive &&
+                        player.x < enemyBullets[i].x + enemyBullets[i].width &&
                         player.x + player.width > enemyBullets[i].x &&
                         player.y < enemyBullets[i].y + enemyBullets[i].height &&
                         player.y + player.height > enemyBullets[i].y) {
@@ -3623,21 +3643,23 @@
                 for (let i = enemies.length - 1; i >= 0; i--) {
                     enemies[i].update();
                     
-                    // Check if enemy hits player
-                    if (!player.powerups.barongShield &&
+                    // Check if enemy hits player (only if not in trivia question mode)
+                    if (!bossActive && !waveTransitionActive &&
                         player.x < enemies[i].x + enemies[i].width &&
                         player.x + player.width > enemies[i].x &&
                         player.y < enemies[i].y + enemies[i].height &&
                         player.y + player.height > enemies[i].y) {
                         
-                        // Reduce durability for current ship
-                        player.durability[player.shipSkin]--;
-                        updateDurabilityDisplay();
-                        
-                        // Check if current ship has no durability left
-                        if (player.durability[player.shipSkin] <= 0) {
-                            gameOver();
-                            break;
+                        if (!player.powerups.barongShield) {
+                            // Reduce durability for current ship
+                            player.durability[player.shipSkin]--;
+                            updateDurabilityDisplay();
+                            
+                            // Check if current ship has no durability left
+                            if (player.durability[player.shipSkin] <= 0) {
+                                gameOver();
+                                break;
+                            }
                         }
                         
                         enemies.splice(i, 1);
@@ -3674,6 +3696,9 @@
                                 }
                                 
                                 // Combo multiplier
+                                comboCount++;
+                                comboTimeout = 60; // 1 second at 60fps
+                                
                                 if (comboCount >= 10) {
                                     points *= 3;
                                     showCombo();
