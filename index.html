@@ -443,13 +443,14 @@
             position: fixed;
             top: 50px;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translate(-50%, -50%);
             font-size: 20px;
             color: #FFD700;
             text-shadow: 3px 3px 0 #8B4513;
             display: none;
             z-index: 2;
             font-family: 'Press Start 2P', cursive;
+            text-align: center;
         }
         
         #waveIndicator {
@@ -2064,6 +2065,13 @@
             backgroundMusic.play().catch(e => console.log("Autoplay prevented:", e));
         }
         
+        // Show objectives screen
+        function showObjectives() {
+            gameState = STATE_OBJECTIVES;
+            document.getElementById('menuScreen').style.display = 'none';
+            document.getElementById('objectivesScreen').style.display = 'flex';
+        }
+        
         // Show wave screen
         function showWaveScreen() {
             gameState = STATE_WAVE;
@@ -3208,20 +3216,16 @@
                 ctx.fillStyle = '#8B4513';
                 ctx.beginPath();
                 ctx.moveTo(
-                    Math.round(player.x),
+                    Math.round(player.x + player.width/2),
                     Math.round(player.y + player.height/3)
                 );
                 ctx.lineTo(
-                    Math.round(player.x + player.width/3),
-                    Math.round(player.y + player.height)
-                );
-                ctx.lineTo(
-                    Math.round(player.x + player.width*2/3),
+                    Math.round(player.x),
                     Math.round(player.y + player.height)
                 );
                 ctx.lineTo(
                     Math.round(player.x + player.width),
-                    Math.round(player.y + player.height/3)
+                    Math.round(player.y + player.height)
                 );
                 ctx.closePath();
                 ctx.fill();
@@ -3378,8 +3382,6 @@
                 boss.y - 5,
                 5, 0, Math.PI * 2
             );
-            ctx.fill();
-            // Right eye
             ctx.arc(
                 boss.x + boss.width/2 + 15,
                 boss.y - 5,
