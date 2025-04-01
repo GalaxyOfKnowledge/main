@@ -917,8 +917,172 @@
         <div class="mobile-btn" id="rightBtn">→</div>
     </div>
     
-    <!-- Rest of your HTML remains the same -->
-    <!-- ... -->
+    <!-- Menu Screen -->
+    <div id="menuScreen">
+        <h1 class="title">PINOY QUIZ TRIVIA SPACE INVADER</h1>
+        <button id="playButton" class="menu-button">PLAY</button>
+        <button id="highscoreButton" class="menu-button">HIGH SCORES</button>
+        <button id="settingsButton" class="menu-button">SETTINGS</button>
+        <button id="tutorialButton" class="menu-button">TUTORIAL</button>
+    </div>
+    
+    <!-- Game Over Screen -->
+    <div id="gameOverScreen" style="display: none;">
+        <h1 class="title">GAME OVER</h1>
+        <div id="finalScore">FINAL SCORE: 0</div>
+        <div id="nameInputContainer">
+            <input type="text" id="nameInput" placeholder="ENTER YOUR NAME" maxlength="10">
+            <button id="submitScore" class="menu-button">SUBMIT SCORE</button>
+        </div>
+        <button id="continueButton" class="menu-button">CONTINUE</button>
+    </div>
+    
+    <!-- Win Screen -->
+    <div id="winScreen" style="display: none;">
+        <h1 class="title">YOU WIN!</h1>
+        <div id="winScore">FINAL SCORE: 0</div>
+        <div id="nameInputContainerWin">
+            <input type="text" id="nameInputWin" placeholder="ENTER YOUR NAME" maxlength="10">
+            <button id="submitScoreWin" class="menu-button">SUBMIT SCORE</button>
+        </div>
+        <button id="winContinueButton" class="menu-button">CONTINUE</button>
+    </div>
+    
+    <!-- High Scores Screen -->
+    <div id="highscoreScreen" style="display: none;">
+        <h1 class="title">HIGH SCORES</h1>
+        <div id="highscoreList"></div>
+        <button id="backButton" class="menu-button">BACK</button>
+    </div>
+    
+    <!-- Settings Screen -->
+    <div id="settingsScreen" style="display: none;">
+        <h1 class="title">SETTINGS</h1>
+        <div class="settings-row">
+            <span>MUSIC VOLUME:</span>
+            <button id="musicDown" class="settings-button">-</button>
+            <span id="musicVolume" class="settings-value">50%</span>
+            <button id="musicUp" class="settings-button">+</button>
+        </div>
+        <div class="settings-row">
+            <span>SOUND EFFECTS:</span>
+            <button id="toggleSound" class="settings-button">ON</button>
+        </div>
+        <div class="settings-row">
+            <span>DIFFICULTY:</span>
+            <button id="changeDifficulty" class="settings-button">NORMAL</button>
+        </div>
+        <button id="settingsBackButton" class="menu-button">BACK</button>
+    </div>
+    
+    <!-- Tutorial Screen -->
+    <div id="tutorialScreen" style="display: none;">
+        <h1 class="title">TUTORIAL</h1>
+        <div class="tutorial-content">
+            <div class="tutorial-section">
+                <div class="tutorial-title">HOW TO PLAY</div>
+                <div class="tutorial-text">
+                    Defeat waves of enemies by shooting them and answering trivia questions correctly.
+                    Each correct answer damages the boss or gives you advantages in the next wave.
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">CONTROLS</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">← →</div>
+                    <div class="tutorial-text">Move left and right</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">SPACE</div>
+                    <div class="tutorial-text">Shoot bullets</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">X</div>
+                    <div class="tutorial-text">Switch to Default Ship</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">C</div>
+                    <div class="tutorial-text">Switch to Bangka Ship</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">V</div>
+                    <div class="tutorial-text">Switch to Jeepney Ship</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">Z</div>
+                    <div class="tutorial-text">Select answer (position ship over option)</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">T</div>
+                    <div class="tutorial-text">Fire Trivia Laser (when charged)</div>
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">SHIPS</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-ship tutorial-ship-default">X</div>
+                    <div class="tutorial-text">DEFAULT SHIP - Balanced stats</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-ship tutorial-ship-bangka">C</div>
+                    <div class="tutorial-text">BANGKA SHIP - Slower but more durable</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-ship tutorial-ship-jeepney">V</div>
+                    <div class="tutorial-text">JEEPNEY SHIP - Faster but less durable</div>
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">ENEMIES</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-enemy tutorial-enemy-kapre"></div>
+                    <div class="tutorial-text">KAPRE - Tough and slow</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-enemy tutorial-enemy-aswang"></div>
+                    <div class="tutorial-text">ASWANG - Fast but fragile</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-enemy tutorial-enemy-sarimanok"></div>
+                    <div class="tutorial-text">SARIMANOK - Balanced</div>
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">POWER-UPS</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-powerup tutorial-powerup-shield"></div>
+                    <div class="tutorial-text">BARONG SHIELD - Temporary invincibility</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-powerup tutorial-powerup-boost"></div>
+                    <div class="tutorial-text">JEEPNEY BOOST - Increased speed</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-powerup tutorial-powerup-tinikling"></div>
+                    <div class="tutorial-text">TINIKLING MODE - Faster shooting</div>
+                </div>
+            </div>
+        </div>
+        <button id="tutorialBackButton" class="menu-button">BACK</button>
+    </div>
+    
+    <!-- Wave Screen -->
+    <div id="waveScreen" style="display: none;">
+        <h1 class="wave-title">WAVE <span id="waveDisplay">1</span></h1>
+        <div id="waveSubtitle" class="title">GET READY!</div>
+        <button id="startWaveButton" class="menu-button">START WAVE</button>
+    </div>
+    
+    <!-- Quiz Screen -->
+    <div id="quizScreen" style="display: none;">
+        <h1 class="quiz-title">TRIVIA CHALLENGE</h1>
+        <div class="quiz-question" id="quizQuestion"></div>
+        <div class="quiz-options" id="quizOptions"></div>
+    </div>
 
     <script>
         // Game constants
