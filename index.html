@@ -2857,45 +2857,69 @@
                     ctx.shadowBlur = 15;
                     ctx.fill();
                     ctx.shadowBlur = 0;
-                } else if (this.type === 'bangka') {
-                    // Mini bangka ship - enhanced design
-                    // Hull (boat shape)
-                    ctx.fillStyle = '#8B4513';
-                    ctx.beginPath();
-                    ctx.moveTo(0, Math.round(-this.height/3));
-                    ctx.lineTo(Math.round(-this.width/2), Math.round(this.height/3));
-                    ctx.lineTo(Math.round(this.width/2), Math.round(this.height/3));
-                    ctx.closePath();
-                    ctx.fill();
-                    
-                    // Sail (triangular shape)
-                    ctx.fillStyle = 'white';
-                    ctx.beginPath();
-                    ctx.moveTo(0, Math.round(-this.height/3));
-                    ctx.lineTo(Math.round(-this.width/4), Math.round(this.height/4));
-                    ctx.lineTo(Math.round(this.width/4), Math.round(this.height/4));
-                    ctx.closePath();
-                    ctx.fill();
-                    
-                    // Sail details (lines)
-                    ctx.strokeStyle = '#8B4513';
-                    ctx.lineWidth = 1;
-                    ctx.beginPath();
-                    ctx.moveTo(0, Math.round(-this.height/3));
-                    ctx.lineTo(0, Math.round(this.height/4));
-                    ctx.stroke();
-                    
-                    // Outriggers (small rectangles)
-                    ctx.fillStyle = '#8B4513';
-                    ctx.fillRect(Math.round(-this.width/2 - 8), Math.round(-this.height/6), 8, 4);
-                    ctx.fillRect(Math.round(this.width/2), Math.round(-this.height/6), 8, 4);
-                    
-                    // Add glow effect
-                    ctx.shadowColor = '#8B4513';
-                    ctx.shadowBlur = 15;
-                    ctx.fill();
-                    ctx.shadowBlur = 0;
-                } else if (this.type === 'jeepney') {
+                }} else if (this.type === 'bangka') {
+    // Mini bangka ship - enhanced design
+    // Hull (boat shape)
+    ctx.fillStyle = '#8B4513';
+    ctx.beginPath();
+    ctx.moveTo(0, Math.round(-this.height/3));
+    ctx.lineTo(Math.round(-this.width/2), Math.round(this.height/3));
+    ctx.lineTo(Math.round(this.width/2), Math.round(this.height/3));
+    ctx.closePath();
+    ctx.fill();
+    
+    // Outriggers (small rectangles)
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(Math.round(-this.width/2 - 8), Math.round(-this.height/6), 8, 4);
+    ctx.fillRect(Math.round(this.width/2), Math.round(-this.height/6), 8, 4);
+    
+    // Add glow effect
+    ctx.shadowColor = '#8B4513';
+    ctx.shadowBlur = 15;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+}
+
+// In the drawPlayer function (bangka section):
+} else if (player.shipSkin === 'bangka') {
+    // Bangka (outrigger boat) - enhanced design
+    // Hull (boat shape)
+    ctx.fillStyle = '#8B4513';
+    ctx.beginPath();
+    ctx.moveTo(
+        Math.round(player.x + player.width/2),
+        Math.round(player.y + player.height/3)
+    );
+    ctx.lineTo(
+        Math.round(player.x),
+        Math.round(player.y + player.height)
+    );
+    ctx.lineTo(
+        Math.round(player.x + player.width),
+        Math.round(player.y + player.height)
+    );
+    ctx.closePath();
+    ctx.fill();
+    
+    // Outriggers (small rectangles)
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(
+        Math.round(player.x - 15),
+        Math.round(player.y + player.height/2),
+        15, 5
+    );
+    ctx.fillRect(
+        Math.round(player.x + player.width),
+        Math.round(player.y + player.height/2),
+        15, 5
+    );
+    
+    // Add ship glow
+                        ctx.shadowColor = '#8B4513';
+                        ctx.shadowBlur = 15;
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                    } else if (this.type === 'jeepney') {
                     // Mini jeepney ship - enhanced design
                     // Body
                     ctx.fillStyle = '#FFD700';
