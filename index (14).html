@@ -1,0 +1,3873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pinoy Quiz Trivia Space Invader</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: white;
+            font-family: 'Press Start 2P', cursive;
+            overflow: hidden;
+            touch-action: manipulation;
+            image-rendering: pixelated;
+            transition: background-color 0.3s;
+        }
+        
+        /* Fullscreen canvas */
+        #gameCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            z-index: 1;
+            background-color: #000;
+            image-rendering: pixelated;
+        }
+        
+        /* Screens */
+        #menuScreen, #gameOverScreen, #highscoreScreen, #settingsScreen, #winScreen, #tutorialScreen, #waveScreen, #quizScreen, #objectivesScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 10;
+        }
+        
+        /* Trivia container - now looks like part of the game */
+        #triviaContainer {
+            position: fixed;
+            left: 50%;
+            bottom: 20px;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 800px;
+            z-index: 3; /* Increased z-index to be above the ship */
+            background-color: transparent;
+            padding: 15px;
+            display: none;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        
+        #triviaQuestion {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #FFD700;
+            text-shadow: 2px 2px 0 #8B4513;
+            line-height: 1.4;
+            background-color: rgba(0, 0, 20, 0.7);
+            padding: 12px;
+            border: 2px solid #FFD700;
+        }
+        
+        #triviaOptions {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            position: relative;
+        }
+        
+        .triviaOption {
+            padding: 15px;
+            margin: 0;
+            background-color: rgba(0, 0, 20, 0.7);
+            text-align: center;
+            flex: 1;
+            min-width: 150px;
+            font-size: 14px;
+            transition: all 0.1s;
+            cursor: pointer;
+            font-family: 'Press Start 2P', cursive;
+            text-shadow: 1px 1px 0 #000;
+            color: white;
+            border: 2px solid #555;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .triviaOption.highlighted {
+            background-color: rgba(85, 85, 255, 0.7);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+            border-color: #FFD700;
+        }
+        
+        .triviaOption.highlighted::after {
+            content: '(Z)';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #FFD700;
+            color: #000;
+            font-size: 12px;
+            padding: 2px 5px;
+            border-radius: 0;
+            border: 2px solid #8B4513;
+        }
+        
+        .triviaOption.selected {
+            background: #2E7D32;
+            border-color: #4CAF50;
+        }
+        
+        /* Rest of your existing CSS... */
+        .title {
+            font-size: 32px;
+            font-weight: normal;
+            margin-bottom: 30px;
+            color: #FFD700;
+            text-align: center;
+            text-shadow: 4px 4px 0 #8B4513;
+            line-height: 1.3;
+        }
+        
+        .menu-button {
+            width: 200px;
+            height: 50px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 0;
+            background: #333;
+            color: white;
+            box-shadow: 4px 4px 0 #555;
+            transition: all 0.1s;
+            font-family: 'Press Start 2P', cursive;
+            text-shadow: 2px 2px 0 #000;
+        }
+        
+        .menu-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 6px 6px 0 #555;
+        }
+        
+        .menu-button:active {
+            transform: translateY(2px);
+            box-shadow: 2px 2px 0 #555;
+        }
+        
+        #playButton { background: #2E7D32; box-shadow: 4px 4px 0 #4CAF50; }
+        #highscoreButton { background: #FF8F00; box-shadow: 4px 4px 0 #FFC107; color: black; }
+        #settingsButton { background: #0D47A1; box-shadow: 4px 4px 0 #2196F3; }
+        #tutorialButton { background: #6A1B9A; box-shadow: 4px 4px 0 #9C27B0; }
+        
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 14px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            border-radius: 0;
+            border: 2px solid #444;
+            display: none;
+            z-index: 2;
+            font-family: 'Press Start 2P', cursive;
+            text-shadow: 2px 2px 0 #000;
+        }
+        
+        #durabilityHud {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            font-size: 12px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            border-radius: 0;
+            border: 2px solid #444;
+            display: none;
+            z-index: 2;
+            font-family: 'Press Start 2P', cursive;
+            text-shadow: 2px 2px 0 #000;
+        }
+        
+        .durability-ships {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .durability-title {
+            font-size: 12px;
+            margin-bottom: 5px;
+            text-decoration: underline;
+        }
+        
+        .ship-durability-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .ship-key {
+            width: 20px;
+            text-align: center;
+            background: #333;
+            padding: 2px;
+            border: 1px solid #555;
+        }
+        
+        .ship-icon-small {
+            width: 20px;
+            height: 20px;
+            border-radius: 0;
+        }
+        
+        .ship-icon-small.default {
+            background-color: #4CAF50;
+        }
+        
+        .ship-icon-small.bangka {
+            background-color: #8B4513;
+        }
+        
+        .ship-icon-small.jeepney {
+            background-color: #FFD700;
+        }
+        
+        .durability-icons {
+            display: flex;
+            gap: 3px;
+        }
+        
+        .durability-icon {
+            width: 16px;
+            height: 16px;
+            border: 1px solid #555;
+        }
+        
+        .durability-icon.default {
+            background-color: #4CAF50;
+        }
+        
+        .durability-icon.bangka {
+            background-color: #8B4513;
+        }
+        
+        .durability-icon.jeepney {
+            background-color: #FFD700;
+        }
+        
+        #powerupHud {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            font-size: 12px;
+            text-align: right;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            border-radius: 0;
+            border: 2px solid #444;
+            display: none;
+            z-index: 2;
+            font-family: 'Press Start 2P', cursive;
+            text-shadow: 2px 2px 0 #000;
+        }
+        
+        #bossHealthBar {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 16px;
+            background-color: #F44336;
+            border-radius: 0;
+            overflow: hidden;
+            border: 2px solid #444;
+            display: none;
+            z-index: 2;
+        }
+        
+        #bossHealth {
+            height: 100%;
+            background: #4CAF50;
+            width: 100%;
+            transition: width 0.1s;
+        }
+        
+        #shipSelection {
+            position: fixed;
+            bottom: 120px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            display: none;
+            z-index: 2;
+        }
+        
+        .ship-icon {
+            width: 32px;
+            height: 32px;
+            border: 2px solid #555;
+            border-radius: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: normal;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 14px;
+            transition: all 0.1s;
+            font-family: 'Press Start 2P', cursive;
+            cursor: pointer;
+        }
+        
+        .ship-icon.available {
+            border-color: #FFD700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+            animation: pulse 1s infinite;
+            background-color: rgba(255, 215, 0, 0.2);
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 2px rgba(255, 215, 0, 0.7); }
+            50% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.9); }
+            100% { box-shadow: 0 0 2px rgba(255, 215, 0, 0.7); }
+        }
+        
+        #mobileControls {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            display: none;
+            justify-content: center;
+            z-index: 2;
+        }
+        
+        .mobile-btn {
+            width: 60px;
+            height: 60px;
+            margin: 0 15px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            user-select: none;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+            transition: all 0.1s;
+        }
+        
+        .mobile-btn:active {
+            transform: translateY(2px);
+            box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .settings-row {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            width: 80%;
+            max-width: 400px;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+        
+        .settings-button {
+            width: 32px;
+            height: 32px;
+            border-radius: 0;
+            border: none;
+            background: #333;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 0 8px;
+            box-shadow: 3px 3px 0 #555;
+            font-family: 'Press Start 2P', cursive;
+        }
+        
+        .settings-value {
+            min-width: 50px;
+            text-align: center;
+            font-size: 12px;
+        }
+        
+        #nameInput, #nameInputWin {
+            padding: 8px;
+            border-radius: 0;
+            border: 2px solid #555;
+            background-color: #111;
+            color: white;
+            margin-bottom: 10px;
+            width: 150px;
+            font-family: 'Press Start 2P', cursive;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        #nameInputContainer, #nameInputContainerWin {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        #gameOverCover {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            z-index: 5;
+        }
+        
+        #comboCounter {
+            position: fixed;
+            top: 50px;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            color: #FFD700;
+            text-shadow: 3px 3px 0 #8B4513;
+            display: none;
+            z-index: 2;
+            font-family: 'Press Start 2P', cursive;
+            text-align: center;
+        }
+        
+        #waveIndicator {
+            position: fixed;
+            top: 50px;
+            right: 20px;
+            font-size: 14px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 0;
+            border: 2px solid #444;
+            display: none;
+            z-index: 2;
+            font-family: 'Press Start 2P', cursive;
+        }
+        
+        /* Tutorial styles */
+        .tutorial-content {
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid #FFD700;
+        }
+        
+        .tutorial-section {
+            margin-bottom: 20px;
+        }
+        
+        .tutorial-title {
+            color: #FFD700;
+            font-size: 18px;
+            margin-bottom: 10px;
+            text-decoration: underline;
+        }
+        
+        .tutorial-text {
+            font-size: 12px;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+        
+        .tutorial-image {
+            width: 100%;
+            max-width: 200px;
+            margin: 10px auto;
+            display: block;
+            border: 2px solid #555;
+        }
+        
+        .tutorial-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .tutorial-key {
+            width: 40px;
+            height: 40px;
+            background-color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 15px;
+            border: 2px solid #555;
+        }
+        
+        .tutorial-ship {
+            width: 60px;
+            height: 40px;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 15px;
+            border: 2px solid #555;
+            position: relative;
+        }
+        
+        .tutorial-ship-default {
+            background-color: #4CAF50;
+        }
+        
+        .tutorial-ship-bangka {
+            background-color: #8B4513;
+        }
+        
+        .tutorial-ship-jeepney {
+            background-color: #FFD700;
+        }
+        
+        .tutorial-enemy {
+            width: 60px;
+            height: 40px;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 15px;
+            border: 2px solid #555;
+            position: relative;
+        }
+        
+        .tutorial-enemy-kapre {
+            background-color: #654321;
+        }
+        
+        .tutorial-enemy-aswang {
+            background-color: #800080;
+        }
+        
+        .tutorial-enemy-sarimanok {
+            background-color: #FFD700;
+        }
+        
+        .tutorial-powerup {
+            width: 40px;
+            height: 40px;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 15px;
+            border: 2px solid #555;
+            position: relative;
+        }
+        
+        .tutorial-powerup-shield {
+            background-color: blue;
+        }
+        
+        .tutorial-powerup-boost {
+            background-color: red;
+        }
+        
+        .tutorial-powerup-tinikling {
+            background-color: green;
+        }
+        
+        /* Wave screen styles */
+        #waveScreen {
+            display: none;
+        }
+        
+        .wave-title {
+            font-size: 48px;
+            color: #FFD700;
+            text-shadow: 4px 4px 0 #8B4513;
+            margin-bottom: 20px;
+            animation: wavePulse 1.5s infinite;
+        }
+        
+        @keyframes wavePulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Quiz screen styles */
+        #quizScreen {
+            display: none;
+        }
+        
+        .quiz-title {
+            font-size: 24px;
+            color: #FFD700;
+            text-shadow: 3px 3px 0 #8B4513;
+            margin-bottom: 30px;
+        }
+        
+        .quiz-question {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #FFD700;
+            text-shadow: 2px 2px 0 #8B4513;
+            line-height: 1.4;
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 80%;
+            max-width: 500px;
+        }
+        
+        .quiz-option {
+            padding: 15px;
+            background-color: rgba(0, 0, 20, 0.7);
+            text-align: center;
+            font-size: 14px;
+            cursor: pointer;
+            border: 2px solid #555;
+            transition: all 0.2s;
+        }
+        
+        .quiz-option:hover {
+            background-color: rgba(85, 85, 255, 0.7);
+            border-color: #FFD700;
+        }
+        
+        /* Timer styles */
+        #timerContainer {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid #444;
+            display: none;
+            z-index: 2;
+        }
+        
+        #timerBar {
+            height: 100%;
+            background: #FFD700;
+            width: 100%;
+            transition: width 0.1s;
+        }
+        
+        /* Wave transition message */
+        #waveTransitionMessage {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: #FFD700;
+            text-shadow: 3px 3px 0 #8B4513;
+            display: none;
+            z-index: 2;
+            font-family: 'Press Start 2P', cursive;
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border: 2px solid #FFD700;
+        }
+        
+        /* Trivia Laser UI */
+        #triviaLaserHud {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 12px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            border-radius: 0;
+            border: 2px solid #444;
+            display: none;
+            z-index: 2;
+            font-family: 'Press Start 2P', cursive;
+            text-shadow: 2px 2px 0 #000;
+        }
+        
+        #triviaLaserBar {
+            width: 100px;
+            height: 10px;
+            background-color: #333;
+            margin-top: 5px;
+            border: 1px solid #555;
+        }
+        
+        #triviaLaserFill {
+            height: 100%;
+            width: 0%;
+            background-color: #4CAF50;
+            transition: width 0.1s;
+        }
+        
+        /* Wave transition timer */
+        #waveTransitionTimer {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            color: #FFD700;
+            text-shadow: 3px 3px 0 #8B4513;
+            display: none;
+            z-index: 2;
+            font-family: 'Press Start 2P', cursive;
+        }
+        
+        /* Objectives screen styles */
+        #objectivesScreen {
+            display: none;
+        }
+        
+        .objectives-content {
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid #FFD700;
+            margin-bottom: 20px;
+        }
+        
+        .objective-item {
+            margin-bottom: 15px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .objective-item::before {
+            content: "• ";
+            color: #FFD700;
+        }
+        
+        /* Special ability cooldown indicators */
+        .ship-icon .cooldown {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0%;
+            background-color: rgba(0, 0, 0, 0.7);
+            transition: height 0.1s;
+        }
+        
+        /* Special ability key */
+        .special-key {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 32px;
+            height: 32px;
+            border: 2px solid #555;
+            border-radius: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: normal;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 14px;
+            transition: all 0.1s;
+            font-family: 'Press Start 2P', cursive;
+            z-index: 2;
+            display: none;
+        }
+        
+        .special-key.available {
+            border-color: #FFD700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+            animation: pulse 1s infinite;
+            background-color: rgba(255, 215, 0, 0.2);
+        }
+        
+        .special-key .cooldown {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0%;
+            background-color: rgba(0, 0, 0, 0.7);
+            transition: height 0.1s;
+        }
+        
+        /* Laser beam effect */
+        .laser-beam {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, 
+                rgba(0, 255, 255, 0.8) 0%, 
+                rgba(0, 255, 255, 0.2) 100%);
+            z-index: 3;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        @media (max-width: 768px) {
+            #mobileControls {
+                display: flex;
+            }
+            
+            .title {
+                font-size: 24px;
+                text-shadow: 3px 3px 0 #8B4513;
+            }
+            
+            .menu-button {
+                width: 160px;
+                height: 40px;
+                font-size: 14px;
+            }
+            
+            #triviaOptions {
+                flex-direction: column;
+            }
+            
+            .triviaOption {
+                min-width: 80%;
+                margin: 5px auto;
+                font-size: 12px;
+                padding: 10px;
+            }
+            
+            #triviaQuestion {
+                font-size: 14px;
+            }
+            
+            #hud, #powerupHud, #durabilityHud {
+                font-size: 10px;
+                padding: 5px 8px;
+            }
+            
+            .mobile-btn {
+                width: 50px;
+                height: 50px;
+                margin: 0 10px;
+                font-size: 18px;
+            }
+            
+            .tutorial-content {
+                max-width: 90%;
+                font-size: 10px;
+            }
+            
+            .tutorial-title {
+                font-size: 14px;
+            }
+            
+            .tutorial-text {
+                font-size: 10px;
+            }
+            
+            #nameInput, #nameInputWin {
+                width: 120px;
+                font-size: 12px;
+            }
+            
+            .wave-title {
+                font-size: 32px;
+            }
+            
+            .quiz-title {
+                font-size: 18px;
+            }
+            
+            .quiz-question {
+                font-size: 14px;
+            }
+            
+            .quiz-options {
+                width: 90%;
+            }
+            
+            #waveTransitionMessage {
+                font-size: 18px;
+                width: 90%;
+            }
+            
+            #waveTransitionTimer {
+                font-size: 18px;
+                top: 10px;
+            }
+            
+            .objectives-content {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameOverCover"></div>
+    <div class="laser-beam" id="laserBeam"></div>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="hud">
+        <div>SCORE: <span id="scoreDisplay">0</span></div>
+        <div>COMBO: <span id="comboCount">0x</span></div>
+    </div>
+    
+    <div id="durabilityHud">
+        <div class="durability-ships">
+            <div class="durability-title">DURABILITY:</div>
+            <div class="ship-durability-row">
+                <span>DEFAULT: </span>
+                <span class="ship-key">X</span>
+                <div class="durability-icons" id="defaultDurabilityIcons"></div>
+            </div>
+            <div class="ship-durability-row">
+                <span>BANGKA: </span>
+                <span class="ship-key">C</span>
+                <div class="durability-icons" id="bangkaDurabilityIcons"></div>
+            </div>
+            <div class="ship-durability-row">
+                <span>JEEPNEY: </span>
+                <span class="ship-key">V</span>
+                <div class="durability-icons" id="jeepneyDurabilityIcons"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="powerupHud">
+        <div>POWERUPS: <span id="powerupStatus">NONE</span></div>
+    </div>
+    
+    <div id="triviaLaserHud">
+        <div>TRIVIA LASER:</div>
+        <div id="triviaLaserBar">
+            <div id="triviaLaserFill"></div>
+        </div>
+    </div>
+    
+    <div id="bossHealthBar">
+        <div id="bossHealth"></div>
+    </div>
+    
+    <div id="timerContainer">
+        <div id="timerBar"></div>
+    </div>
+    
+    <div id="waveTransitionMessage"></div>
+    <div id="waveTransitionTimer"></div>
+    
+    <div id="comboCounter"></div>
+    <div id="waveIndicator">WAVE: <span id="waveNumber">1</span></div>
+    
+    <div id="triviaContainer">
+        <div id="triviaQuestion"></div>
+        <div id="triviaOptions"></div>
+    </div>
+    
+    <div id="shipSelection">
+        <div class="ship-icon" id="defaultShip" title="Default Ship (X)">X</div>
+        <div class="ship-icon" id="bangkaShip" title="Bangka Ship (C)">C</div>
+        <div class="ship-icon" id="jeepneyShip" title="Jeepney Ship (V)">V</div>
+    </div>
+    
+    <div class="special-key" id="specialKey">B</div>
+    
+    <div id="mobileControls">
+        <div class="mobile-btn" id="leftBtn">←</div>
+        <div class="mobile-btn" id="shootBtn">🔫</div>
+        <div class="mobile-btn" id="rightBtn">→</div>
+        <div class="mobile-btn" id="specialBtn">B</div>
+    </div>
+    
+    <div id="menuScreen">
+        <div class="title">PINOY QUIZ TRIVIA<br>SPACE INVADER</div>
+        <button id="playButton" class="menu-button">PLAY</button>
+        <button id="highscoreButton" class="menu-button">HIGHSCORE</button>
+        <button id="settingsButton" class="menu-button">SETTINGS</button>
+        <button id="tutorialButton" class="menu-button">TUTORIAL</button>
+    </div>
+    
+    <!-- New Objectives Screen -->
+    <div id="objectivesScreen" style="display: none;">
+        <div class="title">MISSION OBJECTIVES</div>
+        <div class="objectives-content">
+            <div class="objective-item">DEFEAT ALL ENEMIES IN EACH WAVE</div>
+            <div class="objective-item">ANSWER TRIVIA QUESTIONS TO CHARGE LASER</div>
+            <div class="objective-item">DEFEAT THE FINAL BOSS AT WAVE 10</div>
+            <div class="objective-item">USE SPECIAL ABILITIES WITH [B] KEY</div>
+            <div class="objective-item">COLLECT POWER-UPS FOR SPECIAL ABILITIES</div>
+            <div class="objective-item">SWITCH SHIPS TO ADAPT TO SITUATIONS</div>
+        </div>
+        <button id="continueFromObjectives" class="menu-button" style="background: #2E7D32; box-shadow: 4px 4px 0 #4CAF50;">START GAME</button>
+    </div>
+    
+    <div id="gameOverScreen" style="display: none;">
+        <div class="title">GAME OVER</div>
+        <div id="finalScore" style="font-size: 20px; margin-bottom: 20px;"></div>
+        <div id="nameInputContainer">
+            <div style="margin-bottom: 10px; font-size: 14px;">ENTER YOUR NAME:</div>
+            <input type="text" id="nameInput" maxlength="10">
+            <button id="submitScore" class="menu-button" style="background: #2E7D32; box-shadow: 4px 4px 0 #4CAF50;">SUBMIT</button>
+        </div>
+        <button id="continueButton" class="menu-button" style="background: #0D47A1; box-shadow: 4px 4px 0 #2196F3;">CONTINUE</button>
+    </div>
+    
+    <div id="winScreen" style="display: none;">
+        <div class="title">YOU WIN!</div>
+        <div id="winScore" style="font-size: 20px; margin-bottom: 20px;"></div>
+        <div id="nameInputContainerWin">
+            <div style="margin-bottom: 10px; font-size: 14px;">ENTER YOUR NAME:</div>
+            <input type="text" id="nameInputWin" maxlength="10">
+            <button id="submitScoreWin" class="menu-button" style="background: #2E7D32; box-shadow: 4px 4px 0 #4CAF50;">SUBMIT</button>
+        </div>
+        <button id="winContinueButton" class="menu-button" style="background: #0D47A1; box-shadow: 4px 4px 0 #2196F3;">CONTINUE</button>
+    </div>
+    
+    <div id="highscoreScreen" style="display: none;">
+        <div class="title">HIGH SCORES</div>
+        <div id="highscoreList" style="margin-bottom: 30px; font-size: 14px;"></div>
+        <button id="backButton" class="menu-button" style="background: #0D47A1; box-shadow: 4px 4px 0 #2196F3;">BACK</button>
+    </div>
+    
+    <div id="settingsScreen" style="display: none;">
+        <div class="title">SETTINGS</div>
+        
+        <div class="settings-row">
+            <div>MUSIC VOLUME:</div>
+            <button id="musicDown" class="settings-button">-</button>
+            <div id="musicVolume" class="settings-value">50%</div>
+            <button id="musicUp" class="settings-button">+</button>
+        </div>
+        
+        <div class="settings-row">
+            <div>SOUND EFFECTS:</div>
+            <button id="toggleSound" class="settings-button" style="width: 60px;">ON</button>
+        </div>
+        
+        <div class="settings-row">
+            <div>DIFFICULTY:</div>
+            <button id="changeDifficulty" class="settings-button" style="width: 80px;">NORMAL</button>
+        </div>
+        
+        <button id="settingsBackButton" class="menu-button" style="background: #B71C1C; box-shadow: 4px 4px 0 #F44336; margin-top: 30px;">BACK TO MENU</button>
+    </div>
+    
+    <div id="tutorialScreen" style="display: none;">
+        <div class="title">HOW TO PLAY</div>
+        <div class="tutorial-content">
+            <div class="tutorial-section">
+                <div class="tutorial-title">CONTROLS</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">←</div>
+                    <div class="tutorial-text">Move Left</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">→</div>
+                    <div class="tutorial-text">Move Right</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">SPACE</div>
+                    <div class="tutorial-text">Shoot Bullets</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">X</div>
+                    <div class="tutorial-text">Switch to Default Ship</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">C</div>
+                    <div class="tutorial-text">Switch to Bangka Ship</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">V</div>
+                    <div class="tutorial-text">Switch to Jeepney Ship</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">Z</div>
+                    <div class="tutorial-text">Select Answer (Boss Fight)</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">B</div>
+                    <div class="tutorial-text">Special Ability (All Ships)</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">T</div>
+                    <div class="tutorial-text">Fire Trivia Laser (When Charged)</div>
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">SHIPS</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-ship tutorial-ship-default"></div>
+                    <div class="tutorial-text">DEFAULT SHIP: Balanced stats</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-ship tutorial-ship-bangka"></div>
+                    <div class="tutorial-text">BANGKA SHIP: Strong but slow</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-ship tutorial-ship-jeepney"></div>
+                    <div class="tutorial-text">JEEPNEY SHIP: Fast but weak</div>
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">ENEMIES</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-enemy tutorial-enemy-kapre"></div>
+                    <div class="tutorial-text">KAPRE: Tough, slow-moving</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-enemy tutorial-enemy-aswang"></div>
+                    <div class="tutorial-text">ASWANG: Fast but fragile</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-enemy tutorial-enemy-sarimanok"></div>
+                    <div class="tutorial-text">SARIMANOK: Balanced enemy</div>
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">POWER-UPS</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-powerup tutorial-powerup-shield"></div>
+                    <div class="tutorial-text">SHIELD: Temporary protection</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-powerup tutorial-powerup-boost"></div>
+                    <div class="tutorial-text">BOOST: Increased speed</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-powerup tutorial-powerup-tinikling"></div>
+                    <div class="tutorial-text">TINIKLING: Faster shooting</div>
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">SPECIAL ABILITIES</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">B</div>
+                    <div class="tutorial-text">DEFAULT SHIP: Temporary shield</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">B</div>
+                    <div class="tutorial-text">BANGKA SHIP: Heal durability</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">B</div>
+                    <div class="tutorial-text">JEEPNEY SHIP: Speed boost</div>
+                </div>
+            </div>
+        </div>
+        <button id="tutorialBackButton" class="menu-button" style="background: #0D47A1; box-shadow: 4px 4px 0 #2196F3; margin-top: 20px;">BACK TO MENU</button>
+    </div>
+    
+    <div id="waveScreen" style="display: none;">
+        <div class="wave-title">WAVE <span id="waveDisplay">1</span></div>
+        <div id="waveSubtitle" style="font-size: 18px; margin-bottom: 30px; color: white;">GET READY!</div>
+        <button id="startWaveButton" class="menu-button" style="background: #2E7D32; box-shadow: 4px 4px 0 #4CAF50;">START WAVE</button>
+    </div>
+    
+    <div id="quizScreen" style="display: none;">
+        <div class="quiz-title">TRIVIA CHALLENGE</div>
+        <div class="quiz-question" id="quizQuestion"></div>
+        <div class="quiz-options" id="quizOptions"></div>
+        <div id="quizTimer" style="margin-top: 20px; font-size: 14px; color: #FFD700;"></div>
+    </div>
+    
+    <script>
+        // Game constants
+        const BOSS_WAVE = 10; // Boss appears at wave 10 (changed from 15)
+        const TRIVIA_LASER_MAX = 100;
+        
+        // Game states
+        const STATE_MENU = 0;
+        const STATE_PLAYING = 1;
+        const STATE_GAME_OVER = 2;
+        const STATE_HIGHSCORE = 3;
+        const STATE_SETTINGS = 4;
+        const STATE_WIN = 5;
+        const STATE_TUTORIAL = 6;
+        const STATE_WAVE = 7;
+        const STATE_QUIZ = 8;
+        const STATE_OBJECTIVES = 9;
+        
+        // Initialize canvas
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let CANVAS_WIDTH = window.innerWidth;
+        let CANVAS_HEIGHT = window.innerHeight;
+
+        // Set dynamic sizing
+        function resizeGame() {
+            CANVAS_WIDTH = window.innerWidth;
+            CANVAS_HEIGHT = window.innerHeight;
+            canvas.width = CANVAS_WIDTH;
+            canvas.height = CANVAS_HEIGHT;
+            
+            if (player) {
+                player.x = CANVAS_WIDTH/2 - player.width/2;
+                player.y = CANVAS_HEIGHT - player.height - 50;
+            }
+            
+            if (bossActive && boss) {
+                boss.x = CANVAS_WIDTH/2 - boss.width/2;
+            }
+        }
+
+        window.addEventListener('resize', resizeGame);
+
+        // Game variables
+        let gameState = STATE_MENU;
+        let player = {
+            x: CANVAS_WIDTH / 2 - 25,
+            y: CANVAS_HEIGHT - 90,
+            width: 50,
+            height: 30,
+            speed: 5,
+            durability: {
+                default: 3,
+                bangka: 3,
+                jeepney: 3
+            },
+            score: 0,
+            powerups: {
+                barongShield: false,
+                jeepneyBoost: false,
+                tiniklingMode: false
+            },
+            shipSkin: 'default',
+            availableShips: {
+                default: true,
+                bangka: false,
+                jeepney: false
+            },
+            triviaLaser: 0,
+            specialAbilities: {
+                default: {
+                    cooldown: 0,
+                    maxCooldown: 300 // 5 seconds at 60fps
+                },
+                bangka: {
+                    cooldown: 0,
+                    maxCooldown: 450 // 7.5 seconds
+                },
+                jeepney: {
+                    cooldown: 0,
+                    maxCooldown: 240 // 4 seconds
+                }
+            }
+        };
+        
+        let bullets = [];
+        let enemies = [];
+        let enemyBullets = [];
+        let powerups = [];
+        let bulletCooldown = 0;
+        let enemySpawnRate = 60;
+        let enemySpawnTimer = 0;
+        let enemySpeed = 1.0;
+        let enemyShootTimer = 0;
+        let enemyShootRate = 120;
+        let comboCount = 0;
+        let comboTimeout = 0;
+        let wave = 1;
+        let enemiesInWave = 0;
+        let enemiesDefeated = 0;
+        let waveDifficultyModifier = 1.0;
+        
+        // Boss variables
+        let boss = null;
+        let bossActive = false;
+        let bossHealth = 0;
+        let bossMaxHealth = 0;
+        let currentQuestion = null;
+        let selectedOption = null;
+        let answerSelectionMode = false;
+        
+        // Quiz variables
+        let quizStartTime = 0;
+        let quizTimeLimit = 10; // seconds
+        let quizTimer = 0;
+        let quizCorrectAnswers = 0;
+        
+        // Time bonus variables
+        let timeBonusActive = false;
+        let timeBonusTimer = 0;
+        let timeBonusDuration = 5; // seconds
+        let slowMoActive = false;
+        let slowMoTimer = 0;
+        
+        // Wave transition variables
+        let waveTransitionActive = false;
+        let waveTransitionTimer = 0;
+        let waveTransitionDuration = 600; // frames (10 seconds at 60fps)
+        let waveTransitionCountdown = 10; // seconds
+        
+        // High scores
+        let highScores = [];
+        const MAX_HIGH_SCORES = 10;
+        
+        // Settings
+        let settings = {
+            musicVolume: 0.5,
+            soundEffects: true,
+            difficulty: 'normal'
+        };
+        
+        // Sound effects - Using different audio sources
+        const sounds = {
+            shoot: new Audio('mixkit-game-whip-shot-1512.wav'),
+            enemyShoot: new Audio('mixkit-arrow-whoosh-1491.wav'),
+            explosion: new Audio('mixkit-arcade-game-explosion-1699.wav'),
+            powerup: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3'),
+            correct: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3'),
+            wrong: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3'),
+            bossSpawn: new Audio('mixkit-dinosaur-monster-roar-1976.wav'),
+            shipChange: new Audio('mixkit-arcade-retro-jump-223 (1).wav'),
+            win: new Audio('mixkit-winning-chimes-2015.wav'),
+            combo: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-extra-bonus-in-a-video-game-2045.mp3'),
+            waveComplete: new Audio('mixkit-arcade-bonus-alert-767.wav'),
+            hit: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-changing-tab-206.mp3'),
+            menuSelect: new Audio('mixkit-gear-fast-lock-tap-2857.wav'),
+            menuHover: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-horror-ambience-228.mp3'),
+            laser: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-laser-weapon-shot-1671.mp3'),
+            slowmo: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3'),
+            heal: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-beep-221.mp3'),
+            shield: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-magic-spell-shimmer-2367.mp3')
+        };
+        
+        // Set volume for all sounds
+        Object.values(sounds).forEach(sound => {
+            sound.volume = settings.soundEffects ? 0.5 : 0;
+        });
+        
+        // Background music - Different 8-bit music
+        const backgroundMusic = new Audio('https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3');
+        backgroundMusic.volume = settings.musicVolume;
+        backgroundMusic.loop = true;
+        
+        // Trivia questions
+        const triviaQuestions = [
+            {
+                question: "WHAT IS THE NATIONAL BIRD OF THE PHILIPPINES?",
+                options: ["MAYA", "PHILIPPINE EAGLE", "COCKATOO", "KINGFISHER"],
+                answer: 1,
+                category: "NATIONAL SYMBOLS"
+            },
+            {
+                question: "WHICH PHILIPPINE HERO IS KNOWN AS THE 'SUBLIME PARALYTIC'?",
+                options: ["JOSE RIZAL", "ANDRES BONIFACIO", "APOLINARIO MABINI", "EMILIO AGUINALDO"],
+                answer: 2,
+                category: "HISTORY"
+            },
+            {
+                question: "WHAT IS THE TRADITIONAL FILIPINO LEAF-WRAPPED RICE CAKE?",
+                options: ["BIBINGKA", "PUTO", "SUMAN", "KUTSINTA"],
+                answer: 2,
+                category: "FOOD"
+            },
+            {
+                question: "WHICH PROVINCE IS KNOWN AS THE 'RICE GRANARY OF THE PHILIPPINES'?",
+                options: ["BULACAN", "NUEVA ECIJA", "PAMPANGA", "TARLAC"],
+                answer: 1,
+                category: "GEOGRAPHY"
+            },
+            {
+                question: "WHAT FESTIVAL IS CELEBRATED IN CEBU EVERY THIRD SUNDAY OF JANUARY?",
+                options: ["SINULOG", "ATI-ATIHAN", "DINAGYANG", "PAHIYAS"],
+                answer: 0,
+                category: "CULTURE"
+            },
+            {
+                question: "WHAT IS THE CAPITAL OF THE PHILIPPINES?",
+                options: ["CEBU", "DAVAO", "MANILA", "QUEZON CITY"],
+                answer: 2,
+                category: "GEOGRAPHY"
+            },
+            {
+                question: "WHICH PHILIPPINE VOLCANO ERUPTED IN 1991?",
+                options: ["MAYON", "TAAL", "PINATUBO", "KANLAON"],
+                answer: 2,
+                category: "GEOGRAPHY"
+            },
+            {
+                question: "WHAT IS THE TRADITIONAL FILIPINO MARTIAL ART?",
+                options: ["KARATE", "TAEKWONDO", "ARNIS", "KUNG FU"],
+                answer: 2,
+                category: "CULTURE"
+            },
+            {
+                question: "WHICH FILIPINO BOXER BECAME AN EIGHT-DIVISION WORLD CHAMPION?",
+                options: ["MANNY PACQUIAO", "NONITO DONAIRE", "FLASH ELORDE", "PANCHO VILLA"],
+                answer: 0,
+                category: "SPORTS"
+            },
+            {
+                question: "WHAT IS THE NATIONAL FLOWER OF THE PHILIPPINES?",
+                options: ["SAMPAGUITA", "ROSE", "ORCHID", "GUMAMELA"],
+                answer: 0,
+                category: "NATIONAL SYMBOLS"
+            }
+        ];
+        
+        // Load high scores from localStorage
+        function loadHighScores() {
+            const savedScores = localStorage.getItem('pinoySpaceInvaderHighScores');
+            if (savedScores) {
+                highScores = JSON.parse(savedScores);
+            } else {
+                highScores = [
+                    { name: "GERBIE", score: 10000 },
+                    { name: "JAMES", score: 9000 },
+                    { name: "ERICKA", score: 8000 },
+                    { name: "JUSTIN", score: 7000 },
+                    { name: "JHAYMIE", score: 6000 },
+                    { name: "EDMEL", score: 5000 }
+                ];
+            }
+        }
+        
+        // Save high scores to localStorage
+        function saveHighScores() {
+            localStorage.setItem('pinoySpaceInvaderHighScores', JSON.stringify(highScores));
+        }
+        
+        // Add a new high score
+        function addHighScore(name, score) {
+            highScores.push({ name: name.toUpperCase(), score });
+            highScores.sort((a, b) => b.score - a.score);
+            highScores = highScores.slice(0, MAX_HIGH_SCORES);
+            saveHighScores();
+        }
+        
+        // Load settings from localStorage
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('pinoySpaceInvaderSettings');
+            if (savedSettings) {
+                settings = JSON.parse(savedSettings);
+                updateSettingsUI();
+            }
+        }
+        
+        // Save settings to localStorage
+        function saveSettings() {
+            localStorage.setItem('pinoySpaceInvaderSettings', JSON.stringify(settings));
+            updateSettingsUI();
+        }
+        
+        // Update settings UI elements
+        function updateSettingsUI() {
+            document.getElementById('musicVolume').textContent = `${Math.round(settings.musicVolume * 100)}%`;
+            document.getElementById('toggleSound').textContent = settings.soundEffects ? 'ON' : 'OFF';
+            document.getElementById('changeDifficulty').textContent = settings.difficulty.toUpperCase();
+            
+            // Update sound volumes
+            backgroundMusic.volume = settings.musicVolume;
+            Object.values(sounds).forEach(sound => {
+                sound.volume = settings.soundEffects ? 0.5 : 0;
+            });
+            
+            // Apply difficulty settings
+            switch (settings.difficulty) {
+                case 'easy':
+                    player.speed = 6;
+                    enemySpeed = 0.8;
+                    enemyShootRate = 150;
+                    break;
+                case 'normal':
+                    player.speed = 5;
+                    enemySpeed = 1.0;
+                    enemyShootRate = 120;
+                    break;
+                case 'hard':
+                    player.speed = 4;
+                    enemySpeed = 1.2;
+                    enemyShootRate = 90;
+                    break;
+            }
+        }
+        
+        // Initialize game
+        function initGame() {
+            loadHighScores();
+            loadSettings();
+            resizeGame();
+            
+            // Set up event listeners
+            document.getElementById('playButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                showObjectives();
+            });
+            
+            document.getElementById('continueFromObjectives').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                startGame();
+            });
+            
+            document.getElementById('highscoreButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                showHighScores();
+            });
+            document.getElementById('settingsButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                showSettings();
+            });
+            document.getElementById('tutorialButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                showTutorial();
+            });
+            document.getElementById('continueButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                returnToMenu();
+            });
+            document.getElementById('winContinueButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                returnToMenu();
+            });
+            document.getElementById('backButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                returnToMenu();
+            });
+            document.getElementById('settingsBackButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                saveSettings();
+                returnToMenu();
+            });
+            document.getElementById('tutorialBackButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                returnToMenu();
+            });
+            document.getElementById('submitScore').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                submitHighScore();
+            });
+            document.getElementById('submitScoreWin').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                submitHighScoreWin();
+            });
+            document.getElementById('startWaveButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                startWave();
+            });
+            
+            // Add hover sounds to menu buttons
+            const menuButtons = document.querySelectorAll('.menu-button');
+            menuButtons.forEach(button => {
+                button.addEventListener('mouseenter', () => {
+                    sounds.menuHover.play();
+                });
+            });
+            
+            // Settings controls
+            document.getElementById('musicDown').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                settings.musicVolume = Math.max(0, settings.musicVolume - 0.1);
+                updateSettingsUI();
+            });
+            document.getElementById('musicUp').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                settings.musicVolume = Math.min(1, settings.musicVolume + 0.1);
+                updateSettingsUI();
+            });
+            document.getElementById('toggleSound').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                settings.soundEffects = !settings.soundEffects;
+                updateSettingsUI();
+            });
+            document.getElementById('changeDifficulty').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                const difficulties = ['easy', 'normal', 'hard'];
+                const currentIndex = difficulties.indexOf(settings.difficulty);
+                settings.difficulty = difficulties[(currentIndex + 1) % difficulties.length];
+                updateSettingsUI();
+            });
+            
+            // Mobile controls
+            document.getElementById('leftBtn').addEventListener('touchstart', () => {
+                keys.ArrowLeft = true;
+            });
+            document.getElementById('leftBtn').addEventListener('touchend', () => {
+                keys.ArrowLeft = false;
+            });
+            document.getElementById('rightBtn').addEventListener('touchstart', () => {
+                keys.ArrowRight = true;
+            });
+            document.getElementById('rightBtn').addEventListener('touchend', () => {
+                keys.ArrowRight = false;
+            });
+            document.getElementById('shootBtn').addEventListener('touchstart', () => {
+                keys[' '] = true;
+            });
+            document.getElementById('shootBtn').addEventListener('touchend', () => {
+                keys[' '] = false;
+            });
+            document.getElementById('specialBtn').addEventListener('touchstart', () => {
+                keys['b'] = true;
+            });
+            document.getElementById('specialBtn').addEventListener('touchend', () => {
+                keys['b'] = false;
+            });
+            
+            // Ship selection buttons
+            document.getElementById('defaultShip').addEventListener('click', () => {
+                if (player.availableShips.default) {
+                    player.shipSkin = 'default';
+                    player.availableShips.default = false;
+                    sounds.shipChange.play();
+                    updateShipSelectionUI();
+                }
+            });
+            
+            document.getElementById('bangkaShip').addEventListener('click', () => {
+                if (player.availableShips.bangka) {
+                    player.shipSkin = 'bangka';
+                    player.availableShips.bangka = false;
+                    sounds.shipChange.play();
+                    updateShipSelectionUI();
+                }
+            });
+            
+            document.getElementById('jeepneyShip').addEventListener('click', () => {
+                if (player.availableShips.jeepney) {
+                    player.shipSkin = 'jeepney';
+                    player.availableShips.jeepney = false;
+                    sounds.shipChange.play();
+                    updateShipSelectionUI();
+                }
+            });
+            
+            // Remove click event listeners for trivia options
+            document.getElementById('triviaOptions').innerHTML = '';
+            
+            // Quiz option click handlers
+            document.getElementById('quizOptions').addEventListener('click', (e) => {
+                if (e.target.classList.contains('quiz-option')) {
+                    const index = Array.from(e.target.parentElement.children).indexOf(e.target);
+                    checkQuizAnswer(index);
+                }
+            });
+            
+            // Keyboard controls
+            window.addEventListener('keydown', (e) => {
+                if (e.key in keys) {
+                    keys[e.key] = true;
+                }
+                
+                // Ship transformation keys
+                if (gameState === STATE_PLAYING) {
+                    if (e.key.toLowerCase() === 'x' && player.availableShips.default) {
+                        player.shipSkin = 'default';
+                        player.availableShips.default = false;
+                        sounds.shipChange.play();
+                        updateShipSelectionUI();
+                    } else if (e.key.toLowerCase() === 'c' && player.availableShips.bangka) {
+                        player.shipSkin = 'bangka';
+                        player.availableShips.bangka = false;
+                        sounds.shipChange.play();
+                        updateShipSelectionUI();
+                    } else if (e.key.toLowerCase() === 'v' && player.availableShips.jeepney) {
+                        player.shipSkin = 'jeepney';
+                        player.availableShips.jeepney = false;
+                        sounds.shipChange.play();
+                        updateShipSelectionUI();
+                    } else if (e.key.toLowerCase() === 'z' && (bossActive || waveTransitionActive)) {
+                        // Select the option based on ship position
+                        selectOptionBasedOnPosition();
+                    } else if (e.key.toLowerCase() === 't' && player.triviaLaser >= TRIVIA_LASER_MAX) {
+                        // Fire trivia laser
+                        fireTriviaLaser();
+                    } else if (e.key.toLowerCase() === 'b') {
+                        // Special ability for current ship
+                        activateSpecialAbility();
+                    }
+                }
+                
+                // In game over screen, allow typing name
+                if ((gameState === STATE_GAME_OVER || gameState === STATE_WIN) && 
+                    (document.getElementById('nameInputContainer').style.display !== 'none' || 
+                     document.getElementById('nameInputContainerWin').style.display !== 'none')) {
+                    if (e.key === 'Enter') {
+                        if (gameState === STATE_GAME_OVER) {
+                            submitHighScore();
+                        } else {
+                            submitHighScoreWin();
+                        }
+                    }
+                }
+            });
+            
+            window.addEventListener('keyup', (e) => {
+                if (e.key in keys) {
+                    keys[e.key] = false;
+                }
+            });
+            
+            // Start game loop
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Track pressed keys
+        const keys = {
+            ArrowLeft: false,
+            ArrowRight: false,
+            ' ': false,
+            'z': false,
+            't': false,
+            'b': false
+        };
+        
+        // Activate special ability based on current ship
+        function activateSpecialAbility() {
+            const ability = player.specialAbilities[player.shipSkin];
+            
+            if (ability.cooldown <= 0) {
+                switch (player.shipSkin) {
+                    case 'default':
+                        // Activate temporary shield
+                        player.powerups.barongShield = true;
+                        powerupTimers.barongShield = 180; // 3 seconds
+                        ability.cooldown = ability.maxCooldown;
+                        updatePowerupStatus();
+                        updateSpecialKeyUI();
+                        sounds.shield.play();
+                        break;
+                    case 'bangka':
+                        // Heal 1 durability point for bangka ship if not at max
+                        if (player.durability.bangka < 3) {
+                            player.durability.bangka = Math.min(3, player.durability.bangka + 1);
+                            ability.cooldown = ability.maxCooldown;
+                            updateDurabilityDisplay();
+                            updateSpecialKeyUI();
+                            sounds.heal.play();
+                        }
+                        break;
+                    case 'jeepney':
+                        // Activate speed boost
+                        player.powerups.jeepneyBoost = true;
+                        powerupTimers.jeepneyBoost = 120; // 2 seconds
+                        ability.cooldown = ability.maxCooldown;
+                        updatePowerupStatus();
+                        updateSpecialKeyUI();
+                        sounds.powerup.play();
+                        break;
+                }
+            }
+        }
+        
+        // Update special key UI
+        function updateSpecialKeyUI() {
+            const specialKey = document.getElementById('specialKey');
+            const ability = player.specialAbilities[player.shipSkin];
+            
+            // Remove existing cooldown element if any
+            const existingCooldown = specialKey.querySelector('.cooldown');
+            if (existingCooldown) {
+                specialKey.removeChild(existingCooldown);
+            }
+            
+            if (ability.cooldown > 0) {
+                const cooldownElement = document.createElement('div');
+                cooldownElement.className = 'cooldown';
+                const cooldownPercent = (ability.cooldown / ability.maxCooldown) * 100;
+                cooldownElement.style.height = `${cooldownPercent}%`;
+                specialKey.appendChild(cooldownElement);
+            }
+        }
+        
+        // Update ship selection UI
+        function updateShipSelectionUI() {
+            const defaultShip = document.getElementById('defaultShip');
+            const bangkaShip = document.getElementById('bangkaShip');
+            const jeepneyShip = document.getElementById('jeepneyShip');
+            
+            defaultShip.classList.toggle('available', player.availableShips.default);
+            bangkaShip.classList.toggle('available', player.availableShips.bangka);
+            jeepneyShip.classList.toggle('available', player.availableShips.jeepney);
+            
+            // Update special key UI
+            updateSpecialKeyUI();
+        }
+        
+        // Update durability display with icons
+        function updateDurabilityDisplay() {
+            // Clear existing icons
+            document.getElementById('defaultDurabilityIcons').innerHTML = '';
+            document.getElementById('bangkaDurabilityIcons').innerHTML = '';
+            document.getElementById('jeepneyDurabilityIcons').innerHTML = '';
+            
+            // Add icons for default ship durability
+            for (let i = 0; i < player.durability.default; i++) {
+                const icon = document.createElement('div');
+                icon.className = 'durability-icon default';
+                document.getElementById('defaultDurabilityIcons').appendChild(icon);
+            }
+            
+            // Add icons for bangka ship durability
+            for (let i = 0; i < player.durability.bangka; i++) {
+                const icon = document.createElement('div');
+                icon.className = 'durability-icon bangka';
+                document.getElementById('bangkaDurabilityIcons').appendChild(icon);
+            }
+            
+            // Add icons for jeepney ship durability
+            for (let i = 0; i < player.durability.jeepney; i++) {
+                const icon = document.createElement('div');
+                icon.className = 'durability-icon jeepney';
+                document.getElementById('jeepneyDurabilityIcons').appendChild(icon);
+            }
+            
+            // Highlight active ship
+            const defaultRow = document.querySelector('.ship-durability-row:nth-child(2)');
+            const bangkaRow = document.querySelector('.ship-durability-row:nth-child(3)');
+            const jeepneyRow = document.querySelector('.ship-durability-row:nth-child(4)');
+            
+            defaultRow.style.color = player.shipSkin === 'default' ? '#FFD700' : 'white';
+            bangkaRow.style.color = player.shipSkin === 'bangka' ? '#FFD700' : 'white';
+            jeepneyRow.style.color = player.shipSkin === 'jeepney' ? '#FFD700' : 'white';
+        }
+        
+        // Update power-up status display
+        function updatePowerupStatus() {
+            let status = [];
+            if (player.powerups.barongShield) status.push("BARONG SHIELD");
+            if (player.powerups.jeepneyBoost) status.push("JEEPNEY BOOST");
+            if (player.powerups.tiniklingMode) status.push("TINIKLING MODE");
+            
+            document.getElementById('powerupStatus').textContent = 
+                status.length > 0 ? status.join(", ") : "NONE";
+        }
+        
+        // Update trivia laser display
+        function updateTriviaLaserDisplay() {
+            const percent = (player.triviaLaser / TRIVIA_LASER_MAX) * 100;
+            document.getElementById('triviaLaserFill').style.width = `${percent}%`;
+        }
+        
+        // Fire trivia laser
+        function fireTriviaLaser() {
+            if (player.triviaLaser < TRIVIA_LASER_MAX) return;
+            
+            sounds.laser.play();
+            player.triviaLaser = 0;
+            updateTriviaLaserDisplay();
+            
+            // Show laser beam effect
+            const laserBeam = document.getElementById('laserBeam');
+            laserBeam.style.opacity = '1';
+            setTimeout(() => {
+                laserBeam.style.opacity = '0';
+            }, 300);
+            
+            // Destroy all enemies on screen
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
+                let points = 0;
+                
+                if (enemy.type === 'kapre') {
+                    points = 100 * wave;
+                } else if (enemy.type === 'sarimanok') {
+                    points = 50 * wave;
+                } else {
+                    points = 30 * wave;
+                }
+                
+                player.score += points;
+                enemies.splice(i, 1);
+                sounds.explosion.play();
+            }
+            
+            // Also destroy enemy bullets
+            enemyBullets = [];
+            
+            updateHUD();
+        }
+        
+        // Return to menu from any screen
+        function returnToMenu() {
+            gameState = STATE_MENU;
+            document.getElementById('gameOverScreen').style.display = 'none';
+            document.getElementById('winScreen').style.display = 'none';
+            document.getElementById('highscoreScreen').style.display = 'none';
+            document.getElementById('settingsScreen').style.display = 'none';
+            document.getElementById('tutorialScreen').style.display = 'none';
+            document.getElementById('waveScreen').style.display = 'none';
+            document.getElementById('quizScreen').style.display = 'none';
+            document.getElementById('objectivesScreen').style.display = 'none';
+            document.getElementById('menuScreen').style.display = 'flex';
+            document.getElementById('gameOverCover').style.display = 'none';
+            
+            // Hide all game elements
+            document.getElementById('hud').style.display = 'none';
+            document.getElementById('durabilityHud').style.display = 'none';
+            document.getElementById('powerupHud').style.display = 'none';
+            document.getElementById('bossHealthBar').style.display = 'none';
+            document.getElementById('triviaContainer').style.display = 'none';
+            document.getElementById('shipSelection').style.display = 'none';
+            document.getElementById('comboCounter').style.display = 'none';
+            document.getElementById('waveIndicator').style.display = 'none';
+            document.getElementById('timerContainer').style.display = 'none';
+            document.getElementById('triviaLaserHud').style.display = 'none';
+            document.getElementById('waveTransitionMessage').style.display = 'none';
+            document.getElementById('waveTransitionTimer').style.display = 'none';
+            document.getElementById('specialKey').style.display = 'none';
+            
+            // Stop background music
+            backgroundMusic.pause();
+        }
+        
+        // Submit high score from game over screen
+        function submitHighScore() {
+            const nameInput = document.getElementById('nameInput');
+            const name = nameInput.value.trim();
+            if (name !== '') {
+                addHighScore(name, player.score);
+                nameInput.value = '';
+                document.getElementById('nameInputContainer').style.display = 'none';
+                document.getElementById('continueButton').style.display = 'block';
+                showHighScores();
+            }
+        }
+        
+        // Submit high score from win screen
+        function submitHighScoreWin() {
+            const nameInput = document.getElementById('nameInputWin');
+            const name = nameInput.value.trim();
+            if (name !== '') {
+                addHighScore(name, player.score);
+                nameInput.value = '';
+                document.getElementById('nameInputContainerWin').style.display = 'none';
+                document.getElementById('winContinueButton').style.display = 'block';
+                showHighScores();
+            }
+        }
+        
+        // Show tutorial
+        function showTutorial() {
+            gameState = STATE_TUTORIAL;
+            document.getElementById('menuScreen').style.display = 'none';
+            document.getElementById('tutorialScreen').style.display = 'flex';
+        }
+        
+        // Start a new game
+        function startGame() {
+            gameState = STATE_WAVE;
+            document.getElementById('menuScreen').style.display = 'none';
+            document.getElementById('objectivesScreen').style.display = 'none';
+            
+            // Reset player
+            player = {
+                x: CANVAS_WIDTH / 2 - 25,
+                y: CANVAS_HEIGHT - 90,
+                width: 50,
+                height: 30,
+                speed: 5,
+                durability: {
+                    default: 3,
+                    bangka: 3,
+                    jeepney: 3
+                },
+                score: 0,
+                powerups: {
+                    barongShield: false,
+                    jeepneyBoost: false,
+                    tiniklingMode: false
+                },
+                shipSkin: 'default',
+                availableShips: {
+                    default: true,
+                    bangka: false,
+                    jeepney: false
+                },
+                triviaLaser: 0,
+                specialAbilities: {
+                    default: {
+                        cooldown: 0,
+                        maxCooldown: 300 // 5 seconds at 60fps
+                    },
+                    bangka: {
+                        cooldown: 0,
+                        maxCooldown: 450 // 7.5 seconds
+                    },
+                    jeepney: {
+                        cooldown: 0,
+                        maxCooldown: 240 // 4 seconds
+                    }
+                }
+            };
+            
+            // Reset game variables
+            bullets = [];
+            enemies = [];
+            enemyBullets = [];
+            powerups = [];
+            bulletCooldown = 0;
+            enemySpawnRate = 60;
+            enemySpawnTimer = 0;
+            enemyShootTimer = 0;
+            boss = null;
+            bossActive = false;
+            selectedOption = null;
+            answerSelectionMode = false;
+            comboCount = 0;
+            comboTimeout = 0;
+            wave = 1;
+            enemiesInWave = 0;
+            enemiesDefeated = 0;
+            waveDifficultyModifier = 1.0;
+            quizCorrectAnswers = 0;
+            waveTransitionActive = false;
+            waveTransitionTimer = 0;
+            waveTransitionCountdown = 10;
+            
+            // Show wave screen
+            showWaveScreen();
+            
+            // Update HUD
+            updateHUD();
+            updateDurabilityDisplay();
+            updatePowerupStatus();
+            updateShipSelectionUI();
+            updateTriviaLaserDisplay();
+            
+            // Hide boss elements
+            document.getElementById('bossHealthBar').style.display = 'none';
+            document.getElementById('triviaContainer').style.display = 'none';
+            document.getElementById('timerContainer').style.display = 'none';
+            document.getElementById('waveTransitionMessage').style.display = 'none';
+            document.getElementById('waveTransitionTimer').style.display = 'none';
+            
+            // Start background music
+            backgroundMusic.currentTime = 0;
+            backgroundMusic.play().catch(e => console.log("Autoplay prevented:", e));
+        }
+        
+        // Show objectives screen
+        function showObjectives() {
+            gameState = STATE_OBJECTIVES;
+            document.getElementById('menuScreen').style.display = 'none';
+            document.getElementById('objectivesScreen').style.display = 'flex';
+        }
+        
+        // Show wave screen
+        function showWaveScreen() {
+            gameState = STATE_WAVE;
+            document.getElementById('waveDisplay').textContent = wave;
+            
+            // Special wave messages
+            let subtitle = "GET READY!";
+            if (wave === BOSS_WAVE) {
+                subtitle = "FINAL BOSS!";
+            } else if (wave > 1) {
+                subtitle = `WAVE ${wave}`;
+            }
+            
+            document.getElementById('waveSubtitle').textContent = subtitle;
+            document.getElementById('waveScreen').style.display = 'flex';
+        }
+        
+        // Start the current wave
+        function startWave() {
+            gameState = STATE_PLAYING;
+            document.getElementById('waveScreen').style.display = 'none';
+            
+            // Show game elements
+            document.getElementById('hud').style.display = 'block';
+            document.getElementById('durabilityHud').style.display = 'block';
+            document.getElementById('powerupHud').style.display = 'block';
+            document.getElementById('shipSelection').style.display = 'flex';
+            document.getElementById('specialKey').style.display = 'flex';
+            document.getElementById('comboCounter').style.display = 'none';
+            document.getElementById('waveIndicator').style.display = 'block';
+            document.getElementById('waveNumber').textContent = wave;
+            document.getElementById('triviaLaserHud').style.display = 'block';
+            
+            // Reset wave counters
+            enemiesDefeated = 0;
+            
+            // Calculate enemies for this wave
+            enemiesInWave = 5 + Math.floor(wave * 1.5);
+            
+            // Adjust difficulty based on modifier
+            enemySpeed = 1.0 * waveDifficultyModifier;
+            enemyShootRate = Math.max(30, 120 - (wave * 5) * waveDifficultyModifier);
+            
+            // Check if boss wave
+            if (wave === BOSS_WAVE) {
+                spawnBoss();
+            }
+        }
+        
+        // Show high scores
+        function showHighScores() {
+            gameState = STATE_HIGHSCORE;
+            document.getElementById('menuScreen').style.display = 'none';
+            document.getElementById('highscoreScreen').style.display = 'flex';
+            
+            // Populate high score list
+            const highscoreList = document.getElementById('highscoreList');
+            highscoreList.innerHTML = '';
+            
+            highScores.forEach((score, index) => {
+                const scoreElement = document.createElement('div');
+                scoreElement.style.margin = '5px';
+                scoreElement.textContent = `${index + 1}. ${score.name} - ${score.score}`;
+                highscoreList.appendChild(scoreElement);
+            });
+        }
+        
+        // Show settings
+        function showSettings() {
+            gameState = STATE_SETTINGS;
+            document.getElementById('menuScreen').style.display = 'none';
+            document.getElementById('settingsScreen').style.display = 'flex';
+        }
+        
+        // Game over
+        function gameOver() {
+            gameState = STATE_GAME_OVER;
+            document.getElementById('gameOverScreen').style.display = 'flex';
+            document.getElementById('finalScore').textContent = `FINAL SCORE: ${player.score}`;
+            document.getElementById('gameOverCover').style.display = 'block';
+            
+            // Check if score qualifies for high score
+            const qualifiesForHighScore = highScores.length < MAX_HIGH_SCORES || 
+                                        player.score > highScores[highScores.length - 1].score;
+            
+            if (qualifiesForHighScore) {
+                document.getElementById('nameInputContainer').style.display = 'flex';
+                document.getElementById('continueButton').style.display = 'none';
+                document.getElementById('nameInput').focus();
+            } else {
+                document.getElementById('nameInputContainer').style.display = 'none';
+                document.getElementById('continueButton').style.display = 'block';
+            }
+        }
+        
+        // Player wins
+        function playerWins() {
+            gameState = STATE_WIN;
+            document.getElementById('winScreen').style.display = 'flex';
+            document.getElementById('winScore').textContent = `FINAL SCORE: ${player.score}`;
+            document.getElementById('gameOverCover').style.display = 'block';
+            sounds.win.play();
+            
+            // Check if score qualifies for high score
+            const qualifiesForHighScore = highScores.length < MAX_HIGH_SCORES || 
+                                        player.score > highScores[highScores.length - 1].score;
+            
+            if (qualifiesForHighScore) {
+                document.getElementById('nameInputContainerWin').style.display = 'flex';
+                document.getElementById('winContinueButton').style.display = 'none';
+                document.getElementById('nameInputWin').focus();
+            } else {
+                document.getElementById('nameInputContainerWin').style.display = 'none';
+                document.getElementById('winContinueButton').style.display = 'block';
+            }
+            
+            // Hide all game elements
+            document.getElementById('hud').style.display = 'none';
+            document.getElementById('durabilityHud').style.display = 'none';
+            document.getElementById('powerupHud').style.display = 'none';
+            document.getElementById('bossHealthBar').style.display = 'none';
+            document.getElementById('triviaContainer').style.display = 'none';
+            document.getElementById('shipSelection').style.display = 'none';
+            document.getElementById('comboCounter').style.display = 'none';
+            document.getElementById('waveIndicator').style.display = 'none';
+            document.getElementById('timerContainer').style.display = 'none';
+            document.getElementById('triviaLaserHud').style.display = 'none';
+            document.getElementById('waveTransitionMessage').style.display = 'none';
+            document.getElementById('waveTransitionTimer').style.display = 'none';
+            document.getElementById('specialKey').style.display = 'none';
+        }
+        
+        // Spawn boss
+        function spawnBoss() {
+            bossActive = true;
+            answerSelectionMode = true;
+            boss = {
+                x: CANVAS_WIDTH / 2 - 75,
+                y: 50,
+                width: 150,
+                height: 120,
+                speed: 1,
+                health: 20 + (wave * 5)
+            };
+            bossMaxHealth = boss.health;
+            
+            // Show boss health bar
+            document.getElementById('bossHealthBar').style.display = 'block';
+            updateBossHealth();
+            
+            // Show trivia container with animation
+            const triviaContainer = document.getElementById('triviaContainer');
+            triviaContainer.style.display = 'block';
+            triviaContainer.style.opacity = '0';
+            triviaContainer.style.transform = 'translateX(-50%) translateY(20px)';
+            
+            // Animate appearance
+            setTimeout(() => {
+                triviaContainer.style.opacity = '1';
+                triviaContainer.style.transform = 'translateX(-50%) translateY(0)';
+                triviaContainer.style.transition = 'all 0.3s ease-out';
+            }, 100);
+            
+            showBossQuestion();
+            sounds.bossSpawn.play();
+        }
+        
+        // Update boss health display
+        function updateBossHealth() {
+            const healthPercent = (boss.health / bossMaxHealth) * 100;
+            document.getElementById('bossHealth').style.width = `${healthPercent}%`;
+        }
+        
+        // Show boss question
+        function showBossQuestion() {
+            currentQuestion = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
+            selectedOption = null;
+            
+            // Display question with larger font
+            const questionElement = document.getElementById('triviaQuestion');
+            questionElement.textContent = currentQuestion.question;
+
+            // Display options with better spacing
+            const optionsContainer = document.getElementById('triviaOptions');
+            optionsContainer.innerHTML = '';
+
+            currentQuestion.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'triviaOption';
+                optionElement.textContent = option;
+                optionElement.dataset.index = index;
+                optionsContainer.appendChild(optionElement);
+            });
+
+            updateOptionHighlight();
+        }
+        
+        // Show wave transition message and question
+        function showWaveTransition() {
+            waveTransitionActive = true;
+            answerSelectionMode = true;
+            
+            // Show message
+            const message = document.getElementById('waveTransitionMessage');
+            message.textContent = `APPROACHING WAVE ${wave + 1}!`;
+            message.style.display = 'block';
+            
+            // Show timer
+            document.getElementById('timerContainer').style.display = 'block';
+            document.getElementById('timerBar').style.width = '100%';
+            
+            // Show countdown timer
+            document.getElementById('waveTransitionTimer').textContent = waveTransitionCountdown;
+            document.getElementById('waveTransitionTimer').style.display = 'block';
+            
+            // Show trivia container
+            const triviaContainer = document.getElementById('triviaContainer');
+            triviaContainer.style.display = 'block';
+            
+            // Select a random question
+            currentQuestion = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
+            selectedOption = null;
+            
+            // Display question
+            document.getElementById('triviaQuestion').textContent = currentQuestion.question;
+            
+            // Display options
+            const optionsContainer = document.getElementById('triviaOptions');
+            optionsContainer.innerHTML = '';
+            
+            currentQuestion.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'triviaOption';
+                optionElement.textContent = option;
+                optionElement.dataset.index = index;
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            // Start timer
+            quizStartTime = Date.now();
+            quizTimer = quizTimeLimit;
+            
+            // Update timer every second
+            const timerInterval = setInterval(() => {
+                if (!waveTransitionActive) {
+                    clearInterval(timerInterval);
+                    return;
+                }
+                
+                const elapsed = Math.floor((Date.now() - quizStartTime) / 1000);
+                quizTimer = Math.max(0, quizTimeLimit - elapsed);
+                const percent = (quizTimer / quizTimeLimit) * 100;
+                document.getElementById('timerBar').style.width = `${percent}%`;
+                
+                // Update countdown timer
+                waveTransitionCountdown = Math.max(0, 10 - elapsed);
+                document.getElementById('waveTransitionTimer').textContent = waveTransitionCountdown;
+                
+                if (quizTimer <= 0) {
+                    clearInterval(timerInterval);
+                    // Time's up - wrong answer
+                    checkWaveTransitionAnswer(-1);
+                }
+            }, 200);
+        }
+        
+        // Update highlighted option based on player position
+        function updateOptionHighlight() {
+            if (!(bossActive || waveTransitionActive) || !currentQuestion) return;
+            
+            const options = document.querySelectorAll('#triviaOptions .triviaOption');
+            const triviaContainer = document.getElementById('triviaContainer');
+            const containerRect = triviaContainer.getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            // Calculate player position relative to trivia container
+            const playerCenterX = player.x + player.width/2;
+            const playerScreenX = canvasRect.left + playerCenterX;
+            const playerRelativeX = playerScreenX - containerRect.left;
+            
+            // Find which option the player is over
+            let selectedIndex = -1;
+            
+            options.forEach((opt, index) => {
+                const optRect = opt.getBoundingClientRect();
+                const optLeft = optRect.left - containerRect.left;
+                const optRight = optRect.right - containerRect.left;
+                
+                opt.classList.remove('highlighted');
+                
+                if (playerRelativeX >= optLeft && playerRelativeX <= optRight) {
+                    selectedIndex = index;
+                }
+            });
+            
+            // Highlight the option the player is over
+            if (selectedIndex >= 0) {
+                options[selectedIndex].classList.add('highlighted');
+            }
+        }
+        
+        // Select option based on player position
+        function selectOptionBasedOnPosition() {
+            if (selectedOption !== null) return; // Prevent multiple selections
+            
+            const options = document.querySelectorAll('#triviaOptions .triviaOption');
+            const triviaContainer = document.getElementById('triviaContainer');
+            const containerRect = triviaContainer.getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            // Calculate player position relative to trivia container
+            const playerCenterX = player.x + player.width/2;
+            const playerScreenX = canvasRect.left + playerCenterX;
+            const playerRelativeX = playerScreenX - containerRect.left;
+            
+            // Find which option the player is over
+            let selectedIndex = -1;
+            
+            options.forEach((opt, index) => {
+                const optRect = opt.getBoundingClientRect();
+                const optLeft = optRect.left - containerRect.left;
+                const optRight = optRect.right - containerRect.left;
+                
+                if (playerRelativeX >= optLeft && playerRelativeX <= optRight) {
+                    selectedIndex = index;
+                }
+            });
+            
+            if (selectedIndex >= 0) {
+                if (bossActive) {
+                    selectBossOption(selectedIndex);
+                } else if (waveTransitionActive) {
+                    checkWaveTransitionAnswer(selectedIndex);
+                }
+            }
+        }
+        
+        // Select boss option
+        function selectBossOption(index) {
+            if (selectedOption !== null) return; // Prevent multiple selections
+            
+            selectedOption = index;
+            const options = document.querySelectorAll('#triviaOptions .triviaOption');
+            
+            // Highlight selected option
+            options.forEach(opt => opt.classList.remove('highlighted'));
+            options[index].classList.add('selected');
+            
+            if (index === currentQuestion.answer) {
+                // Correct answer - damage boss
+                boss.health -= player.powerups.tiniklingMode ? 3 : 2;
+                updateBossHealth();
+                
+                // Play sound
+                sounds.correct.play();
+                
+                if (boss.health <= 0) {
+                    // Boss defeated - player wins
+                    player.score += 1000 * wave;
+                    updateHUD();
+                    bossActive = false;
+                    answerSelectionMode = false;
+                    document.getElementById('bossHealthBar').style.display = 'none';
+                    document.getElementById('triviaContainer').style.display = 'none';
+                    
+                    // Play explosion sound
+                    sounds.explosion.play();
+                    
+                    // Clear any remaining enemies
+                    enemies = [];
+                    
+                    // Player wins
+                    setTimeout(playerWins, 1000);
+                } else {
+                    // Get next question after delay
+                    setTimeout(showBossQuestion, 1000);
+                }
+            } else {
+                // Wrong answer - boss attacks
+                if (!player.powerups.barongShield) {
+                    // Reduce durability for current ship
+                    player.durability[player.shipSkin]--;
+                    updateDurabilityDisplay();
+                    
+                    // Check if player has any durability left
+                    if (player.durability.default <= 0 && player.durability.bangka <= 0 && player.durability.jeepney <= 0) {
+                        gameOver();
+                        return;
+                    }
+                    
+                    // If current ship has no durability left, switch to another available ship
+                    if (player.durability[player.shipSkin] <= 0) {
+                        if (player.durability.default > 0) {
+                            player.shipSkin = 'default';
+                        } else if (player.durability.bangka > 0) {
+                            player.shipSkin = 'bangka';
+                        } else if (player.durability.jeepney > 0) {
+                            player.shipSkin = 'jeepney';
+                        }
+                    }
+                }
+                
+                // Play sound
+                sounds.wrong.play();
+                
+                // Get next question after delay
+                setTimeout(showBossQuestion, 1000);
+            }
+        }
+        
+        // Check wave transition answer
+        function checkWaveTransitionAnswer(index) {
+            const isCorrect = index === currentQuestion.answer;
+            const answerTime = (Date.now() - quizStartTime) / 1000; // in seconds
+            
+            if (isCorrect) {
+                sounds.correct.play();
+                quizCorrectAnswers++;
+                
+                // Calculate time bonus (faster answers give better bonuses)
+                const timeBonus = Math.max(1, quizTimeLimit - answerTime);
+                
+                // Add to trivia laser (33% per correct answer to reach 100% in 3 answers)
+                player.triviaLaser = Math.min(TRIVIA_LASER_MAX, player.triviaLaser + 33);
+                updateTriviaLaserDisplay();
+                
+                // Apply time bonus
+                if (timeBonus >= quizTimeLimit * 0.7) {
+                    // Slow-mo for very fast answers
+                    slowMoActive = true;
+                    slowMoTimer = timeBonusDuration;
+                    sounds.slowmo.play();
+                    document.body.style.backgroundColor = 'rgba(0, 0, 100, 0.5)';
+                } else if (timeBonus >= quizTimeLimit * 0.3) {
+                    // Temporary invincibility for fast answers
+                    timeBonusActive = true;
+                    timeBonusTimer = timeBonusDuration;
+                    player.powerups.barongShield = true;
+                    updatePowerupStatus();
+                }
+                
+                // Make next wave easier
+                waveDifficultyModifier = Math.max(0.5, waveDifficultyModifier * 0.9);
+            } else {
+                sounds.wrong.play();
+                
+                // Drain trivia laser
+                player.triviaLaser = Math.max(0, player.triviaLaser - 15);
+                updateTriviaLaserDisplay();
+                
+                // Make next wave harder
+                waveDifficultyModifier = Math.min(2.0, waveDifficultyModifier * 1.2);
+                
+                // Speed up enemies temporarily
+                enemySpeed *= 1.2;
+                enemyShootRate = Math.max(30, enemyShootRate * 0.8);
+            }
+            
+            // Hide trivia elements
+            document.getElementById('triviaContainer').style.display = 'none';
+            document.getElementById('timerContainer').style.display = 'none';
+            document.getElementById('waveTransitionMessage').style.display = 'none';
+            document.getElementById('waveTransitionTimer').style.display = 'none';
+            
+            // Reset countdown
+            waveTransitionCountdown = 10;
+            
+            // Move to next wave
+            wave++;
+            waveTransitionActive = false;
+            answerSelectionMode = false;
+            
+            // Start the next wave
+            startWave();
+        }
+        
+        // Update HUD
+        function updateHUD() {
+            document.getElementById('scoreDisplay').textContent = player.score;
+            document.getElementById('comboCount').textContent = `${comboCount}x`;
+            updateDurabilityDisplay();
+            updatePowerupStatus();
+        }
+        
+        // Show combo effect
+        function showCombo() {
+            if (comboCount > 3) {
+                const comboText = document.getElementById('comboCounter');
+                comboText.textContent = `${comboCount} KILL COMBO!`;
+                comboText.style.display = 'block';
+                
+                // Different colors for different combo levels
+                if (comboCount >= 10) {
+                    comboText.style.color = '#FF0000';
+                    comboText.style.fontSize = '28px';
+                } else if (comboCount >= 7) {
+                    comboText.style.color = '#FFA500';
+                    comboText.style.fontSize = '24px';
+                } else {
+                    comboText.style.color = '#FFFF00';
+                    comboText.style.fontSize = '20px';
+                }
+                
+                // Hide after 1.5 seconds
+                setTimeout(() => {
+                    comboText.style.display = 'none';
+                }, 1500);
+            }
+        }
+        
+        // Enemy class
+        class Enemy {
+            constructor() {
+                this.type = ['kapre', 'aswang', 'sarimanok'][Math.floor(Math.random() * 3)];
+                
+                if (this.type === 'kapre') {
+                    this.width = 60;
+                    this.height = 50;
+                    this.health = 3;
+                    this.speed = enemySpeed * 0.7;
+                    this.shootChance = 0.3;
+                } else if (this.type === 'aswang') {
+                    this.width = 30;
+                    this.height = 20;
+                    this.health = 1;
+                    this.speed = enemySpeed * 1.5;
+                    this.shootChance = 0.5;
+                } else { // sarimanok
+                    this.width = 45;
+                    this.height = 45;
+                    this.health = 2;
+                    this.speed = enemySpeed;
+                    this.shootChance = 0.4;
+                }
+                
+                this.x = Math.random() * (CANVAS_WIDTH - this.width);
+                this.y = -this.height;
+            }
+            
+            update() {
+                this.y += this.speed * (slowMoActive ? 0.5 : 1);
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.globalCompositeOperation = 'source-over';
+                
+                if (this.type === 'kapre') {
+                    // Draw kapre (big, dark enemy) - scarier version
+                    ctx.fillStyle = '#222';
+                    ctx.fillRect(Math.round(this.x), Math.round(this.y), Math.round(this.width), Math.round(this.height));
+                    
+                    // Face details - more menacing
+                    ctx.fillStyle = '#111';
+                    ctx.beginPath();
+                    ctx.arc(Math.round(this.x + this.width/2), Math.round(this.y + 20), 15, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Glowing red eyes
+                    ctx.fillStyle = 'red';
+                    ctx.beginPath();
+                    ctx.arc(Math.round(this.x + this.width/2 - 10), Math.round(this.y + 15), 5, 0, Math.PI * 2);
+                    ctx.arc(Math.round(this.x + this.width/2 + 10), Math.round(this.y + 15), 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Add glow effect to eyes
+                    ctx.shadowColor = 'red';
+                    ctx.shadowBlur = 10;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    
+                    // Sharp teeth
+                    ctx.fillStyle = 'white';
+                    for (let i = 0; i < 5; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(Math.round(this.x + this.width/2 - 12 + i*5), Math.round(this.y + 25));
+                        ctx.lineTo(Math.round(this.x + this.width/2 - 14 + i*5), Math.round(this.y + 35));
+                        ctx.lineTo(Math.round(this.x + this.width/2 - 10 + i*5), Math.round(this.y + 35));
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                    
+                    // Smoke from cigar
+                    ctx.fillStyle = 'rgba(200, 200, 200, 0.7)';
+                    for (let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.arc(Math.round(this.x + this.width/2 + 15 + i*5), 
+                               Math.round(this.y + 15 - i*3), 
+                               3 + i, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                } else if (this.type === 'aswang') {
+                    // Draw aswang (small, fast enemy) - scarier version
+                    ctx.fillStyle = '#400040';
+                    ctx.beginPath();
+                    ctx.moveTo(Math.round(this.x + this.width/2), Math.round(this.y));
+                    ctx.lineTo(Math.round(this.x), Math.round(this.y + this.height));
+                    ctx.lineTo(Math.round(this.x + this.width), Math.round(this.y + this.height));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Glowing white eyes
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(Math.round(this.x + this.width/3), Math.round(this.y + this.height/2), 4, 0, Math.PI * 2);
+                    ctx.arc(Math.round(this.x + this.width*2/3), Math.round(this.y + this.height/2), 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Blood dripping from mouth
+                    ctx.fillStyle = 'red';
+                    ctx.beginPath();
+                    ctx.moveTo(Math.round(this.x + this.width/2), Math.round(this.y + this.height - 5));
+                    ctx.lineTo(Math.round(this.x + this.width/2 - 5), Math.round(this.y + this.height + 5));
+                    ctx.lineTo(Math.round(this.x + this.width/2 + 5), Math.round(this.y + this.height + 5));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Add glow effect
+                    ctx.shadowColor = '#800080';
+                    ctx.shadowBlur = 10;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                } else { // sarimanok
+                    // Draw sarimanok (colorful bird-like enemy) - more menacing
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.moveTo(Math.round(this.x + this.width/2), Math.round(this.y));
+                    ctx.lineTo(Math.round(this.x), Math.round(this.y + this.height));
+                    ctx.lineTo(Math.round(this.x + this.width), Math.round(this.y + this.height));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Sharp beak
+                    ctx.fillStyle = '#FF4500';
+                    ctx.beginPath();
+                    ctx.moveTo(Math.round(this.x + this.width/2), Math.round(this.y + 10));
+                    ctx.lineTo(Math.round(this.x + this.width/2 - 5), Math.round(this.y + 20));
+                    ctx.lineTo(Math.round(this.x + this.width/2 + 5), Math.round(this.y + 20));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Angry eyes
+                    ctx.fillStyle = 'red';
+                    ctx.beginPath();
+                    ctx.arc(Math.round(this.x + this.width/3), Math.round(this.y + 15), 3, 0, Math.PI * 2);
+                    ctx.arc(Math.round(this.x + this.width*2/3), Math.round(this.y + 15), 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Sharp tail feathers
+                    ctx.fillStyle = '#FF0000';
+                    for (let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(Math.round(this.x + this.width/2), Math.round(this.y + this.height - 5));
+                        ctx.lineTo(Math.round(this.x + this.width/2 - 10 + i*10), Math.round(this.y + this.height + 15));
+                        ctx.lineTo(Math.round(this.x + this.width/2 - 5 + i*10), Math.round(this.y + this.height + 15));
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                }
+                
+                ctx.restore();
+            }
+            
+            isOffScreen() {
+                return this.y > CANVAS_HEIGHT;
+            }
+            
+            hit() {
+                this.health--;
+                return this.health <= 0;
+            }
+            
+            shoot() {
+                if (Math.random() < this.shootChance) {
+                    enemyBullets.push({
+                        x: this.x + this.width/2,
+                        y: this.y + this.height,
+                        width: 5,
+                        height: 10,
+                        speed: 3 * (slowMoActive ? 0.5 : 1)
+                    });
+                    sounds.enemyShoot.play();
+                }
+            }
+        }
+        
+        // Bullet class
+        class Bullet {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.radius = 5;
+                this.speed = 7 * (slowMoActive ? 1.5 : 1);
+                this.damage = player.powerups.tiniklingMode ? 2 : 1;
+            }
+            
+            update() {
+                this.y -= this.speed;
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.fillStyle = 'yellow';
+                ctx.beginPath();
+                ctx.arc(Math.round(this.x), Math.round(this.y), this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Add glow effect
+                ctx.shadowColor = 'yellow';
+                ctx.shadowBlur = 5;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.restore();
+            }
+            
+            isOffScreen() {
+                return this.y < 0;
+            }
+        }
+        
+        // Ship Power-up class (mini versions of ships)
+        class ShipPowerup {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.width = 40;
+                this.height = 40;
+                this.speed = 2 * (slowMoActive ? 0.5 : 1);
+                this.type = type;
+                this.rotation = 0;
+                this.rotationSpeed = Math.random() * 0.02 - 0.01;
+                this.pulse = 0;
+                this.pulseSpeed = Math.random() * 0.05 + 0.02;
+            }
+            
+            update() {
+                this.y += this.speed;
+                this.rotation += this.rotationSpeed;
+                this.pulse += this.pulseSpeed;
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.translate(Math.round(this.x + this.width/2), Math.round(this.y + this.height/2));
+                ctx.rotate(this.rotation);
+                
+                // Pulse effect
+                const pulseScale = 1 + Math.sin(this.pulse) * 0.1;
+                ctx.scale(pulseScale, pulseScale);
+                
+                if (this.type === 'default') {
+                    // Mini default ship - enhanced design
+                    ctx.fillStyle = '#4CAF50';
+                    ctx.beginPath();
+                    // Main body
+                    ctx.moveTo(0, Math.round(-this.height/2));
+                    ctx.lineTo(Math.round(-this.width/2), Math.round(this.height/4));
+                    ctx.lineTo(Math.round(-this.width/4), Math.round(this.height/2));
+                    ctx.lineTo(Math.round(this.width/4), Math.round(this.height/2));
+                    ctx.lineTo(Math.round(this.width/2), Math.round(this.height/4));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Cockpit
+                    ctx.fillStyle = '#87CEEB';
+                    ctx.beginPath();
+                    ctx.arc(0, Math.round(-this.height/4), 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Engine glow
+                    ctx.fillStyle = 'rgba(255, 255, 0, 0.7)';
+                    ctx.beginPath();
+                    ctx.moveTo(Math.round(-this.width/4), Math.round(this.height/2));
+                    ctx.lineTo(0, Math.round(this.height/2 + 5));
+                    ctx.lineTo(Math.round(this.width/4), Math.round(this.height/2));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Add glow effect
+                    ctx.shadowColor = '#4CAF50';
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                } else if (this.type === 'bangka') {
+                    // Mini bangka ship - enhanced design
+                    // Hull (boat shape)
+                    ctx.fillStyle = '#8B4513';
+                    ctx.beginPath();
+                    ctx.moveTo(0, Math.round(-this.height/3));
+                    ctx.lineTo(Math.round(-this.width/2), Math.round(this.height/3));
+                    ctx.lineTo(Math.round(this.width/2), Math.round(this.height/3));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Sail (triangular shape)
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.moveTo(0, Math.round(-this.height/3));
+                    ctx.lineTo(Math.round(-this.width/4), Math.round(this.height/4));
+                    ctx.lineTo(Math.round(this.width/4), Math.round(this.height/4));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Sail details (lines)
+                    ctx.strokeStyle = '#8B4513';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(0, Math.round(-this.height/3));
+                    ctx.lineTo(0, Math.round(this.height/4));
+                    ctx.stroke();
+                    
+                    // Outriggers (small rectangles)
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(Math.round(-this.width/2 - 8), Math.round(-this.height/6), 8, 4);
+                    ctx.fillRect(Math.round(this.width/2), Math.round(-this.height/6), 8, 4);
+                    
+                    // Add glow effect
+                    ctx.shadowColor = '#8B4513';
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                } else if (this.type === 'jeepney') {
+                    // Mini jeepney ship - enhanced design
+                    // Body
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillRect(
+                        Math.round(-this.width/2),
+                        Math.round(-this.height/2),
+                        Math.round(this.width),
+                        Math.round(this.height)
+                    );
+                    
+                    // Body details
+                    ctx.fillStyle = '#FF0000';
+                    ctx.fillRect(
+                        Math.round(-this.width/2 + 5),
+                        Math.round(-this.height/2 + 5),
+                        Math.round(this.width - 10),
+                        Math.round(this.height - 10)
+                    );
+                    
+                    // Windows
+                    ctx.fillStyle = '#87CEEB';
+                    ctx.fillRect(
+                        Math.round(-this.width/2 + 10),
+                        Math.round(-this.height/2 + 10),
+                        10, 10
+                    );
+                    ctx.fillRect(
+                        Math.round(this.width/2 - 20),
+                        Math.round(-this.height/2 + 10),
+                        10, 10
+                    );
+                    
+                    // Headlights
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(
+                        Math.round(-this.width/2 + 5),
+                        Math.round(-this.height/4),
+                        3, 0, Math.PI * 2
+                    );
+                    ctx.arc(
+                        Math.round(this.width/2 - 5),
+                        Math.round(-this.height/4),
+                        3, 0, Math.PI * 2
+                    );
+                    ctx.fill();
+                    
+                    // Decorative stripes
+                    ctx.fillStyle = '#FFD700';
+                    for (let i = 0; i < 3; i++) {
+                        ctx.fillRect(
+                            Math.round(-this.width/2 + 5),
+                            Math.round(-this.height/2 + 20 + i*8),
+                            Math.round(this.width - 10),
+                            3
+                        );
+                    }
+                    
+                    // Add glow effect
+                    ctx.shadowColor = '#FFD700';
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+                
+                ctx.restore();
+            }
+            
+            isOffScreen() {
+                return this.y > CANVAS_HEIGHT;
+            }
+        }
+        
+        // Power-up class
+        class PowerUp {
+            constructor(x, y, type = null) {
+                this.x = x;
+                this.y = y;
+                this.width = 30;
+                this.height = 30;
+                this.speed = 2 * (slowMoActive ? 0.5 : 1);
+                this.type = type || ['barongShield', 'jeepneyBoost', 'tiniklingMode'][Math.floor(Math.random() * 3)];
+                this.rotation = 0;
+                this.rotationSpeed = Math.random() * 0.02 - 0.01;
+                this.pulse = 0;
+                this.pulseSpeed = Math.random() * 0.05 + 0.02;
+            }
+            
+            update() {
+                this.y += this.speed;
+                this.rotation += this.rotationSpeed;
+                this.pulse += this.pulseSpeed;
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.translate(Math.round(this.x + this.width/2), Math.round(this.y + this.height/2));
+                ctx.rotate(this.rotation);
+                
+                // Pulse effect
+                const pulseScale = 1 + Math.sin(this.pulse) * 0.2;
+                ctx.scale(pulseScale, pulseScale);
+                
+                if (this.type === 'barongShield') {
+                    // Shield power-up - enhanced design
+                    ctx.fillStyle = 'rgba(0, 0, 255, 0.8)';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, Math.round(this.width/2), 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                    ctx.beginPath();
+                    ctx.moveTo(0, Math.round(-this.height/2 + 5));
+                    ctx.lineTo(Math.round(-this.width/2 + 5), 0);
+                    ctx.lineTo(0, Math.round(this.height/2 - 5));
+                    ctx.lineTo(Math.round(this.width/2 - 5), 0);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Inner circle
+                    ctx.fillStyle = 'rgba(0, 0, 200, 0.8)';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, Math.round(this.width/4), 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Add glow effect
+                    ctx.shadowColor = 'blue';
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                } else if (this.type === 'jeepneyBoost') {
+                    // Boost power-up - enhanced design
+                    ctx.fillStyle = 'rgba(255, 0, 0, 0.8)';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, Math.round(this.width/2), 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = 'rgba(255, 255, 0, 0.9)';
+                    ctx.beginPath();
+                    ctx.moveTo(0, Math.round(-this.height/2 + 5));
+                    ctx.lineTo(Math.round(-this.width/4), Math.round(-this.height/4));
+                    ctx.lineTo(Math.round(-this.width/2 + 5), 0);
+                    ctx.lineTo(Math.round(-this.width/4), Math.round(this.height/4));
+                    ctx.lineTo(0, Math.round(this.height/2 - 5));
+                    ctx.lineTo(Math.round(this.width/4), Math.round(this.height/4));
+                    ctx.lineTo(Math.round(this.width/2 - 5), 0);
+                    ctx.lineTo(Math.round(this.width/4), Math.round(-this.height/4));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Inner circle
+                    ctx.fillStyle = 'rgba(200, 0, 0, 0.8)';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, Math.round(this.width/4), 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Add glow effect
+                    ctx.shadowColor = 'red';
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                } else if (this.type === 'tiniklingMode') {
+                    // Tinikling power-up - enhanced design
+                    ctx.fillStyle = 'rgba(0, 255, 0, 0.8)';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, Math.round(this.width/2), 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                    ctx.beginPath();
+                    ctx.moveTo(Math.round(-this.width/4), Math.round(-this.height/4));
+                    ctx.lineTo(Math.round(this.width/4), Math.round(-this.height/4));
+                    ctx.lineTo(Math.round(this.width/4), Math.round(this.height/4));
+                    ctx.lineTo(Math.round(-this.width/4), Math.round(this.height/4));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Inner square
+                    ctx.fillStyle = 'rgba(0, 200, 0, 0.8)';
+                    ctx.beginPath();
+                    ctx.moveTo(Math.round(-this.width/8), Math.round(-this.height/8));
+                    ctx.lineTo(Math.round(this.width/8), Math.round(-this.height/8));
+                    ctx.lineTo(Math.round(this.width/8), Math.round(this.height/8));
+                    ctx.lineTo(Math.round(-this.width/8), Math.round(this.height/8));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Add glow effect
+                    ctx.shadowColor = 'green';
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+                
+                ctx.restore();
+            }
+            
+            isOffScreen() {
+                return this.y > CANVAS_HEIGHT;
+            }
+        }
+        
+        // Power-up timers
+        const powerupDuration = 300;
+        const powerupTimers = {
+            barongShield: 0,
+            jeepneyBoost: 0,
+            tiniklingMode: 0
+        };
+        
+        // Update power-up timers
+        function updatePowerupTimers() {
+            for (const type in powerupTimers) {
+                if (powerupTimers[type] > 0) {
+                    powerupTimers[type]--;
+                    if (powerupTimers[type] === 0) {
+                        player.powerups[type] = false;
+                        updateHUD();
+                    }
+                }
+            }
+            
+            // Update special ability cooldowns
+            for (const shipType in player.specialAbilities) {
+                if (player.specialAbilities[shipType].cooldown > 0) {
+                    player.specialAbilities[shipType].cooldown--;
+                    updateSpecialKeyUI();
+                }
+            }
+            
+            // Update time bonus
+            if (timeBonusActive) {
+                timeBonusTimer--;
+                if (timeBonusTimer <= 0) {
+                    timeBonusActive = false;
+                    player.powerups.barongShield = false;
+                    updateHUD();
+                }
+            }
+            
+            // Update slow-mo
+            if (slowMoActive) {
+                slowMoTimer--;
+                if (slowMoTimer <= 0) {
+                    slowMoActive = false;
+                    document.body.style.backgroundColor = '#000';
+                }
+            }
+            
+            // Update wave transition
+            if (waveTransitionActive) {
+                waveTransitionTimer--;
+                if (waveTransitionTimer <= 0) {
+                    // Time's up - wrong answer
+                    checkWaveTransitionAnswer(-1);
+                }
+            }
+        }
+        
+        // Draw player ship
+        function drawPlayer() {
+            ctx.save();
+            ctx.globalCompositeOperation = 'source-over';
+            
+            // Make player invincible during trivia questions
+            if (bossActive || waveTransitionActive) {
+                // Draw shield around player - fixed for all ship types
+                ctx.strokeStyle = 'rgba(0, 255, 255, 0.7)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(
+                    Math.round(player.x + player.width/2),
+                    Math.round(player.y + player.height/2),
+                    Math.round((player.width + player.height)/2) + 8,
+                    0, Math.PI * 2
+                );
+                ctx.stroke();
+                
+                // Add shield glow
+                ctx.shadowColor = 'cyan';
+                ctx.shadowBlur = 15;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            } else if (player.powerups.barongShield) {
+                // Draw shield around player - fixed for all ship types
+                ctx.strokeStyle = 'rgba(0, 0, 255, 0.7)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(
+                    Math.round(player.x + player.width/2),
+                    Math.round(player.y + player.height/2),
+                    Math.round((player.width + player.height)/2) + 8,
+                    0, Math.PI * 2
+                );
+                ctx.stroke();
+                
+                // Add shield glow
+                ctx.shadowColor = 'blue';
+                ctx.shadowBlur = 15;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+            
+            if (player.shipSkin === 'default') {
+                // Default ship - enhanced design
+                ctx.fillStyle = '#4CAF50';
+                ctx.beginPath();
+                // Main body
+                ctx.moveTo(
+                    Math.round(player.x + player.width/2),
+                    Math.round(player.y)
+                );
+                ctx.lineTo(
+                    Math.round(player.x),
+                    Math.round(player.y + player.height)
+                );
+                ctx.lineTo(
+                    Math.round(player.x + player.width),
+                    Math.round(player.y + player.height)
+                );
+                ctx.closePath();
+                ctx.fill();
+                
+                // Cockpit
+                ctx.fillStyle = '#87CEEB';
+                ctx.beginPath();
+                ctx.arc(
+                    Math.round(player.x + player.width/2),
+                    Math.round(player.y + player.height/3),
+                    5, 0, Math.PI * 2
+                );
+                ctx.fill();
+                
+                // Add engine glow when moving
+                if (keys.ArrowLeft || keys.ArrowRight) {
+                    ctx.fillStyle = 'rgba(255, 255, 0, 0.7)';
+                    ctx.beginPath();
+                    ctx.moveTo(
+                        Math.round(player.x + player.width/2 - 5),
+                        Math.round(player.y + player.height)
+                    );
+                    ctx.lineTo(
+                        Math.round(player.x + player.width/2 + 5),
+                        Math.round(player.y + player.height)
+                    );
+                    ctx.lineTo(
+                        Math.round(player.x + player.width/2),
+                        Math.round(player.y + player.height + 10)
+                    );
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.shadowColor = 'yellow';
+                    ctx.shadowBlur = 10;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+                
+                // Add ship glow
+                ctx.shadowColor = '#4CAF50';
+                ctx.shadowBlur = 15;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            } else if (player.shipSkin === 'bangka') {
+                // Bangka (outrigger boat) - enhanced design
+                // Hull (boat shape)
+                ctx.fillStyle = '#8B4513';
+                ctx.beginPath();
+                ctx.moveTo(
+                    Math.round(player.x + player.width/2),
+                    Math.round(player.y + player.height/3)
+                );
+                ctx.lineTo(
+                    Math.round(player.x),
+                    Math.round(player.y + player.height)
+                );
+                ctx.lineTo(
+                    Math.round(player.x + player.width),
+                    Math.round(player.y + player.height)
+                );
+                ctx.closePath();
+                ctx.fill();
+                
+                // Sail (triangular shape)
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.moveTo(
+                    Math.round(player.x + player.width/2),
+                    Math.round(player.y + player.height/3)
+                );
+                ctx.lineTo(
+                    Math.round(player.x + player.width/4),
+                    Math.round(player.y + player.height)
+                );
+                ctx.lineTo(
+                    Math.round(player.x + player.width*3/4),
+                    Math.round(player.y + player.height)
+                );
+                ctx.closePath();
+                ctx.fill();
+                
+                // Sail details (lines)
+                ctx.strokeStyle = '#8B4513';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(
+                    Math.round(player.x + player.width/2),
+                    Math.round(player.y + player.height/3)
+                );
+                ctx.lineTo(
+                    Math.round(player.x + player.width/2),
+                    Math.round(player.y + player.height)
+                );
+                ctx.stroke();
+                
+                // Outriggers (small rectangles)
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(
+                    Math.round(player.x - 15),
+                    Math.round(player.y + player.height/2),
+                    15, 5
+                );
+                ctx.fillRect(
+                    Math.round(player.x + player.width),
+                    Math.round(player.y + player.height/2),
+                    15, 5
+                );
+                
+                // Add ship glow
+                ctx.shadowColor = '#8B4513';
+                ctx.shadowBlur = 15;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            } else if (player.shipSkin === 'jeepney') {
+                // Jeepney - enhanced design
+                // Body
+                ctx.fillStyle = '#FFD700';
+                ctx.fillRect(
+                    Math.round(player.x),
+                    Math.round(player.y),
+                    Math.round(player.width),
+                    Math.round(player.height)
+                );
+                
+                // Body details
+                ctx.fillStyle = '#FF0000';
+                ctx.fillRect(
+                    Math.round(player.x + 5),
+                    Math.round(player.y + 5),
+                    Math.round(player.width - 10),
+                    Math.round(player.height - 10)
+                );
+                
+                // Windows
+                ctx.fillStyle = '#87CEEB';
+                ctx.fillRect(
+                    Math.round(player.x + 10),
+                    Math.round(player.y + 10),
+                    10, 10
+                );
+                ctx.fillRect(
+                    Math.round(player.x + player.width - 20),
+                    Math.round(player.y + 10),
+                    10, 10
+                );
+                
+                // Headlights
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(
+                    Math.round(player.x + 5),
+                    Math.round(player.y + 15),
+                    3, 0, Math.PI * 2
+                );
+                ctx.arc(
+                    Math.round(player.x + player.width - 5),
+                    Math.round(player.y + 15),
+                    3, 0, Math.PI * 2
+                );
+                ctx.fill();
+                
+                // Decorative stripes
+                ctx.fillStyle = '#FFD700';
+                for (let i = 0; i < 3; i++) {
+                    ctx.fillRect(
+                        Math.round(player.x + 5),
+                        Math.round(player.y + 20 + i*8),
+                        Math.round(player.width - 10),
+                        3
+                    );
+                }
+                
+                // Add ship glow
+                ctx.shadowColor = '#FFD700';
+                ctx.shadowBlur = 15;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+            
+            ctx.restore();
+        }
+        
+        // Draw boss
+        function drawBoss() {
+            ctx.save();
+            ctx.globalCompositeOperation = 'source-over';
+            
+            // Draw tikbalang boss - more scary version
+            ctx.fillStyle = '#222';
+            ctx.beginPath();
+            // Body
+            ctx.moveTo(boss.x + boss.width/2, boss.y + 20);
+            ctx.lineTo(boss.x + 10, boss.y + boss.height);
+            ctx.lineTo(boss.x + boss.width - 10, boss.y + boss.height);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Head - more demonic
+            ctx.fillStyle = '#111';
+            ctx.beginPath();
+            ctx.arc(
+                boss.x + boss.width/2,
+                boss.y,
+                25, 0, Math.PI * 2
+            );
+            ctx.fill();
+            
+            // Glowing red eyes with slit pupils
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            // Left eye
+            ctx.arc(
+                boss.x + boss.width/2 - 15,
+                boss.y - 5,
+                5, 0, Math.PI * 2
+            );
+            ctx.arc(
+                boss.x + boss.width/2 + 15,
+                boss.y - 5,
+                5, 0, Math.PI * 2
+            );
+            ctx.fill();
+            
+            // Add glow effect to eyes
+            ctx.shadowColor = 'red';
+            ctx.shadowBlur = 15;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            // Slit pupils
+            ctx.fillStyle = 'black';
+            ctx.fillRect(boss.x + boss.width/2 - 17, boss.y - 7, 4, 10);
+            ctx.fillRect(boss.x + boss.width/2 + 13, boss.y - 7, 4, 10);
+            
+            // Horns
+            ctx.fillStyle = '#444';
+            ctx.beginPath();
+            // Left horn
+            ctx.moveTo(boss.x + boss.width/2 - 15, boss.y - 20);
+            ctx.lineTo(boss.x + boss.width/2 - 25, boss.y - 40);
+            ctx.lineTo(boss.x + boss.width/2 - 20, boss.y - 35);
+            ctx.closePath();
+            ctx.fill();
+            // Right horn
+            ctx.moveTo(boss.x + boss.width/2 + 15, boss.y - 20);
+            ctx.lineTo(boss.x + boss.width/2 + 25, boss.y - 40);
+            ctx.lineTo(boss.x + boss.width/2 + 20, boss.y - 35);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Mouth with sharp teeth
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(
+                boss.x + boss.width/2,
+                boss.y + 10,
+                15, 0.2 * Math.PI, 0.8 * Math.PI, true
+            );
+            ctx.fill();
+            
+            // Teeth
+            ctx.fillStyle = 'white';
+            for (let i = 0; i < 7; i++) {
+                ctx.beginPath();
+                ctx.moveTo(
+                    boss.x + boss.width/2 - 12 + i*4,
+                    boss.y + 10
+                );
+                ctx.lineTo(
+                    boss.x + boss.width/2 - 14 + i*4,
+                    boss.y + 20
+                );
+                ctx.lineTo(
+                    boss.x + boss.width/2 - 10 + i*4,
+                    boss.y + 20
+                );
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            // Arms with claws
+            ctx.fillStyle = '#222';
+            // Left arm
+            ctx.beginPath();
+            ctx.moveTo(boss.x + 15, boss.y + 40);
+            ctx.lineTo(boss.x, boss.y + 60);
+            ctx.lineTo(boss.x - 10, boss.y + 55);
+            ctx.lineTo(boss.x + 5, boss.y + 45);
+            ctx.closePath();
+            ctx.fill();
+            // Right arm
+            ctx.beginPath();
+            ctx.moveTo(boss.x + boss.width - 15, boss.y + 40);
+            ctx.lineTo(boss.x + boss.width, boss.y + 60);
+            ctx.lineTo(boss.x + boss.width + 10, boss.y + 55);
+            ctx.lineTo(boss.x + boss.width - 5, boss.y + 45);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Add overall shadow effect
+            ctx.shadowColor = 'rgba(255, 0, 0, 0.5)';
+            ctx.shadowBlur = 20;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            ctx.restore();
+        }
+        
+        // Main game loop
+        function gameLoop() {
+            // Clear canvas with a subtle starfield effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            // Draw stars (pixel-style)
+            ctx.fillStyle = 'white';
+            for (let i = 0; i < 50; i++) {
+                const x = Math.sin(Date.now() * 0.0001 + i) * CANVAS_WIDTH;
+                const y = (i * CANVAS_HEIGHT / 50 + Date.now() * 0.05) % CANVAS_HEIGHT;
+                ctx.fillRect(Math.round(x), Math.round(y), 2, 2);
+            }
+            
+            if (gameState === STATE_PLAYING) {
+                // Update combo timer
+                if (comboTimeout > 0) {
+                    comboTimeout--;
+                    if (comboTimeout === 0) {
+                        comboCount = 0;
+                        updateHUD();
+                    }
+                }
+                
+                // Move player
+                if (keys.ArrowLeft) {
+                    player.x -= player.speed * (player.powerups.jeepneyBoost ? 1.5 : 1) * (slowMoActive ? 1.5 : 1);
+                    if (player.x < 0) player.x = 0;
+                }
+                if (keys.ArrowRight) {
+                    player.x += player.speed * (player.powerups.jeepneyBoost ? 1.5 : 1) * (slowMoActive ? 1.5 : 1);
+                    if (player.x > CANVAS_WIDTH - player.width) player.x = CANVAS_WIDTH - player.width;
+                }
+                
+                // Update option highlight based on player position
+                if ((bossActive || waveTransitionActive) && answerSelectionMode) {
+                    updateOptionHighlight();
+                }
+                
+                // Check if wave is complete (not in boss wave)
+                if (!bossActive && !waveTransitionActive && enemiesDefeated >= enemiesInWave) {
+                    // Start wave transition
+                    showWaveTransition();
+                    waveTransitionTimer = waveTransitionDuration;
+                }
+                
+                // Shoot
+                if (keys[' '] && bulletCooldown <= 0 && !waveTransitionActive) {
+                    bullets.push(new Bullet(player.x + player.width/2, player.y));
+                    sounds.shoot.currentTime = 0; // Reset sound to start
+                    sounds.shoot.play();
+                    bulletCooldown = 15 / (player.powerups.tiniklingMode ? 2 : 1);
+                }
+                
+                if (bulletCooldown > 0) {
+                    bulletCooldown--;
+                }
+                
+                // Spawn enemies if not in boss wave, not in wave transition, and wave not complete
+                if (!bossActive && !waveTransitionActive && enemiesDefeated < enemiesInWave) {
+                    enemySpawnTimer++;
+                    if (enemySpawnTimer >= enemySpawnRate) {
+                        enemySpawnTimer = 0;
+                        enemies.push(new Enemy());
+                    }
+                }
+                
+                // Make enemies shoot
+                enemyShootTimer++;
+                if (enemyShootTimer >= enemyShootRate) {
+                    enemyShootTimer = 0;
+                    for (const enemy of enemies) {
+                        enemy.shoot();
+                    }
+                }
+                
+                // Update enemy bullets
+                for (let i = enemyBullets.length - 1; i >= 0; i--) {
+                    enemyBullets[i].y += enemyBullets[i].speed;
+                    
+                    // Check if enemy bullet hits player (only if not in trivia question mode)
+                    if (!bossActive && !waveTransitionActive &&
+                        player.x < enemyBullets[i].x + enemyBullets[i].width &&
+                        player.x + player.width > enemyBullets[i].x &&
+                        player.y < enemyBullets[i].y + enemyBullets[i].height &&
+                        player.y + player.height > enemyBullets[i].y) {
+                        
+                        if (!player.powerups.barongShield) {
+                            // Reduce durability for current ship
+                            player.durability[player.shipSkin]--;
+                            updateDurabilityDisplay();
+                            
+                            // Check if current ship has no durability left
+                            if (player.durability[player.shipSkin] <= 0) {
+                                gameOver();
+                                break;
+                            }
+                        }
+                        
+                        enemyBullets.splice(i, 1);
+                        sounds.hit.play();
+                        continue;
+                    }
+                    
+                    if (enemyBullets[i].y > CANVAS_HEIGHT) {
+                        enemyBullets.splice(i, 1);
+                    }
+                }
+                
+                // Update bullets
+                for (let i = bullets.length - 1; i >= 0; i--) {
+                    bullets[i].update();
+                    
+                    // Check if bullet hits boss
+                    if (bossActive && bullets[i].x > boss.x && bullets[i].x < boss.x + boss.width &&
+                        bullets[i].y > boss.y && bullets[i].y < boss.y + boss.height) {
+                        boss.health--;
+                        updateBossHealth();
+                        bullets.splice(i, 1);
+                        
+                        if (boss.health <= 0) {
+                            // Boss defeated
+                            player.score += 1000 * wave;
+                            updateHUD();
+                            bossActive = false;
+                            answerSelectionMode = false;
+                            document.getElementById('bossHealthBar').style.display = 'none';
+                            document.getElementById('triviaContainer').style.display = 'none';
+                            
+                            // Play explosion sound
+                            sounds.explosion.play();
+                            
+                            // Clear any remaining enemies
+                            enemies = [];
+                            
+                            // Player wins
+                            setTimeout(playerWins, 1000);
+                        }
+                        continue;
+                    }
+                    
+                    if (bullets[i].isOffScreen()) {
+                        bullets.splice(i, 1);
+                    }
+                }
+                
+                // Update enemies
+                for (let i = enemies.length - 1; i >= 0; i--) {
+                    enemies[i].update();
+                    
+                    // Check if enemy hits player (only if not in trivia question mode)
+                    if (!bossActive && !waveTransitionActive &&
+                        player.x < enemies[i].x + enemies[i].width &&
+                        player.x + player.width > enemies[i].x &&
+                        player.y < enemies[i].y + enemies[i].height &&
+                        player.y + player.height > enemies[i].y) {
+                        
+                        if (!player.powerups.barongShield) {
+                            // Reduce durability for current ship
+                            player.durability[player.shipSkin]--;
+                            updateDurabilityDisplay();
+                            
+                            // Check if current ship has no durability left
+                            if (player.durability[player.shipSkin] <= 0) {
+                                gameOver();
+                                break;
+                            }
+                        }
+                        
+                        enemies.splice(i, 1);
+                        sounds.hit.play();
+                        continue;
+                    }
+                    
+                    if (enemies[i].isOffScreen()) {
+                        enemies.splice(i, 1);
+                    }
+                }
+                
+                // Check bullet-enemy collisions
+                for (let i = bullets.length - 1; i >= 0; i--) {
+                    for (let j = enemies.length - 1; j >= 0; j--) {
+                        const bullet = bullets[i];
+                        const enemy = enemies[j];
+                        
+                        if (bullet.x > enemy.x && bullet.x < enemy.x + enemy.width &&
+                            bullet.y > enemy.y && bullet.y < enemy.y + enemy.height) {
+                            
+                            if (enemy.hit()) {
+                                enemies.splice(j, 1);
+                                enemiesDefeated++;
+                                
+                                // Different points for different enemies
+                                let points = 0;
+                                if (enemy.type === 'kapre') {
+                                    points = 100 * wave;
+                                } else if (enemy.type === 'sarimanok') {
+                                    points = 50 * wave;
+                                } else {
+                                    points = 30 * wave;
+                                }
+                                
+                                // Combo multiplier
+                                comboCount++;
+                                comboTimeout = 60; // 1 second at 60fps
+                                
+                                if (comboCount >= 10) {
+                                    points *= 3;
+                                    showCombo();
+                                    sounds.combo.play();
+                                } else if (comboCount >= 5) {
+                                    points *= 2;
+                                    showCombo();
+                                }
+                                
+                                player.score += points;
+                                updateHUD();
+                                
+                                // Chance to drop power-up or ship
+                                if (Math.random() < 0.2 + (wave * 0.02)) {
+                                    // 60% chance for regular power-up, 40% for ship
+                                    if (Math.random() < 0.6) {
+                                        powerups.push(new PowerUp(
+                                            enemy.x + enemy.width/2,
+                                            enemy.y + enemy.height/2
+                                        ));
+                                    } else {
+                                        const shipTypes = ['default', 'bangka', 'jeepney'];
+                                        const randomShip = shipTypes[Math.floor(Math.random() * shipTypes.length)];
+                                        powerups.push(new ShipPowerup(
+                                            enemy.x + enemy.width/2,
+                                            enemy.y + enemy.height/2,
+                                            randomShip
+                                        ));
+                                    }
+                                }
+                                
+                                sounds.explosion.play();
+                            }
+                            
+                            bullets.splice(i, 1);
+                            break;
+                        }
+                    }
+                }
+                
+                // Update power-ups
+                for (let i = powerups.length - 1; i >= 0; i--) {
+                    powerups[i].update();
+                    
+                    // Check if player collected power-up
+                    if (player.x < powerups[i].x + powerups[i].width &&
+                        player.x + player.width > powerups[i].x &&
+                        player.y < powerups[i].y + powerups[i].height &&
+                        player.y + player.height > powerups[i].y) {
+                        
+                        if (powerups[i] instanceof ShipPowerup) {
+                            // It's a ship power-up - add durability for that ship type
+                            player.durability[powerups[i].type] += 1;
+                            // Make this ship type available for selection
+                            player.availableShips[powerups[i].type] = true;
+                            updateDurabilityDisplay();
+                            updateShipSelectionUI();
+                            
+                            // Highlight the ship in the durability display
+                            const shipRow = document.querySelector(`.ship-durability-row:nth-child(${
+                                powerups[i].type === 'default' ? 2 : 
+                                powerups[i].type === 'bangka' ? 3 : 4
+                            })`);
+                            shipRow.style.animation = 'pulse 0.5s 3';
+                            setTimeout(() => {
+                                shipRow.style.animation = '';
+                            }, 1500);
+                        } else {
+                            // Regular power-up
+                            player.powerups[powerups[i].type] = true;
+                            powerupTimers[powerups[i].type] = powerupDuration;
+                        }
+                        
+                        powerups.splice(i, 1);
+                        sounds.powerup.play();
+                        updateHUD();
+                        continue;
+                    }
+                    
+                    if (powerups[i].isOffScreen()) {
+                        powerups.splice(i, 1);
+                    }
+                }
+                
+                // Update power-up timers
+                updatePowerupTimers();
+                
+                // Move boss if active
+                if (bossActive) {
+                    // Simple side-to-side movement
+                    boss.x += boss.speed * (slowMoActive ? 0.5 : 1);
+                    if (boss.x <= 0 || boss.x + boss.width >= CANVAS_WIDTH) {
+                        boss.speed *= -1;
+                    }
+                }
+                
+                // Draw everything
+                for (const bullet of bullets) {
+                    bullet.draw();
+                }
+                
+                for (const enemy of enemies) {
+                    enemy.draw();
+                }
+                
+                for (const enemyBullet of enemyBullets) {
+                    ctx.fillStyle = 'red';
+                    ctx.beginPath();
+                    ctx.arc(
+                        Math.round(enemyBullet.x),
+                        Math.round(enemyBullet.y),
+                        Math.round(enemyBullet.width/2),
+                        0, Math.PI * 2
+                    );
+                    ctx.fill();
+                }
+                
+                for (const powerup of powerups) {
+                    powerup.draw();
+                }
+                
+                if (bossActive) {
+                    drawBoss();
+                }
+                
+                drawPlayer();
+            }
+            
+            // Continue game loop
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Start the game
+        window.onload = function() {
+            initGame();
+            resizeGame();
+        };
+    </script>
+</body>
+</html>
