@@ -3261,42 +3261,75 @@
                 ctx.fill();
                 ctx.shadowBlur = 0;
             } else if (player.shipSkin === 'bangka') {
-                // Bangka (outrigger boat) - enhanced design
-                // Hull (boat shape)
-                ctx.fillStyle = '#8B4513';
-                ctx.beginPath();
-                ctx.moveTo(
-                    Math.round(player.x + player.width/2),
-                    Math.round(player.y + player.height/3)
+               // New Bangka design - outrigger boat without sail
+            ctx.fillStyle = '#8B4513'; // Dark wood color for hull
+            ctx.beginPath();
+            // Boat hull (canoe shape)
+            ctx.moveTo(
+                Math.round(player.x + player.width/4),
+                Math.round(player.y + player.height/3)
+            );
+            ctx.lineTo(
+                Math.round(player.x),
+                Math.round(player.y + player.height)
+            );
+            ctx.lineTo(
+                Math.round(player.x + player.width),
+                Math.round(player.y + player.height)
+            );
+            ctx.lineTo(
+                Math.round(player.x + player.width*3/4),
+                Math.round(player.y + player.height/3)
+            );
+            ctx.closePath();
+           ctx.fill();
+    
+            // Outriggers (bamboo floats)
+            ctx.fillStyle = '#5D2906'; // Darker wood color
+            // Left outrigger
+            ctx.fillRect(
+                Math.round(player.x - 15),
+                Math.round(player.y + player.height/2),
+                15, 8
+            );
+            // Right outrigger
+            ctx.fillRect(
+                Math.round(player.x + player.width),
+                Math.round(player.y + player.height/2),
+                15, 8
+            );
+    
+            // Boat details (wooden planks)
+            ctx.fillStyle = '#A0522D'; // Lighter wood color
+            for (let i = 0; i < 3; i++) {
+                ctx.fillRect(
+                    Math.round(player.x + player.width/4 + i*10),
+                    Math.round(player.y + player.height/3),
+                    5, 5
                 );
-                ctx.lineTo(
-                    Math.round(player.x),
-                    Math.round(player.y + player.height)
-                );
-                ctx.lineTo(
-                    Math.round(player.x + player.width),
-                    Math.round(player.y + player.height)
-                );
-                ctx.closePath();
-                ctx.fill();
-                
-                // Sail (triangular shape)
-                ctx.fillStyle = 'white';
-                ctx.beginPath();
-                ctx.moveTo(
-                    Math.round(player.x + player.width/2),
-                    Math.round(player.y + player.height/3)
-                );
-                ctx.lineTo(
-                    Math.round(player.x + player.width/4),
-                    Math.round(player.y + player.height)
-                );
-                ctx.lineTo(
-                    Math.round(player.x + player.width*3/4),
-                    Math.round(player.y + player.height)
-                );
-                ctx.closePath();
-                ctx.fill();
+            }
+    
+            // Paddlers (simple representation)
+            ctx.fillStyle = '#654321';
+            // Left paddler
+            ctx.fillRect(
+                Math.round(player.x + player.width/4 - 5),
+                Math.round(player.y + player.height/2),
+                5, 10
+            );
+            // Right paddler
+            ctx.fillRect(
+                  Math.round(player.x + player.width*3/4),
+                Math.round(player.y + player.height/2),
+                5, 10
+            );
+    
+            // Add glow effect
+            ctx.shadowColor = '#8B4513';
+            ctx.shadowBlur = 15;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
                 
                 // Sail details (lines)
                 ctx.strokeStyle = '#8B4513';
