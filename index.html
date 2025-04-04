@@ -31,7 +31,19 @@
             background-color: #000;
             image-rendering: pixelated;
         }
-        
+         /* Settings Wheel */
+        #settingsWheel {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 20;
+            transition: transform 0.3s;
+        }
+        #settingsWheel:hover {
+            transform: rotate(30deg);
+        }
         /* Screens */
         #menuScreen, #gameOverScreen, #highscoreScreen, #settingsScreen, #winScreen, #tutorialScreen, #waveScreen, #quizScreen, #objectivesScreen {
             position: fixed;
