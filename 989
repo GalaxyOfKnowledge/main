@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GALAXY OF KNOWLEDGE</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: white;
+            font-family: 'Press Start 2P', cursive;
+            overflow: hidden;
+            touch-action: manipulation;
+            image-rendering: pixelated;
+            transition: background-color 0.3s;
+        }
+        
+        /* Fullscreen canvas */
+        #gameCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            z-index: 1;
+            background-color: #000;
+            image-rendering: pixelated;
+        }
+        
+        /* Settings Wheel */
+        #settingsWheel {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 20;
+            transition: transform 0.3s;
+            display: none; /* Hidden by default, shown in-game */
+        }
+        #settingsWheel:hover {
+            transform: rotate(30deg);
+        }
+        
+        /* Screens */
+        #menuScreen, #gameOverScreen, #highscoreScreen, #settingsScreen, #winScreen, #tutorialScreen, #waveScreen, #quizScreen, #objectivesScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 10;
+        }
+        
+        /* Trivia container - now looks like part of the game */
+        #triviaContainer {
+            position: fixed;
+            left: 50%;
+            bottom: 20px;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 800px;
+            z-index: 3; /* Above gameplay elements */
+            background-color: rgba(0, 0, 20, 0.7);
+            padding: 15px;
+            display: none;
+            box-sizing: border-box;
+            text-align: center;
+            border: 2px solid #FFD700;
+            border-radius: 5px;
+        }
+        
+        #triviaQuestion {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #FFD700;
+            text-shadow: 2px 2px 0 #8B4513;
+            line-height: 1.4;
+            padding: 12px;
+        }
+        
+        #triviaOptions {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            position: relative;
+        }
+        
+        .triviaOption {
+            padding: 15px;
+            margin: 0;
+            background-color: rgba(0, 0, 40, 0.8);
+            text-align: center;
+            flex: 1;
+            min-width: 150px;
+            font-size: 14px;
+            transition: all 0.1s;
+            cursor: pointer;
+            font-family: 'Press Start 2P', cursive;
+            text-shadow: 1px 1px 0 #000;
+            color: white;
+            border: 2px solid #555;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .triviaOption.highlighted {
+            background-color: rgba(85, 85, 255, 0.7);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+            border-color: #FFD700;
+        }
+        
+        .triviaOption.highlighted::after {
+            content: '(Z)';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #FFD700;
+            color: #000;
+            font-size: 12px;
+            padding: 2px 5px;
+            border-radius: 0;
+            border: 2px solid #8B4513;
+        }
+        
+        .triviaOption.selected {
+            background: #2E7D32;
+            border-color: #4CAF50;
+        }
+        
+        .triviaOption.incorrect {
+            background: #B71C1C;
+            border-color: #F44336;
+        }
+        
+        /* Answer feedback */
+        .answer-feedback {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: white;
+            text-shadow: 3px 3px 0 #000;
+            z-index: 4;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .correct-feedback {
+            color: #4CAF50;
+            border: 2px solid #4CAF50;
+        }
+        
+        .incorrect-feedback {
+            color: #F44336;
+            border: 2px solid #F44336;
+        }
+        
+        /* Rest of your existing CSS... */
+        .title {
+            font-size: 32px;
+            font-weight: normal;
+            margin-bottom: 30px;
+            color: #FFD700;
+            text-align: center;
+            text-shadow: 4px 4px 0 #8B4513;
+            line-height: 1.3;
+        }
+        
+        .menu-button {
+            width: 200px;
+            height: 50px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 0;
+            background: #333;
+            color: white;
+            box-shadow: 4px 4px 0 #555;
+            transition: all 0.1s;
+            font-family: 'Press Start 2P', cursive;
+            text-shadow: 2px 2px 0 #000;
+        }
+        
+        .menu-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 6px 6px 0 #555;
+        }
+        
+        .menu-button:active {
+            transform: translateY(2px);
+            box-shadow: 2px 2px 0 #555;
+        }
+        
+        #playButton { background: #2E7D32; box-shadow: 4px 4px 0 #4CAF50; }
+        #highscoreButton { background: #FF8F00; box-shadow: 4px 4px 0 #FFC107; color: black; }
+        #settingsButton { background: #0D47A1; box-shadow: 4px 4px 0 #2196F3; }
+        #tutorialButton { background: #6A1B9A; box-shadow: 4px 4px 0 #9C27B0; }
+        
+        /* Game UI elements - made more visible */
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 14px;
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 8px 12px;
+            border-radius: 0;
+            border: 2px solid #FFD700;
+            display: none;
+            z-index: 2;
+            font-family: 'Press Start 2P', cursive;
+            text-shadow: 2px 2px 0 #000;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        #durabilityHud {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            font-size: 12px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 8px 12px;
+            border-radius: 0;
+            border: 2px solid #FFD700;
+            display: none;
+            z-index: 2;
+            font-family: 'Press Start 2P', cursive;
+            text-shadow: 2px 2px 0 #000;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        .durability-ships {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .durability-title {
+            font-size: 12px;
+            margin-bottom: 5px;
+            text-decoration: underline;
+            color: #FFD700;
+        }
+        
+        .ship-durability-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .ship-key {
+            width: 20px;
+            text-align: center;
+            background: #333;
+            padding: 2px;
+            border: 1px solid #555;
+        }
+        
+        .ship-icon-small {
+            width: 20px;
+            height: 20px;
+            border-radius: 0;
+        }
+        
+        .ship-icon-small.default {
+            background-color: #4CAF50;
+        }
+        
+        .ship-icon-small.bangka {
+            background-color: #8B4513;
+        }
+        
+        .ship-icon-small.jeepney {
+            background-color: #FFD700;
+        }
+        
+        .durability-icons {
+            display: flex;
+            gap: 3px;
+        }
+        
+        .durability-icon {
+            width: 16px;
+            height: 16px;
+            border: 1px solid #555;
+        }
+        
+        .durability-icon.default {
+            background-color: #4CAF50;
+        }
+        
+        .durability-icon.bangka {
+            background-color: #8B4513;
+        }
+        
+        .durability-icon.jeepney {
+            background-color: #FFD700;
+        }
+        
+        #powerupHud {
+            position: fixed;
+            top: 10px;
+            right: 50px; /* Moved left to make room for settings */
+            font-size: 12px;
+            text-align: right;
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 8px 12px;
+            border-radius: 0;
+            border: 2px solid #FFD700;
+            display: none;
+            z-index: 2;
+            font-family: 'Press Start 2P', cursive;
+            text-shadow: 2px 2px 0 #000;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        #bossHealthBar {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 16px;
+            background-color: #F44336;
+            border-radius: 0;
+            overflow: hidden;
+            border: 2px solid #FFD700;
+            display: none;
+            z-index: 2;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        #bossHealth {
+            height: 100%;
+            background: #4CAF50;
+            width: 100%;
+            transition: width 0.1s;
+        }
+        
+        #shipSelection {
+            position: fixed;
+            bottom: 120px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            display: none;
+            z-index: 2;
+        }
+        
+        .ship-icon {
+            width: 32px;
+            height: 32px;
+            border: 2px solid #555;
+            border-radius: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: normal;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 14px;
+            transition: all 0.1s;
+            font-family: 'Press Start 2P', cursive;
+            cursor: pointer;
+        }
+        
+        .ship-icon.available {
+            border-color: #FFD700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+            animation: pulse 1s infinite;
+            background-color: rgba(255, 215, 0, 0.2);
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 2px rgba(255, 215, 0, 0.7); }
+            50% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.9); }
+            100% { box-shadow: 0 0 2px rgba(255, 215, 0, 0.7); }
+        }
+        
+        #mobileControls {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            display: none;
+            justify-content: center;
+            z-index: 2;
+        }
+        
+        .mobile-btn {
+            width: 60px;
+            height: 60px;
+            margin: 0 15px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            user-select: none;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+            transition: all 0.1s;
+        }
+        
+        .mobile-btn:active {
+            transform: translateY(2px);
+            box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Settings screen styles */
+        .settings-row {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            width: 80%;
+            max-width: 400px;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+        
+        .settings-button {
+            width: 32px;
+            height: 32px;
+            border-radius: 0;
+            border: none;
+            background: #333;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 0 8px;
+            box-shadow: 3px 3px 0 #555;
+            font-family: 'Press Start 2P', cursive;
+        }
+        
+        .settings-value {
+            min-width: 50px;
+            text-align: center;
+            font-size: 12px;
+        }
+        
+        /* Timer styles */
+        #timerContainer {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid #FFD700;
+            display: none;
+            z-index: 2;
+        }
+        
+        #timerBar {
+            height: 100%;
+            background: #FFD700;
+            width: 100%;
+            transition: width 0.1s;
+        }
+        
+        /* Wave transition message */
+        #waveTransitionMessage {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: #FFD700;
+            text-shadow: 3px 3px 0 #8B4513;
+            display: none;
+            z-index: 2;
+            font-family: 'Press Start 2P', cursive;
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border: 2px solid #FFD700;
+        }
+        
+        /* Trivia Laser UI */
+        #triviaLaserHud {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 12px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 8px 12px;
+            border-radius: 0;
+            border: 2px solid #FFD700;
+            display: none;
+            z-index: 2;
+            font-family: 'Press Start 2P', cursive;
+            text-shadow: 2px 2px 0 #000;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        #triviaLaserBar {
+            width: 100px;
+            height: 10px;
+            background-color: #333;
+            margin-top: 5px;
+            border: 1px solid #555;
+        }
+        
+        #triviaLaserFill {
+            height: 100%;
+            width: 0%;
+            background-color: #4CAF50;
+            transition: width 0.1s;
+        }
+        
+        /* Wave transition timer */
+        #waveTransitionTimer {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            color: #FFD700;
+            text-shadow: 3px 3px 0 #8B4513;
+            display: none;
+            z-index: 2;
+            font-family: 'Press Start 2P', cursive;
+        }
+        
+        /* Objectives screen styles */
+        #objectivesScreen {
+            display: none;
+        }
+        
+        .objectives-content {
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid #FFD700;
+            margin-bottom: 20px;
+        }
+        
+        .objective-item {
+            margin-bottom: 15px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .objective-item::before {
+            content: "• ";
+            color: #FFD700;
+        }
+        
+        /* Special ability cooldown indicators */
+        .ship-icon .cooldown {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0%;
+            background-color: rgba(0, 0, 0, 0.7);
+            transition: height 0.1s;
+        }
+        
+        /* Special ability key */
+        .special-key {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 32px;
+            height: 32px;
+            border: 2px solid #FFD700;
+            border-radius: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: normal;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 14px;
+            transition: all 0.1s;
+            font-family: 'Press Start 2P', cursive;
+            z-index: 2;
+            display: none;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        .special-key.available {
+            border-color: #FFD700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+            animation: pulse 1s infinite;
+            background-color: rgba(255, 215, 0, 0.2);
+        }
+        
+        .special-key .cooldown {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0%;
+            background-color: rgba(0, 0, 0, 0.7);
+            transition: height 0.1s;
+        }
+        
+        /* Laser beam effect */
+        .laser-beam {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, 
+                rgba(0, 255, 255, 0.8) 0%, 
+                rgba(0, 255, 255, 0.2) 100%);
+            z-index: 3;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        /* Pause overlay */
+        #pauseOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 15;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-size: 48px;
+            color: #FFD700;
+            text-shadow: 4px 4px 0 #8B4513;
+        }
+        
+        @media (max-width: 768px) {
+            #mobileControls {
+                display: flex;
+            }
+            
+            .title {
+                font-size: 24px;
+                text-shadow: 3px 3px 0 #8B4513;
+            }
+            
+            .menu-button {
+                width: 160px;
+                height: 40px;
+                font-size: 14px;
+            }
+            
+            #triviaOptions {
+                flex-direction: column;
+            }
+            
+            .triviaOption {
+                min-width: 80%;
+                margin: 5px auto;
+                font-size: 12px;
+                padding: 10px;
+            }
+            
+            #triviaQuestion {
+                font-size: 14px;
+            }
+            
+            #hud, #powerupHud, #durabilityHud {
+                font-size: 10px;
+                padding: 5px 8px;
+            }
+            
+            .mobile-btn {
+                width: 50px;
+                height: 50px;
+                margin: 0 10px;
+                font-size: 18px;
+            }
+            
+            .tutorial-content {
+                max-width: 90%;
+                font-size: 10px;
+            }
+            
+            .tutorial-title {
+                font-size: 14px;
+            }
+            
+            .tutorial-text {
+                font-size: 10px;
+            }
+            
+            #nameInput, #nameInputWin {
+                width: 120px;
+                font-size: 12px;
+            }
+            
+            .wave-title {
+                font-size: 32px;
+            }
+            
+            .quiz-title {
+                font-size: 18px;
+            }
+            
+            .quiz-question {
+                font-size: 14px;
+            }
+            
+            .quiz-options {
+                width: 90%;
+            }
+            
+            #waveTransitionMessage {
+                font-size: 18px;
+                width: 90%;
+            }
+            
+            #waveTransitionTimer {
+                font-size: 18px;
+                top: 10px;
+            }
+            
+            .objectives-content {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="settingsWheel">⚙️</div>
+    <div id="gameOverCover"></div>
+    <div class="laser-beam" id="laserBeam"></div>
+    <div id="pauseOverlay">PAUSED</div>
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- Answer feedback elements -->
+    <div class="answer-feedback correct-feedback" id="correctFeedback">CORRECT!</div>
+    <div class="answer-feedback incorrect-feedback" id="incorrectFeedback">WRONG!</div>
+    
+    <!-- Game UI elements -->
+    <div id="hud">
+        <div>SCORE: <span id="scoreDisplay">0</span></div>
+        <div>COMBO: <span id="comboCount">0x</span></div>
+    </div>
+    
+    <div id="durabilityHud">
+        <div class="durability-ships">
+            <div class="durability-title">DURABILITY:</div>
+            <div class="ship-durability-row">
+                <span>DEFAULT: </span>
+                <span class="ship-key">X</span>
+                <div class="durability-icons" id="defaultDurabilityIcons"></div>
+            </div>
+            <div class="ship-durability-row">
+                <span>BANGKA: </span>
+                <span class="ship-key">C</span>
+                <div class="durability-icons" id="bangkaDurabilityIcons"></div>
+            </div>
+            <div class="ship-durability-row">
+                <span>JEEPNEY: </span>
+                <span class="ship-key">V</span>
+                <div class="durability-icons" id="jeepneyDurabilityIcons"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="powerupHud">
+        <div>POWERUPS: <span id="powerupStatus">NONE</span></div>
+    </div>
+    
+    <div id="triviaLaserHud">
+        <div>TRIVIA LASER:</div>
+        <div id="triviaLaserBar">
+            <div id="triviaLaserFill"></div>
+        </div>
+    </div>
+    
+    <div id="bossHealthBar">
+        <div id="bossHealth"></div>
+    </div>
+    
+    <div id="timerContainer">
+        <div id="timerBar"></div>
+    </div>
+    
+    <div id="waveTransitionMessage"></div>
+    <div id="waveTransitionTimer"></div>
+    
+    <div id="comboCounter"></div>
+    <div id="waveIndicator">WAVE: <span id="waveNumber">1</span></div>
+    
+    <div id="triviaContainer">
+        <div id="triviaQuestion"></div>
+        <div id="triviaOptions"></div>
+    </div>
+    
+    <div id="shipSelection">
+        <div class="ship-icon" id="defaultShip" title="Default Ship (X)">X</div>
+        <div class="ship-icon" id="bangkaShip" title="Bangka Ship (C)">C</div>
+        <div class="ship-icon" id="jeepneyShip" title="Jeepney Ship (V)">V</div>
+    </div>
+    
+    <div class="special-key" id="specialKey">B</div>
+    
+    <div id="mobileControls">
+        <div class="mobile-btn" id="leftBtn">←</div>
+        <div class="mobile-btn" id="shootBtn">🔫</div>
+        <div class="mobile-btn" id="rightBtn">→</div>
+        <div class="mobile-btn" id="specialBtn">B</div>
+    </div>
+    
+    <!-- Screens -->
+    <div id="menuScreen">
+        <div class="title">GALAXY OF KNOWLEDGE</div>
+        <button id="playButton" class="menu-button">PLAY</button>
+        <button id="highscoreButton" class="menu-button">HIGHSCORE</button>
+        <button id="settingsButton" class="menu-button">SETTINGS</button>
+        <button id="tutorialButton" class="menu-button">TUTORIAL</button>
+    </div>
+    
+    <div id="objectivesScreen" style="display: none;">
+        <div class="title">MISSION OBJECTIVES</div>
+        <div class="objectives-content">
+            <div class="objective-item">DEFEAT ALL ENEMIES IN EACH WAVE</div>
+            <div class="objective-item">ANSWER TRIVIA QUESTIONS TO CHARGE LASER</div>
+            <div class="objective-item">DEFEAT THE FINAL BOSS AT WAVE 10</div>
+            <div class="objective-item">USE SPECIAL ABILITIES WITH [B] KEY</div>
+            <div class="objective-item">COLLECT POWER-UPS FOR SPECIAL ABILITIES</div>
+            <div class="objective-item">SWITCH SHIPS TO ADAPT TO SITUATIONS</div>
+        </div>
+        <button id="continueFromObjectives" class="menu-button" style="background: #2E7D32; box-shadow: 4px 4px 0 #4CAF50;">START GAME</button>
+    </div>
+    
+    <div id="gameOverScreen" style="display: none;">
+        <div class="title">GAME OVER</div>
+        <div id="finalScore" style="font-size: 20px; margin-bottom: 20px;"></div>
+        <div id="nameInputContainer">
+            <div style="margin-bottom: 10px; font-size: 14px;">ENTER YOUR NAME:</div>
+            <input type="text" id="nameInput" maxlength="10">
+            <button id="submitScore" class="menu-button" style="background: #2E7D32; box-shadow: 4px 4px 0 #4CAF50;">SUBMIT</button>
+        </div>
+        <button id="continueButton" class="menu-button" style="background: #0D47A1; box-shadow: 4px 4px 0 #2196F3;">CONTINUE</button>
+    </div>
+    
+    <div id="winScreen" style="display: none;">
+        <div class="title">YOU WIN!</div>
+        <div id="winScore" style="font-size: 20px; margin-bottom: 20px;"></div>
+        <div id="nameInputContainerWin">
+            <div style="margin-bottom: 10px; font-size: 14px;">ENTER YOUR NAME:</div>
+            <input type="text" id="nameInputWin" maxlength="10">
+            <button id="submitScoreWin" class="menu-button" style="background: #2E7D32; box-shadow: 4px 4px 0 #4CAF50;">SUBMIT</button>
+        </div>
+        <button id="winContinueButton" class="menu-button" style="background: #0D47A1; box-shadow: 4px 4px 0 #2196F3;">CONTINUE</button>
+    </div>
+    
+    <div id="highscoreScreen" style="display: none;">
+        <div class="title">HIGH SCORES</div>
+        <div id="highscoreList" style="margin-bottom: 30px; font-size: 14px;"></div>
+        <button id="backButton" class="menu-button" style="background: #0D47A1; box-shadow: 4px 4px 0 #2196F3;">BACK</button>
+    </div>
+    
+    <div id="settingsScreen" style="display: none;">
+        <div class="title">SETTINGS</div>
+        
+        <div class="settings-row">
+            <div>MUSIC VOLUME:</div>
+            <button id="musicDown" class="settings-button">-</button>
+            <div id="musicVolume" class="settings-value">50%</div>
+            <button id="musicUp" class="settings-button">+</button>
+        </div>
+        
+        <div class="settings-row">
+            <div>SOUND EFFECTS:</div>
+            <button id="toggleSound" class="settings-button" style="width: 60px;">ON</button>
+        </div>
+        
+        <div class="settings-row">
+            <div>DIFFICULTY:</div>
+            <button id="changeDifficulty" class="settings-button" style="width: 80px;">NORMAL</button>
+        </div>
+        
+        <button id="settingsBackButton" class="menu-button" style="background: #0D47A1; box-shadow: 4px 4px 0 #2196F3; margin-top: 30px;">BACK TO GAME</button>
+    </div>
+    
+    <div id="tutorialScreen" style="display: none;">
+        <div class="title">HOW TO PLAY</div>
+        <div class="tutorial-content">
+            <div class="tutorial-section">
+                <div class="tutorial-title">CONTROLS</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">←</div>
+                    <div class="tutorial-text">Move Left</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">→</div>
+                    <div class="tutorial-text">Move Right</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">SPACE</div>
+                    <div class="tutorial-text">Shoot Bullets</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">X</div>
+                    <div class="tutorial-text">Switch to Default Ship</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">C</div>
+                    <div class="tutorial-text">Switch to Bangka Ship</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">V</div>
+                    <div class="tutorial-text">Switch to Jeepney Ship</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">Z</div>
+                    <div class="tutorial-text">Select Answer (Boss Fight)</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">B</div>
+                    <div class="tutorial-text">Special Ability (All Ships)</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">T</div>
+                    <div class="tutorial-text">Fire Trivia Laser (When Charged)</div>
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">SHIPS</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-ship tutorial-ship-default"></div>
+                    <div class="tutorial-text">DEFAULT SHIP: Balanced stats</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-ship tutorial-ship-bangka"></div>
+                    <div class="tutorial-text">BANGKA SHIP: Strong but slow</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-ship tutorial-ship-jeepney"></div>
+                    <div class="tutorial-text">JEEPNEY SHIP: Fast but weak</div>
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">ENEMIES</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-enemy tutorial-enemy-kapre"></div>
+                    <div class="tutorial-text">KAPRE: Tough, slow-moving</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-enemy tutorial-enemy-aswang"></div>
+                    <div class="tutorial-text">ASWANG: Fast but fragile</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-enemy tutorial-enemy-sarimanok"></div>
+                    <div class="tutorial-text">SARIMANOK: Balanced enemy</div>
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">POWER-UPS</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-powerup tutorial-powerup-shield"></div>
+                   
