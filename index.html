@@ -839,7 +839,7 @@
         <button id="playButton" class="menu-button">PLAY</button>
         <button id="highscoreButton" class="menu-button">HIGHSCORE</button>
         <button id="settingsButton" class="menu-button">SETTINGS</button>
-        <button id="tutorialButton" class="menu-button">TUTORIAL</button>
+        <button id="tutorialButton" class="menu-button" onclick="window.location.href='tutorial.html'">TUTORIAL</button>
     </div>
     
     <div id="objectivesScreen" style="display: none;">
@@ -906,116 +906,7 @@
         <button id="settingsBackButton" class="menu-button" style="background: #0D47A1; box-shadow: 4px 4px 0 #2196F3; margin-top: 30px;">BACK TO GAME</button>
     </div>
     
-    <div id="tutorialScreen" style="display: none;">
-        <div class="title">HOW TO PLAY</div>
-        <div class="tutorial-content">
-            <div class="tutorial-section">
-                <div class="tutorial-title">CONTROLS</div>
-                <div class="tutorial-row">
-                    <div class="tutorial-key">←</div>
-                    <div class="tutorial-text">Move Left</div>
-                </div>
-                <div class="tutorial-row">
-                    <div class="tutorial-key">→</div>
-                    <div class="tutorial-text">Move Right</div>
-                </div>
-                <div class="tutorial-row">
-                    <div class="tutorial-key">SPACE</div>
-                    <div class="tutorial-text">Shoot Bullets</div>
-                </div>
-                <div class="tutorial-row">
-                    <div class="tutorial-key">X</div>
-                    <div class="tutorial-text">Switch to Default Ship</div>
-                </div>
-                <div class="tutorial-row">
-                    <div class="tutorial-key">C</div>
-                    <div class="tutorial-text">Switch to Bangka Ship</div>
-                </div>
-                <div class="tutorial-row">
-                    <div class="tutorial-key">V</div>
-                    <div class="tutorial-text">Switch to Jeepney Ship</div>
-                </div>
-                <div class="tutorial-row">
-                    <div class="tutorial-key">Z</div>
-                    <div class="tutorial-text">Select Answer (Boss Fight)</div>
-                </div>
-                <div class="tutorial-row">
-                    <div class="tutorial-key">B</div>
-                    <div class="tutorial-text">Special Ability (All Ships)</div>
-                </div>
-                <div class="tutorial-row">
-                    <div class="tutorial-key">T</div>
-                    <div class="tutorial-text">Fire Trivia Laser (When Charged)</div>
-                </div>
-            </div>
-            
-            <div class="tutorial-section">
-                <div class="tutorial-title">SHIPS</div>
-                <div class="tutorial-row">
-                    <div class="tutorial-ship tutorial-ship-default"></div>
-                    <div class="tutorial-text">DEFAULT SHIP: Balanced stats</div>
-                </div>
-                <div class="tutorial-row">
-                    <div class="tutorial-ship tutorial-ship-bangka"></div>
-                    <div class="tutorial-text">BANGKA SHIP: Strong but slow</div>
-                </div>
-                <div class="tutorial-row">
-                    <div class="tutorial-ship tutorial-ship-jeepney"></div>
-                    <div class="tutorial-text">JEEPNEY SHIP: Fast but weak</div>
-                </div>
-            </div>
-            
-            <div class="tutorial-section">
-                <div class="tutorial-title">ENEMIES</div>
-                <div class="tutorial-row">
-                    <div class="tutorial-enemy tutorial-enemy-kapre"></div>
-                    <div class="tutorial-text">KAPRE: Tough, slow-moving</div>
-                </div>
-                <div class="tutorial-row">
-                    <div class="tutorial-enemy tutorial-enemy-aswang"></div>
-                    <div class="tutorial-text">ASWANG: Fast but fragile</div>
-                </div>
-                <div class="tutorial-row">
-                    <div class="tutorial-enemy tutorial-enemy-sarimanok"></div>
-                    <div class="tutorial-text">SARIMANOK: Balanced enemy</div>
-                </div>
-            </div>
-            
-            <div class="tutorial-section">
-                <div class="tutorial-title">POWER-UPS</div>
-                <div class="tutorial-row">
-                    <div class="tutorial-powerup tutorial-powerup-shield"></div>
-                    <div class="tutorial-text">SHIELD: Temporary protection</div>
-                </div>
-                <div class="tutorial-row">
-                    <div class="tutorial-powerup tutorial-powerup-boost"></div>
-                    <div class="tutorial-text">BOOST: Increased speed</div>
-                </div>
-                <div class="tutorial-row">
-                    <div class="tutorial-powerup tutorial-powerup-tinikling"></div>
-                    <div class="tutorial-text">TINIKLING: Faster shooting</div>
-                </div>
-            </div>
-            
-            <div class="tutorial-section">
-                <div class="tutorial-title">SPECIAL ABILITIES</div>
-                <div class="tutorial-row">
-                    <div class="tutorial-key">B</div>
-                    <div class="tutorial-text">DEFAULT SHIP: Temporary shield</div>
-                </div>
-                <div class="tutorial-row">
-                    <div class="tutorial-key">B</div>
-                    <div class="tutorial-text">BANGKA SHIP: Heal durability</div>
-                </div>
-                <div class="tutorial-row">
-                    <div class="tutorial-key">B</div>
-                    <div class="tutorial-text">JEEPNEY SHIP: Speed boost</div>
-                </div>
-            </div>
-        </div>
-        <button id="tutorialBackButton" class="menu-button" style="background: #0D47A1; box-shadow: 4px 4px 0 #2196F3; margin-top: 20px;">BACK TO MENU</button>
-    </div>
-    
+        
     <div id="waveScreen" style="display: none;">
         <div class="wave-title">WAVE <span id="waveDisplay">1</span></div>
         <div id="waveSubtitle" style="font-size: 18px; margin-bottom: 30px; color: white;">GET READY!</div>
@@ -1041,10 +932,9 @@
         const STATE_HIGHSCORE = 3;
         const STATE_SETTINGS = 4;
         const STATE_WIN = 5;
-        const STATE_TUTORIAL = 6;
-        const STATE_WAVE = 7;
-        const STATE_QUIZ = 8;
-        const STATE_OBJECTIVES = 9;
+        const STATE_WAVE = 6;
+        const STATE_QUIZ = 7;
+        const STATE_OBJECTIVES = 8;
         
         // Initialize canvas
         const canvas = document.getElementById('gameCanvas');
@@ -1382,10 +1272,7 @@
                 sounds.menuSelect.play();
                 showSettings();
             });
-            document.getElementById('tutorialButton').addEventListener('click', () => {
-                sounds.menuSelect.play();
-                showTutorial();
-            });
+    
             document.getElementById('continueButton').addEventListener('click', () => {
                 sounds.menuSelect.play();
                 returnToMenu();
@@ -1818,13 +1705,6 @@
                 document.getElementById('winContinueButton').style.display = 'block';
                 showHighScores();
             }
-        }
-        
-        // Show tutorial
-        function showTutorial() {
-            gameState = STATE_TUTORIAL;
-            document.getElementById('menuScreen').style.display = 'none';
-            document.getElementById('tutorialScreen').style.display = 'flex';
         }
         
         // Start a new game
