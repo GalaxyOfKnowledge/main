@@ -26,7 +26,7 @@
             z-index: 1;
         }
         
-        .tutorial-wrapper {
+        .container {
             position: relative;
             z-index: 2;
             max-width: 800px;
@@ -36,19 +36,18 @@
         
         .title {
             font-size: 32px;
+            font-weight: normal;
+            margin-bottom: 30px;
             color: #FFD700;
             text-align: center;
             text-shadow: 4px 4px 0 #8B4513;
-            margin: 30px 0;
-            padding: 10px;
-            background-color: rgba(0, 0, 20, 0.7);
-            border-bottom: 3px solid #FFD700;
+            line-height: 1.3;
         }
         
         .menu-button {
             width: 200px;
             height: 50px;
-            margin: 30px auto;
+            margin: 10px;
             font-size: 16px;
             cursor: pointer;
             border: none;
@@ -56,59 +55,75 @@
             background: #0D47A1;
             color: white;
             box-shadow: 4px 4px 0 #2196F3;
+            transition: all 0.1s;
             font-family: 'Press Start 2P', cursive;
             text-shadow: 2px 2px 0 #000;
             display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .menu-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 6px 6px 0 #2196F3;
+        }
+        
+        .menu-button:active {
+            transform: translateY(2px);
+            box-shadow: 2px 2px 0 #2196F3;
+        }
+        
+        .tutorial-content {
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 2px solid #FFD700;
+            margin-bottom: 20px;
         }
         
         .tutorial-section {
-            margin-bottom: 40px;
-            padding: 20px;
-            background-color: rgba(0, 0, 40, 0.7);
-            border-left: 4px solid #FFD700;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            margin-bottom: 15px;
+            font-size: 14px;
+            line-height: 1.5;
         }
         
-        .section-title {
+        .tutorial-title {
             color: #FFD700;
             font-size: 18px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             text-shadow: 2px 2px 0 #8B4513;
-            padding-bottom: 5px;
-            border-bottom: 2px solid #555;
         }
         
         .tutorial-row {
             display: flex;
             align-items: center;
-            margin-bottom: 15px;
-            padding: 10px;
-            background-color: rgba(0, 0, 60, 0.3);
+            margin-bottom: 10px;
         }
         
         .tutorial-key {
-            width: 60px;
-            height: 40px;
+            width: 40px;
+            height: 30px;
             background-color: #333;
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-right: 20px;
+            margin-right: 15px;
             border: 2px solid #555;
-            box-shadow: 3px 3px 0 #222;
-            flex-shrink: 0;
+            transition: all 0.1s;
         }
         
-        .tutorial-item {
-            width: 50px;
-            height: 40px;
-            margin-right: 20px;
+        .tutorial-key:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 5px rgba(255, 215, 0, 0.7);
+        }
+        
+        .tutorial-ship {
+            width: 30px;
+            height: 20px;
+            margin-right: 15px;
             border: 2px solid #555;
-            box-shadow: 3px 3px 0 #222;
-            flex-shrink: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
         
         .tutorial-ship-default {
@@ -123,48 +138,46 @@
             background-color: #FFD700;
         }
         
+        .tutorial-enemy {
+            width: 30px;
+            height: 20px;
+            margin-right: 15px;
+        }
+        
         .tutorial-enemy-kapre {
             background-color: #222;
-            border-color: #444;
         }
         
         .tutorial-enemy-aswang {
             background-color: #400040;
-            border-color: #800080;
         }
         
         .tutorial-enemy-sarimanok {
             background-color: #FFD700;
-            border-color: #8B4513;
         }
         
         .tutorial-powerup {
+            width: 25px;
+            height: 25px;
+            margin-right: 15px;
             border-radius: 50%;
         }
         
         .tutorial-powerup-shield {
             background-color: blue;
-            border-color: #00F;
         }
         
         .tutorial-powerup-boost {
             background-color: red;
-            border-color: #F00;
         }
         
         .tutorial-powerup-tinikling {
             background-color: green;
-            border-color: #0F0;
         }
         
         @media (max-width: 768px) {
-            .tutorial-wrapper {
-                padding: 10px;
-            }
-            
             .title {
                 font-size: 24px;
-                margin: 20px 0;
             }
             
             .menu-button {
@@ -173,13 +186,13 @@
                 font-size: 14px;
             }
             
-            .section-title {
-                font-size: 16px;
+            .tutorial-title {
+                font-size: 14px;
             }
             
-            .tutorial-key, .tutorial-item {
-                width: 40px;
-                height: 30px;
+            .tutorial-key, .tutorial-ship, .tutorial-enemy, .tutorial-powerup {
+                width: 25px;
+                height: 20px;
                 margin-right: 10px;
             }
         }
@@ -188,93 +201,93 @@
 <body>
     <canvas id="starsCanvas"></canvas>
     
-    <div class="tutorial-wrapper">
+    <div class="container">
         <div class="title">HOW TO PLAY</div>
-        
-        <div class="tutorial-section">
-            <div class="section-title">CONTROLS</div>
-            <div class="tutorial-row">
-                <div class="tutorial-key">←</div>
-                <div class="tutorial-text">Move Left</div>
+        <div class="tutorial-content">
+            <div class="tutorial-section">
+                <div class="tutorial-title">CONTROLS</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">←</div>
+                    <div class="tutorial-text">Move Left</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">→</div>
+                    <div class="tutorial-text">Move Right</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">SPACE</div>
+                    <div class="tutorial-text">Shoot Bullets</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">X</div>
+                    <div class="tutorial-text">Switch to Default Ship</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">C</div>
+                    <div class="tutorial-text">Switch to Bangka Ship</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">V</div>
+                    <div class="tutorial-text">Switch to Jeepney Ship</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">Z</div>
+                    <div class="tutorial-text">Select Answer (Boss Fight)</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">T</div>
+                    <div class="tutorial-text">Fire Trivia Laser (When Charged)</div>
+                </div>
             </div>
-            <div class="tutorial-row">
-                <div class="tutorial-key">→</div>
-                <div class="tutorial-text">Move Right</div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">SHIPS</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-ship tutorial-ship-default"></div>
+                    <div class="tutorial-text">DEFAULT SHIP: Balanced stats</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-ship tutorial-ship-bangka"></div>
+                    <div class="tutorial-text">BANGKA SHIP: Strong but slow</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-ship tutorial-ship-jeepney"></div>
+                    <div class="tutorial-text">JEEPNEY SHIP: Fast but weak</div>
+                </div>
             </div>
-            <div class="tutorial-row">
-                <div class="tutorial-key">SPACE</div>
-                <div class="tutorial-text">Shoot Bullets</div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">ENEMIES</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-enemy tutorial-enemy-kapre"></div>
+                    <div class="tutorial-text">KAPRE: Tough, slow-moving</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-enemy tutorial-enemy-aswang"></div>
+                    <div class="tutorial-text">ASWANG: Fast but fragile</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-enemy tutorial-enemy-sarimanok"></div>
+                    <div class="tutorial-text">SARIMANOK: Balanced enemy</div>
+                </div>
             </div>
-            <div class="tutorial-row">
-                <div class="tutorial-key">X</div>
-                <div class="tutorial-text">Switch to Default Ship</div>
-            </div>
-            <div class="tutorial-row">
-                <div class="tutorial-key">C</div>
-                <div class="tutorial-text">Switch to Bangka Ship</div>
-            </div>
-            <div class="tutorial-row">
-                <div class="tutorial-key">V</div>
-                <div class="tutorial-text">Switch to Jeepney Ship</div>
-            </div>
-            <div class="tutorial-row">
-                <div class="tutorial-key">Z</div>
-                <div class="tutorial-text">Select Answer (Boss Fight)</div>
-            </div>
-            <div class="tutorial-row">
-                <div class="tutorial-key">T</div>
-                <div class="tutorial-text">Fire Trivia Laser (When Charged)</div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">POWER-UPS</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-powerup tutorial-powerup-shield"></div>
+                    <div class="tutorial-text">SHIELD: Temporary protection</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-powerup tutorial-powerup-boost"></div>
+                    <div class="tutorial-text">BOOST: Increased speed</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-powerup tutorial-powerup-tinikling"></div>
+                    <div class="tutorial-text">TINIKLING: Faster shooting</div>
+                </div>
             </div>
         </div>
-        
-        <div class="tutorial-section">
-            <div class="section-title">SHIPS</div>
-            <div class="tutorial-row">
-                <div class="tutorial-item tutorial-ship-default"></div>
-                <div class="tutorial-text">DEFAULT SHIP: Balanced stats</div>
-            </div>
-            <div class="tutorial-row">
-                <div class="tutorial-item tutorial-ship-bangka"></div>
-                <div class="tutorial-text">BANGKA SHIP: Strong but slow</div>
-            </div>
-            <div class="tutorial-row">
-                <div class="tutorial-item tutorial-ship-jeepney"></div>
-                <div class="tutorial-text">JEEPNEY SHIP: Fast but weak</div>
-            </div>
-        </div>
-        
-        <div class="tutorial-section">
-            <div class="section-title">ENEMIES</div>
-            <div class="tutorial-row">
-                <div class="tutorial-item tutorial-enemy-kapre"></div>
-                <div class="tutorial-text">KAPRE: Tough, slow-moving</div>
-            </div>
-            <div class="tutorial-row">
-                <div class="tutorial-item tutorial-enemy-aswang"></div>
-                <div class="tutorial-text">ASWANG: Fast but fragile</div>
-            </div>
-            <div class="tutorial-row">
-                <div class="tutorial-item tutorial-enemy-sarimanok"></div>
-                <div class="tutorial-text">SARIMANOK: Balanced enemy</div>
-            </div>
-        </div>
-        
-        <div class="tutorial-section">
-            <div class="section-title">POWER-UPS</div>
-            <div class="tutorial-row">
-                <div class="tutorial-item tutorial-powerup-shield"></div>
-                <div class="tutorial-text">SHIELD: Temporary protection</div>
-            </div>
-            <div class="tutorial-row">
-                <div class="tutorial-item tutorial-powerup-boost"></div>
-                <div class="tutorial-text">BOOST: Increased speed</div>
-            </div>
-            <div class="tutorial-row">
-                <div class="tutorial-item tutorial-powerup-tinikling"></div>
-                <div class="tutorial-text">TINIKLING: Faster shooting</div>
-            </div>
-        </div>
-        
         <button id="tutorialBackButton" class="menu-button">BACK TO MENU</button>
     </div>
 
@@ -284,12 +297,9 @@
         const ctx = canvas.getContext('2d');
         
         // Set canvas size
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        resizeCanvas();
-        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
         // Stars array
         const stars = [];
         const starCount = 100;
@@ -326,12 +336,30 @@
         
         // Handle window resize
         window.addEventListener('resize', () => {
-            resizeCanvas();
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
         });
         
-        // Back button
+        // Back button with sound effect
         document.getElementById('tutorialBackButton').addEventListener('click', () => {
-            window.location.href = 'index.html';
+            // Create temporary audio element for the sound
+            const sound = new Audio();
+            sound.src = 'https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3';
+            sound.volume = 0.5;
+            sound.play();
+            
+            // Navigate after sound plays
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 200);
+        });
+        
+        // Add hover sound to menu button
+        document.getElementById('tutorialBackButton').addEventListener('mouseenter', () => {
+            const sound = new Audio();
+            sound.src = 'https://assets.mixkit.co/sfx/preview/mixkit-horror-ambience-228.mp3';
+            sound.volume = 0.3;
+            sound.play();
         });
     </script>
 </body>
