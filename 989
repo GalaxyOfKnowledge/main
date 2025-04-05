@@ -2877,4 +2877,905 @@
             }
             
             draw() {
-                ctx
+                ctx.save();
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.translate(Math.round(this.x + this.width/2), Math.round(this.y + this.height/2));
+                ctx.rotate(this.rotation);
+                
+                // Pulse effect
+                const pulseScale = 1 + Math.sin(this.pulse) * 0.2;
+                ctx.scale(pulseScale, pulseScale);
+                
+                if (this.type === 'barongShield') {
+                    // Shield power-up - enhanced design
+                    ctx.fillStyle = 'rgba(0, 0, 255, 0.8)';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, Math.round(this.width/2), 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                    ctx.beginPath();
+                    ctx.moveTo(0, Math.round(-this.height/2 + 5));
+                    ctx.lineTo(Math.round(-this.width/2 + 5), 0);
+                    ctx.lineTo(0, Math.round(this.height/2 - 5));
+                    ctx.lineTo(Math.round(this.width/2 - 5), 0);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Inner circle
+                    ctx.fillStyle = 'rgba(0, 0, 200, 0.8)';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, Math.round(this.width/4), 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Add glow effect
+                    ctx.shadowColor = 'blue';
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                } else if (this.type === 'jeepneyBoost') {
+                    // Boost power-up - enhanced design
+                    ctx.fillStyle = 'rgba(255, 0, 0, 0.8)';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, Math.round(this.width/2), 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = 'rgba(255, 255, 0, 0.9)';
+                    ctx.beginPath();
+                    ctx.moveTo(0, Math.round(-this.height/2 + 5));
+                    ctx.lineTo(Math.round(-this.width/4), Math.round(-this.height/4));
+                    ctx.lineTo(Math.round(-this.width/2 + 5), 0);
+                    ctx.lineTo(Math.round(-this.width/4), Math.round(this.height/4));
+                    ctx.lineTo(0, Math.round(this.height/2 - 5));
+                    ctx.lineTo(Math.round(this.width/4), Math.round(this.height/4));
+                    ctx.lineTo(Math.round(this.width/2 - 5), 0);
+                    ctx.lineTo(Math.round(this.width/4), Math.round(-this.height/4));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Inner circle
+                    ctx.fillStyle = 'rgba(200, 0, 0, 0.8)';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, Math.round(this.width/4), 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Add glow effect
+                    ctx.shadowColor = 'red';
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                } else if (this.type === 'tiniklingMode') {
+                    // Tinikling power-up - enhanced design
+                    ctx.fillStyle = 'rgba(0, 255, 0, 0.8)';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, Math.round(this.width/2), 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                    ctx.beginPath();
+                    ctx.moveTo(Math.round(-this.width/4), Math.round(-this.height/4));
+                    ctx.lineTo(Math.round(this.width/4), Math.round(-this.height/4));
+                    ctx.lineTo(Math.round(this.width/4), Math.round(this.height/4));
+                    ctx.lineTo(Math.round(-this.width/4), Math.round(this.height/4));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Inner square
+                    ctx.fillStyle = 'rgba(0, 200, 0, 0.8)';
+                    ctx.beginPath();
+                    ctx.moveTo(Math.round(-this.width/8), Math.round(-this.height/8));
+                    ctx.lineTo(Math.round(this.width/8), Math.round(-this.height/8));
+                    ctx.lineTo(Math.round(this.width/8), Math.round(this.height/8));
+                    ctx.lineTo(Math.round(-this.width/8), Math.round(this.height/8));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Add glow effect
+                    ctx.shadowColor = 'green';
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+                
+                ctx.restore();
+            }
+            
+            isOffScreen() {
+                return this.y > CANVAS_HEIGHT;
+            }
+        }
+        
+        // Power-up timers
+        const powerupDuration = 300;
+        const powerupTimers = {
+            barongShield: 0,
+            jeepneyBoost: 0,
+            tiniklingMode: 0
+        };
+        
+        // Update power-up timers
+        function updatePowerupTimers() {
+            for (const type in powerupTimers) {
+                if (powerupTimers[type] > 0) {
+                    powerupTimers[type]--;
+                    if (powerupTimers[type] === 0) {
+                        player.powerups[type] = false;
+                        updateHUD();
+                    }
+                }
+            }
+            
+            // Update special ability cooldowns
+            for (const shipType in player.specialAbilities) {
+                if (player.specialAbilities[shipType].cooldown > 0) {
+                    player.specialAbilities[shipType].cooldown--;
+                    updateSpecialKeyUI();
+                }
+            }
+            
+            // Update time bonus
+            if (timeBonusActive) {
+                timeBonusTimer--;
+                if (timeBonusTimer <= 0) {
+                    timeBonusActive = false;
+                    player.powerups.barongShield = false;
+                    updateHUD();
+                }
+            }
+            
+            // Update slow-mo
+            if (slowMoActive) {
+                slowMoTimer--;
+                if (slowMoTimer <= 0) {
+                    slowMoActive = false;
+                    document.body.style.backgroundColor = '#000';
+                }
+            }
+            
+            // Update wave transition
+            if (waveTransitionActive) {
+                waveTransitionTimer--;
+                if (waveTransitionTimer <= 0) {
+                    // Time's up - wrong answer
+                    checkWaveTransitionAnswer(-1);
+                }
+            }
+        }
+        
+        // Draw player ship
+        function drawPlayer() {
+            ctx.save();
+            ctx.globalCompositeOperation = 'source-over';
+            
+            // Make player invincible during trivia questions
+            if (bossActive || waveTransitionActive) {
+                // Draw shield around player - fixed for all ship types
+                ctx.strokeStyle = 'rgba(0, 255, 255, 0.7)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(
+                    Math.round(player.x + player.width/2),
+                    Math.round(player.y + player.height/2),
+                    Math.round((player.width + player.height)/2) + 8,
+                    0, Math.PI * 2
+                );
+                ctx.stroke();
+                
+                // Add shield glow
+                ctx.shadowColor = 'cyan';
+                ctx.shadowBlur = 15;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            } else if (player.powerups.barongShield) {
+                // Draw shield around player - fixed for all ship types
+                ctx.strokeStyle = 'rgba(0, 0, 255, 0.7)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(
+                    Math.round(player.x + player.width/2),
+                    Math.round(player.y + player.height/2),
+                    Math.round((player.width + player.height)/2) + 8,
+                    0, Math.PI * 2
+                );
+                ctx.stroke();
+                
+                // Add shield glow
+                ctx.shadowColor = 'blue';
+                ctx.shadowBlur = 15;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+            
+            if (player.shipSkin === 'default') {
+                // Default ship - enhanced design
+                ctx.fillStyle = '#4CAF50';
+                ctx.beginPath();
+                // Main body
+                ctx.moveTo(
+                    Math.round(player.x + player.width/2),
+                    Math.round(player.y)
+                );
+                ctx.lineTo(
+                    Math.round(player.x),
+                    Math.round(player.y + player.height)
+                );
+                ctx.lineTo(
+                    Math.round(player.x + player.width),
+                    Math.round(player.y + player.height)
+                );
+                ctx.closePath();
+                ctx.fill();
+                
+                // Cockpit
+                ctx.fillStyle = '#87CEEB';
+                ctx.beginPath();
+                ctx.arc(
+                    Math.round(player.x + player.width/2),
+                    Math.round(player.y + player.height/3),
+                    5, 0, Math.PI * 2
+                );
+                ctx.fill();
+                
+                // Add engine glow when moving
+                if (keys.ArrowLeft || keys.ArrowRight) {
+                    ctx.fillStyle = 'rgba(255, 255, 0, 0.7)';
+                    ctx.beginPath();
+                    ctx.moveTo(
+                        Math.round(player.x + player.width/2 - 5),
+                        Math.round(player.y + player.height)
+                    );
+                    ctx.lineTo(
+                        Math.round(player.x + player.width/2 + 5),
+                        Math.round(player.y + player.height)
+                    );
+                    ctx.lineTo(
+                        Math.round(player.x + player.width/2),
+                        Math.round(player.y + player.height + 10)
+                    );
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.shadowColor = 'yellow';
+                    ctx.shadowBlur = 10;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+                
+                // Add ship glow
+                ctx.shadowColor = '#4CAF50';
+                ctx.shadowBlur = 15;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            } else if (player.shipSkin === 'bangka') {
+                // Enhanced bangka design with more details
+                // Hull (boat shape)
+                ctx.fillStyle = '#5D2906';
+                ctx.beginPath();
+                ctx.moveTo(
+                    Math.round(player.x + player.width/2),
+                    Math.round(player.y + player.height/3)
+                );
+                ctx.lineTo(
+                    Math.round(player.x),
+                    Math.round(player.y + player.height)
+                );
+                ctx.lineTo(
+                    Math.round(player.x + player.width),
+                    Math.round(player.y + player.height)
+                );
+                ctx.closePath();
+                ctx.fill();
+                
+                // Deck
+                ctx.fillStyle = '#8B4513';
+                ctx.beginPath();
+                ctx.moveTo(
+                    Math.round(player.x + player.width/3),
+                    Math.round(player.y + player.height*2/3)
+                );
+                ctx.lineTo(
+                    Math.round(player.x + player.width*2/3),
+                    Math.round(player.y + player.height*2/3)
+                );
+                ctx.lineTo(
+                    Math.round(player.x + player.width*3/4),
+                    Math.round(player.y + player.height)
+                );
+                ctx.lineTo(
+                    Math.round(player.x + player.width/4),
+                    Math.round(player.y + player.height)
+                );
+                ctx.closePath();
+                ctx.fill();
+                
+                // Outriggers
+                ctx.fillStyle = '#5D2906';
+                ctx.fillRect(
+                    Math.round(player.x - 15),
+                    Math.round(player.y + player.height/2),
+                    15, 5
+                );
+                ctx.fillRect(
+                    Math.round(player.x + player.width),
+                    Math.round(player.y + player.height/2),
+                    15, 5
+                );
+                
+                // Sail (triangular shape)
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.moveTo(
+                    Math.round(player.x + player.width/2),
+                    Math.round(player.y + player.height/3)
+                );
+                ctx.lineTo(
+                    Math.round(player.x + player.width/4),
+                    Math.round(player.y + player.height*3/4)
+                );
+                ctx.lineTo(
+                    Math.round(player.x + player.width*3/4),
+                    Math.round(player.y + player.height*3/4)
+                );
+                ctx.closePath();
+                ctx.fill();
+                
+                // Sail details (lines)
+                ctx.strokeStyle = '#8B4513';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(
+                    Math.round(player.x + player.width/2),
+                    Math.round(player.y + player.height/3)
+                );
+                ctx.lineTo(
+                    Math.round(player.x + player.width/2),
+                    Math.round(player.y + player.height*3/4)
+                );
+                ctx.stroke();
+                
+                // Add ship glow
+                ctx.shadowColor = '#8B4513';
+                ctx.shadowBlur = 15;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            } else if (player.shipSkin === 'jeepney') {
+                // Jeepney - enhanced design
+                // Body
+                ctx.fillStyle = '#FFD700';
+                ctx.fillRect(
+                    Math.round(player.x),
+                    Math.round(player.y),
+                    Math.round(player.width),
+                    Math.round(player.height)
+                );
+                
+                // Body details
+                ctx.fillStyle = '#FF0000';
+                ctx.fillRect(
+                    Math.round(player.x + 5),
+                    Math.round(player.y + 5),
+                    Math.round(player.width - 10),
+                    Math.round(player.height - 10)
+                );
+                
+                // Windows
+                ctx.fillStyle = '#87CEEB';
+                ctx.fillRect(
+                    Math.round(player.x + 10),
+                    Math.round(player.y + 10),
+                    10, 10
+                );
+                ctx.fillRect(
+                    Math.round(player.x + player.width - 20),
+                    Math.round(player.y + 10),
+                    10, 10
+                );
+                
+                // Headlights
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(
+                    Math.round(player.x + 5),
+                    Math.round(player.y + 15),
+                    3, 0, Math.PI * 2
+                );
+                ctx.arc(
+                    Math.round(player.x + player.width - 5),
+                    Math.round(player.y + 15),
+                    3, 0, Math.PI * 2
+                );
+                ctx.fill();
+                
+                // Decorative stripes
+                ctx.fillStyle = '#FFD700';
+                for (let i = 0; i < 3; i++) {
+                    ctx.fillRect(
+                        Math.round(player.x + 5),
+                        Math.round(player.y + 20 + i*8),
+                        Math.round(player.width - 10),
+                        3
+                    );
+                }
+                
+                // Add ship glow
+                ctx.shadowColor = '#FFD700';
+                ctx.shadowBlur = 15;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+            
+            ctx.restore();
+        }
+        
+        // Draw boss
+        function drawBoss() {
+            ctx.save();
+            ctx.globalCompositeOperation = 'source-over';
+            
+            // Draw tikbalang boss - more scary version
+            ctx.fillStyle = '#222';
+            ctx.beginPath();
+            // Body
+            ctx.moveTo(boss.x + boss.width/2, boss.y + 20);
+            ctx.lineTo(boss.x + 10, boss.y + boss.height);
+            ctx.lineTo(boss.x + boss.width - 10, boss.y + boss.height);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Head - more demonic
+            ctx.fillStyle = '#111';
+            ctx.beginPath();
+            ctx.arc(
+                boss.x + boss.width/2,
+                boss.y,
+                25, 0, Math.PI * 2
+            );
+            ctx.fill();
+            
+            // Glowing red eyes with slit pupils
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            // Left eye
+            ctx.arc(
+                boss.x + boss.width/2 - 15,
+                boss.y - 5,
+                5, 0, Math.PI * 2
+            );
+            ctx.arc(
+                boss.x + boss.width/2 + 15,
+                boss.y - 5,
+                5, 0, Math.PI * 2
+            );
+            ctx.fill();
+            
+            // Add glow effect to eyes
+            ctx.shadowColor = 'red';
+            ctx.shadowBlur = 15;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            // Slit pupils
+            ctx.fillStyle = 'black';
+            ctx.fillRect(boss.x + boss.width/2 - 17, boss.y - 7, 4, 10);
+            ctx.fillRect(boss.x + boss.width/2 + 13, boss.y - 7, 4, 10);
+            
+            // Horns
+            ctx.fillStyle = '#444';
+            ctx.beginPath();
+            // Left horn
+            ctx.moveTo(boss.x + boss.width/2 - 15, boss.y - 20);
+            ctx.lineTo(boss.x + boss.width/2 - 25, boss.y - 40);
+            ctx.lineTo(boss.x + boss.width/2 - 20, boss.y - 35);
+            ctx.closePath();
+            ctx.fill();
+            // Right horn
+            ctx.moveTo(boss.x + boss.width/2 + 15, boss.y - 20);
+            ctx.lineTo(boss.x + boss.width/2 + 25, boss.y - 40);
+            ctx.lineTo(boss.x + boss.width/2 + 20, boss.y - 35);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Mouth with sharp teeth
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(
+                boss.x + boss.width/2,
+                boss.y + 10,
+                15, 0.2 * Math.PI, 0.8 * Math.PI, true
+            );
+            ctx.fill();
+            
+            // Teeth
+            ctx.fillStyle = 'white';
+            for (let i = 0; i < 7; i++) {
+                ctx.beginPath();
+                ctx.moveTo(
+                    boss.x + boss.width/2 - 12 + i*4,
+                    boss.y + 10
+                );
+                ctx.lineTo(
+                    boss.x + boss.width/2 - 14 + i*4,
+                    boss.y + 20
+                );
+                ctx.lineTo(
+                    boss.x + boss.width/2 - 10 + i*4,
+                    boss.y + 20
+                );
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            // Arms with claws
+            ctx.fillStyle = '#222';
+            // Left arm
+            ctx.beginPath();
+            ctx.moveTo(boss.x + 15, boss.y + 40);
+            ctx.lineTo(boss.x, boss.y + 60);
+            ctx.lineTo(boss.x - 10, boss.y + 55);
+            ctx.lineTo(boss.x + 5, boss.y + 45);
+            ctx.closePath();
+            ctx.fill();
+            // Right arm
+            ctx.beginPath();
+            ctx.moveTo(boss.x + boss.width - 15, boss.y + 40);
+            ctx.lineTo(boss.x + boss.width, boss.y + 60);
+            ctx.lineTo(boss.x + boss.width + 10, boss.y + 55);
+            ctx.lineTo(boss.x + boss.width - 5, boss.y + 45);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Add overall shadow effect
+            ctx.shadowColor = 'rgba(255, 0, 0, 0.5)';
+            ctx.shadowBlur = 20;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            ctx.restore();
+        }
+        
+        // Main game loop
+        function gameLoop() {
+            // Clear canvas with a subtle starfield effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            // Draw stars (pixel-style)
+            ctx.fillStyle = 'white';
+            for (let i = 0; i < 50; i++) {
+                const x = Math.sin(Date.now() * 0.0001 + i) * CANVAS_WIDTH;
+                const y = (i * CANVAS_HEIGHT / 50 + Date.now() * 0.05) % CANVAS_HEIGHT;
+                ctx.fillRect(Math.round(x), Math.round(y), 2, 2);
+            }
+            
+            if (gameState === STATE_PLAYING) {
+                // Update combo timer
+                if (comboTimeout > 0) {
+                    comboTimeout--;
+                    if (comboTimeout === 0) {
+                        comboCount = 0;
+                        updateHUD();
+                    }
+                }
+                
+                // Move player
+                if (keys.ArrowLeft) {
+                    player.x -= player.speed * (player.powerups.jeepneyBoost ? 1.5 : 1) * (slowMoActive ? 1.5 : 1);
+                    if (player.x < 0) player.x = 0;
+                }
+                if (keys.ArrowRight) {
+                    player.x += player.speed * (player.powerups.jeepneyBoost ? 1.5 : 1) * (slowMoActive ? 1.5 : 1);
+                    if (player.x > CANVAS_WIDTH - player.width) player.x = CANVAS_WIDTH - player.width;
+                }
+                
+                // Update option highlight based on player position
+                if ((bossActive || waveTransitionActive) && answerSelectionMode) {
+                    updateOptionHighlight();
+                }
+                
+                // Check if wave is complete (not in boss wave)
+                if (!bossActive && !waveTransitionActive && enemiesDefeated >= enemiesInWave) {
+                    // Start wave transition
+                    showWaveTransition();
+                    waveTransitionTimer = waveTransitionDuration;
+                }
+                
+                // Shoot - now works even during questionnaire
+                if (keys[' '] && bulletCooldown <= 0) {
+                    bullets.push(new Bullet(player.x + player.width/2, player.y));
+                    sounds.shoot.currentTime = 0; // Reset sound to start
+                    sounds.shoot.play();
+                    bulletCooldown = 15 / (player.powerups.tiniklingMode ? 2 : 1);
+                }
+                
+                if (bulletCooldown > 0) {
+                    bulletCooldown--;
+                }
+                
+                // Spawn enemies if not in boss wave, not in wave transition, and wave not complete
+                if (!bossActive && !waveTransitionActive && enemiesDefeated < enemiesInWave) {
+                    enemySpawnTimer++;
+                    if (enemySpawnTimer >= enemySpawnRate) {
+                        enemySpawnTimer = 0;
+                        enemies.push(new Enemy());
+                    }
+                }
+                
+                // Make enemies shoot
+                enemyShootTimer++;
+                if (enemyShootTimer >= enemyShootRate) {
+                    enemyShootTimer = 0;
+                    for (const enemy of enemies) {
+                        enemy.shoot();
+                    }
+                }
+                
+                // Update enemy bullets
+                for (let i = enemyBullets.length - 1; i >= 0; i--) {
+                    enemyBullets[i].y += enemyBullets[i].speed;
+                    
+                    // Check if enemy bullet hits player (only if not in trivia question mode)
+                    if (!bossActive && !waveTransitionActive &&
+                        player.x < enemyBullets[i].x + enemyBullets[i].width &&
+                        player.x + player.width > enemyBullets[i].x &&
+                        player.y < enemyBullets[i].y + enemyBullets[i].height &&
+                        player.y + player.height > enemyBullets[i].y) {
+                        
+                        if (!player.powerups.barongShield) {
+                            // Reduce durability for current ship
+                            player.durability[player.shipSkin]--;
+                            updateDurabilityDisplay();
+                            
+                            // Check if current ship has no durability left
+                            if (player.durability[player.shipSkin] <= 0) {
+                                gameOver();
+                                break;
+                            }
+                        }
+                        
+                        enemyBullets.splice(i, 1);
+                        sounds.hit.play();
+                        continue;
+                    }
+                    
+                    if (enemyBullets[i].y > CANVAS_HEIGHT) {
+                        enemyBullets.splice(i, 1);
+                    }
+                }
+                
+                // Update bullets
+                for (let i = bullets.length - 1; i >= 0; i--) {
+                    bullets[i].update();
+                    
+                    // Check if bullet hits boss
+                    if (bossActive && bullets[i].x > boss.x && bullets[i].x < boss.x + boss.width &&
+                        bullets[i].y > boss.y && bullets[i].y < boss.y + boss.height) {
+                        boss.health--;
+                        updateBossHealth();
+                        bullets.splice(i, 1);
+                        
+                        if (boss.health <= 0) {
+                            // Boss defeated
+                            player.score += 1000 * wave;
+                            updateHUD();
+                            bossActive = false;
+                            answerSelectionMode = false;
+                            document.getElementById('bossHealthBar').style.display = 'none';
+                            document.getElementById('triviaContainer').style.display = 'none';
+                            
+                            // Play explosion sound
+                            sounds.explosion.play();
+                            
+                            // Clear any remaining enemies
+                            enemies = [];
+                            
+                            // Player wins
+                            setTimeout(playerWins, 1000);
+                        }
+                        continue;
+                    }
+                    
+                    if (bullets[i].isOffScreen()) {
+                        bullets.splice(i, 1);
+                    }
+                }
+                
+                // Update enemies
+                for (let i = enemies.length - 1; i >= 0; i--) {
+                    enemies[i].update();
+                    
+                    // Check if enemy hits player (only if not in trivia question mode)
+                    if (!bossActive && !waveTransitionActive &&
+                        player.x < enemies[i].x + enemies[i].width &&
+                        player.x + player.width > enemies[i].x &&
+                        player.y < enemies[i].y + enemies[i].height &&
+                        player.y + player.height > enemies[i].y) {
+                        
+                        if (!player.powerups.barongShield) {
+                            // Reduce durability for current ship
+                            player.durability[player.shipSkin]--;
+                            updateDurabilityDisplay();
+                            
+                            // Check if current ship has no durability left
+                            if (player.durability[player.shipSkin] <= 0) {
+                                gameOver();
+                                break;
+                            }
+                        }
+                        
+                        enemies.splice(i, 1);
+                        sounds.hit.play();
+                        continue;
+                    }
+                    
+                    if (enemies[i].isOffScreen()) {
+                        enemies.splice(i, 1);
+                    }
+                }
+                
+                // Check bullet-enemy collisions
+                for (let i = bullets.length - 1; i >= 0; i--) {
+                    for (let j = enemies.length - 1; j >= 0; j--) {
+                        const bullet = bullets[i];
+                        const enemy = enemies[j];
+                        
+                        if (bullet.x > enemy.x && bullet.x < enemy.x + enemy.width &&
+                            bullet.y > enemy.y && bullet.y < enemy.y + enemy.height) {
+                            
+                            if (enemy.hit()) {
+                                enemies.splice(j, 1);
+                                enemiesDefeated++;
+                                
+                                // Different points for different enemies
+                                let points = 0;
+                                if (enemy.type === 'kapre') {
+                                    points = 100 * wave;
+                                } else if (enemy.type === 'sarimanok') {
+                                    points = 50 * wave;
+                                } else {
+                                    points = 30 * wave;
+                                }
+                                
+                                // Combo multiplier
+                                comboCount++;
+                                comboTimeout = 60; // 1 second at 60fps
+                                
+                                if (comboCount >= 10) {
+                                    points *= 3;
+                                    showCombo();
+                                    sounds.combo.play();
+                                } else if (comboCount >= 5) {
+                                    points *= 2;
+                                    showCombo();
+                                }
+                                
+                                player.score += points;
+                                updateHUD();
+                                
+                                // Chance to drop power-up or ship
+                                if (Math.random() < 0.2 + (wave * 0.02)) {
+                                    // 60% chance for regular power-up, 40% for ship
+                                    if (Math.random() < 0.6) {
+                                        powerups.push(new PowerUp(
+                                            enemy.x + enemy.width/2,
+                                            enemy.y + enemy.height/2
+                                        ));
+                                    } else {
+                                        const shipTypes = ['default', 'bangka', 'jeepney'];
+                                        const randomShip = shipTypes[Math.floor(Math.random() * shipTypes.length)];
+                                        powerups.push(new ShipPowerup(
+                                            enemy.x + enemy.width/2,
+                                            enemy.y + enemy.height/2,
+                                            randomShip
+                                        ));
+                                    }
+                                }
+                                
+                                sounds.explosion.play();
+                            }
+                            
+                            bullets.splice(i, 1);
+                            break;
+                        }
+                    }
+                }
+                
+                // Update power-ups
+                for (let i = powerups.length - 1; i >= 0; i--) {
+                    powerups[i].update();
+                    
+                    // Check if player collected power-up
+                    if (player.x < powerups[i].x + powerups[i].width &&
+                        player.x + player.width > powerups[i].x &&
+                        player.y < powerups[i].y + powerups[i].height &&
+                        player.y + player.height > powerups[i].y) {
+                        
+                        if (powerups[i] instanceof ShipPowerup) {
+                            // It's a ship power-up - add durability for that ship type
+                            player.durability[powerups[i].type] += 1;
+                            // Make this ship type available for selection
+                            player.availableShips[powerups[i].type] = true;
+                            updateDurabilityDisplay();
+                            updateShipSelectionUI();
+                            
+                            // Highlight the ship in the durability display
+                            const shipRow = document.querySelector(`.ship-durability-row:nth-child(${
+                                powerups[i].type === 'default' ? 2 : 
+                                powerups[i].type === 'bangka' ? 3 : 4
+                            })`);
+                            shipRow.style.animation = 'pulse 0.5s 3';
+                            setTimeout(() => {
+                                shipRow.style.animation = '';
+                            }, 1500);
+                        } else {
+                            // Regular power-up
+                            player.powerups[powerups[i].type] = true;
+                            powerupTimers[powerups[i].type] = powerupDuration;
+                        }
+                        
+                        powerups.splice(i, 1);
+                        sounds.powerup.play();
+                        updateHUD();
+                        continue;
+                    }
+                    
+                    if (powerups[i].isOffScreen()) {
+                        powerups.splice(i, 1);
+                    }
+                }
+                
+                // Update power-up timers
+                updatePowerupTimers();
+                
+                // Move boss if active
+                if (bossActive) {
+                    // Simple side-to-side movement
+                    boss.x += boss.speed * (slowMoActive ? 0.5 : 1);
+                    if (boss.x <= 0 || boss.x + boss.width >= CANVAS_WIDTH) {
+                        boss.speed *= -1;
+                    }
+                }
+                
+                // Draw everything
+                for (const bullet of bullets) {
+                    bullet.draw();
+                }
+                
+                for (const enemy of enemies) {
+                    enemy.draw();
+                }
+                
+                for (const enemyBullet of enemyBullets) {
+                    ctx.fillStyle = 'red';
+                    ctx.beginPath();
+                    ctx.arc(
+                        Math.round(enemyBullet.x),
+                        Math.round(enemyBullet.y),
+                        Math.round(enemyBullet.width/2),
+                        0, Math.PI * 2
+                    );
+                    ctx.fill();
+                }
+                
+                for (const powerup of powerups) {
+                    powerup.draw();
+                }
+                
+                if (bossActive) {
+                    drawBoss();
+                }
+                
+                drawPlayer();
+            }
+            
+            // Continue game loop
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Start the game
+        window.onload = function() {
+            initGame();
+            resizeGame();
+        };
+    </script>
+</body>
+</html>
