@@ -985,4 +985,1896 @@
                 <div class="tutorial-title">POWER-UPS</div>
                 <div class="tutorial-row">
                     <div class="tutorial-powerup tutorial-powerup-shield"></div>
-                   
+                    <div class="tutorial-text">SHIELD: Temporary protection</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-powerup tutorial-powerup-boost"></div>
+                    <div class="tutorial-text">BOOST: Increased speed</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-powerup tutorial-powerup-tinikling"></div>
+                    <div class="tutorial-text">TINIKLING: Faster shooting</div>
+                </div>
+            </div>
+            
+            <div class="tutorial-section">
+                <div class="tutorial-title">SPECIAL ABILITIES</div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">B</div>
+                    <div class="tutorial-text">DEFAULT SHIP: Temporary shield</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">B</div>
+                    <div class="tutorial-text">BANGKA SHIP: Heal durability</div>
+                </div>
+                <div class="tutorial-row">
+                    <div class="tutorial-key">B</div>
+                    <div class="tutorial-text">JEEPNEY SHIP: Speed boost</div>
+                </div>
+            </div>
+        </div>
+        <button id="tutorialBackButton" class="menu-button" style="background: #0D47A1; box-shadow: 4px 4px 0 #2196F3; margin-top: 20px;">BACK TO MENU</button>
+    </div>
+    
+    <div id="waveScreen" style="display: none;">
+        <div class="wave-title">WAVE <span id="waveDisplay">1</span></div>
+        <div id="waveSubtitle" style="font-size: 18px; margin-bottom: 30px; color: white;">GET READY!</div>
+        <button id="startWaveButton" class="menu-button" style="background: #2E7D32; box-shadow: 4px 4px 0 #4CAF50;">START WAVE</button>
+    </div>
+    
+    <div id="quizScreen" style="display: none;">
+        <div class="quiz-title">TRIVIA CHALLENGE</div>
+        <div class="quiz-question" id="quizQuestion"></div>
+        <div class="quiz-options" id="quizOptions"></div>
+        <div id="quizTimer" style="margin-top: 20px; font-size: 14px; color: #FFD700;"></div>
+    </div>
+    
+    <script>
+        // Game constants
+        const BOSS_WAVE = 10;
+        const TRIVIA_LASER_MAX = 100;
+        
+        // Game states
+        const STATE_MENU = 0;
+        const STATE_PLAYING = 1;
+        const STATE_GAME_OVER = 2;
+        const STATE_HIGHSCORE = 3;
+        const STATE_SETTINGS = 4;
+        const STATE_WIN = 5;
+        const STATE_TUTORIAL = 6;
+        const STATE_WAVE = 7;
+        const STATE_QUIZ = 8;
+        const STATE_OBJECTIVES = 9;
+        
+        // Initialize canvas
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let CANVAS_WIDTH = window.innerWidth;
+        let CANVAS_HEIGHT = window.innerHeight;
+
+        // Set dynamic sizing
+        function resizeGame() {
+            CANVAS_WIDTH = window.innerWidth;
+            CANVAS_HEIGHT = window.innerHeight;
+            canvas.width = CANVAS_WIDTH;
+            canvas.height = CANVAS_HEIGHT;
+            
+            if (player) {
+                player.x = CANVAS_WIDTH/2 - player.width/2;
+                player.y = CANVAS_HEIGHT - player.height - 50;
+            }
+            
+            if (bossActive && boss) {
+                boss.x = CANVAS_WIDTH/2 - boss.width/2;
+            }
+        }
+
+        window.addEventListener('resize', resizeGame);
+
+        // Game variables
+        let gameState = STATE_MENU;
+        let player = {
+            x: CANVAS_WIDTH / 2 - 25,
+            y: CANVAS_HEIGHT - 90,
+            width: 50,
+            height: 30,
+            speed: 5,
+            durability: {
+                default: 3,
+                bangka: 3,
+                jeepney: 3
+            },
+            score: 0,
+            powerups: {
+                barongShield: false,
+                jeepneyBoost: false,
+                tiniklingMode: false
+            },
+            shipSkin: 'default',
+            availableShips: {
+                default: true,
+                bangka: false,
+                jeepney: false
+            },
+            triviaLaser: 0,
+            specialAbilities: {
+                default: {
+                    cooldown: 0,
+                    maxCooldown: 300 // 5 seconds at 60fps
+                },
+                bangka: {
+                    cooldown: 0,
+                    maxCooldown: 450 // 7.5 seconds
+                },
+                jeepney: {
+                    cooldown: 0,
+                    maxCooldown: 240 // 4 seconds
+                }
+            }
+        };
+        
+        let bullets = [];
+        let enemies = [];
+        let enemyBullets = [];
+        let powerups = [];
+        let bulletCooldown = 0;
+        let enemySpawnRate = 60;
+        let enemySpawnTimer = 0;
+        let enemySpeed = 1.0;
+        let enemyShootTimer = 0;
+        let enemyShootRate = 120;
+        let comboCount = 0;
+        let comboTimeout = 0;
+        let wave = 1;
+        let enemiesInWave = 0;
+        let enemiesDefeated = 0;
+        let waveDifficultyModifier = 1.0;
+        
+        // Boss variables
+        let boss = null;
+        let bossActive = false;
+        let bossHealth = 0;
+        let bossMaxHealth = 0;
+        let currentQuestion = null;
+        let selectedOption = null;
+        let answerSelectionMode = false;
+        
+        // Quiz variables
+        let quizStartTime = 0;
+        let quizTimeLimit = 15; // Increased to 15 seconds
+        let quizTimer = 0;
+        let quizCorrectAnswers = 0;
+        
+        // Time bonus variables
+        let timeBonusActive = false;
+        let timeBonusTimer = 0;
+        let timeBonusDuration = 5; // seconds
+        let slowMoActive = false;
+        let slowMoTimer = 0;
+        
+        // Wave transition variables
+        let waveTransitionActive = false;
+        let waveTransitionTimer = 0;
+        let waveTransitionDuration = 600; // frames (10 seconds at 60fps)
+        let waveTransitionCountdown = 10; // seconds
+        
+        // High scores
+        let highScores = [];
+        const MAX_HIGH_SCORES = 10;
+        
+        // Settings
+        let settings = {
+            musicVolume: 0.5,
+            soundEffects: true,
+            difficulty: 'normal'
+        };
+        
+        // Sound effects
+        const sounds = {
+            shoot: new Audio('mixkit-game-whip-shot-1512.wav'),
+            enemyShoot: new Audio('mixkit-arrow-whoosh-1491.wav'),
+            explosion: new Audio('mixkit-arcade-game-explosion-1699.wav'),
+            powerup: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3'),
+            correct: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3'),
+            wrong: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3'),
+            bossSpawn: new Audio('mixkit-dinosaur-monster-roar-1976.wav'),
+            shipChange: new Audio('mixkit-arcade-retro-jump-223 (1).wav'),
+            win: new Audio('mixkit-winning-chimes-2015.wav'),
+            combo: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-extra-bonus-in-a-video-game-2045.mp3'),
+            waveComplete: new Audio('mixkit-arcade-bonus-alert-767.wav'),
+            hit: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-changing-tab-206.mp3'),
+            menuSelect: new Audio('mixkit-gear-fast-lock-tap-2857.wav'),
+            menuHover: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-horror-ambience-228.mp3'),
+            laser: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-laser-weapon-shot-1671.mp3'),
+            slowmo: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3'),
+            heal: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-beep-221.mp3'),
+            shield: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-magic-spell-shimmer-2367.mp3'),
+            menuOpen: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3'),
+            gameStart: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-game-show-suspense-waiting-668.mp3'),
+        };
+        
+        // Set volume for all sounds
+        Object.values(sounds).forEach(sound => {
+            sound.volume = settings.soundEffects ? 0.5 : 0;
+        });
+        
+        // Background music
+        const backgroundMusic = new Audio('https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3');
+        backgroundMusic.volume = settings.musicVolume;
+        backgroundMusic.loop = true;
+        
+        // Trivia questions
+        const triviaQuestions = [
+            {
+                question: "WHAT IS THE NATIONAL BIRD OF THE PHILIPPINES?",
+                options: ["MAYA", "PHILIPPINE EAGLE", "COCKATOO", "KINGFISHER"],
+                answer: 1,
+                category: "NATIONAL SYMBOLS"
+            },
+            {
+                question: "WHICH PHILIPPINE HERO IS KNOWN AS THE 'SUBLIME PARALYTIC'?",
+                options: ["JOSE RIZAL", "ANDRES BONIFACIO", "APOLINARIO MABINI", "EMILIO AGUINALDO"],
+                answer: 2,
+                category: "HISTORY"
+            },
+            {
+                question: "WHAT IS THE TRADITIONAL FILIPINO LEAF-WRAPPED RICE CAKE?",
+                options: ["BIBINGKA", "PUTO", "SUMAN", "KUTSINTA"],
+                answer: 2,
+                category: "FOOD"
+            },
+            {
+                question: "WHICH PROVINCE IS KNOWN AS THE 'RICE GRANARY OF THE PHILIPPINES'?",
+                options: ["BULACAN", "NUEVA ECIJA", "PAMPANGA", "TARLAC"],
+                answer: 1,
+                category: "GEOGRAPHY"
+            },
+            {
+                question: "WHAT FESTIVAL IS CELEBRATED IN CEBU EVERY THIRD SUNDAY OF JANUARY?",
+                options: ["SINULOG", "ATI-ATIHAN", "DINAGYANG", "PAHIYAS"],
+                answer: 0,
+                category: "CULTURE"
+            },
+            {
+                question: "WHAT IS THE CAPITAL OF THE PHILIPPINES?",
+                options: ["CEBU", "DAVAO", "MANILA", "QUEZON CITY"],
+                answer: 2,
+                category: "GEOGRAPHY"
+            },
+            {
+                question: "WHICH PHILIPPINE VOLCANO ERUPTED IN 1991?",
+                options: ["MAYON", "TAAL", "PINATUBO", "KANLAON"],
+                answer: 2,
+                category: "GEOGRAPHY"
+            },
+            {
+                question: "WHAT IS THE TRADITIONAL FILIPINO MARTIAL ART?",
+                options: ["KARATE", "TAEKWONDO", "ARNIS", "KUNG FU"],
+                answer: 2,
+                category: "CULTURE"
+            },
+            {
+                question: "WHICH FILIPINO BOXER BECAME AN EIGHT-DIVISION WORLD CHAMPION?",
+                options: ["MANNY PACQUIAO", "NONITO DONAIRE", "FLASH ELORDE", "PANCHO VILLA"],
+                answer: 0,
+                category: "SPORTS"
+            },
+            {
+                question: "WHAT IS THE NATIONAL FLOWER OF THE PHILIPPINES?",
+                options: ["SAMPAGUITA", "ROSE", "ORCHID", "GUMAMELA"],
+                answer: 0,
+                category: "NATIONAL SYMBOLS"
+            }
+        ];
+        
+        // Load high scores from localStorage
+        function loadHighScores() {
+            const savedScores = localStorage.getItem('pinoySpaceInvaderHighScores');
+            if (savedScores) {
+                highScores = JSON.parse(savedScores);
+            } else {
+                highScores = [
+                    { name: "GERBIE", score: 10000 },
+                    { name: "JAMES", score: 9000 },
+                    { name: "ERICKA", score: 8000 },
+                    { name: "JUSTIN", score: 7000 },
+                    { name: "JHAYMIE", score: 6000 },
+                    { name: "EDMEL", score: 5000 }
+                ];
+            }
+        }
+        
+        // Save high scores to localStorage
+        function saveHighScores() {
+            localStorage.setItem('pinoySpaceInvaderHighScores', JSON.stringify(highScores));
+        }
+        
+        // Add a new high score
+        function addHighScore(name, score) {
+            highScores.push({ name: name.toUpperCase(), score });
+            highScores.sort((a, b) => b.score - a.score);
+            highScores = highScores.slice(0, MAX_HIGH_SCORES);
+            saveHighScores();
+        }
+        
+        // Load settings from localStorage
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('pinoySpaceInvaderSettings');
+            if (savedSettings) {
+                settings = JSON.parse(savedSettings);
+                updateSettingsUI();
+            }
+        }
+        
+        // Save settings to localStorage
+        function saveSettings() {
+            localStorage.setItem('pinoySpaceInvaderSettings', JSON.stringify(settings));
+            updateSettingsUI();
+        }
+        
+        // Update settings UI elements
+        function updateSettingsUI() {
+            document.getElementById('musicVolume').textContent = `${Math.round(settings.musicVolume * 100)}%`;
+            document.getElementById('toggleSound').textContent = settings.soundEffects ? 'ON' : 'OFF';
+            document.getElementById('changeDifficulty').textContent = settings.difficulty.toUpperCase();
+            
+            // Update sound volumes
+            backgroundMusic.volume = settings.musicVolume;
+            Object.values(sounds).forEach(sound => {
+                sound.volume = settings.soundEffects ? 0.5 : 0;
+            });
+            
+            // Apply difficulty settings
+            switch (settings.difficulty) {
+                case 'easy':
+                    player.speed = 6;
+                    enemySpeed = 0.8;
+                    enemyShootRate = 150;
+                    break;
+                case 'normal':
+                    player.speed = 5;
+                    enemySpeed = 1.0;
+                    enemyShootRate = 120;
+                    break;
+                case 'hard':
+                    player.speed = 4;
+                    enemySpeed = 1.2;
+                    enemyShootRate = 90;
+                    break;
+            }
+        }
+        
+        // Initialize game
+        function initGame() {
+            loadHighScores();
+            loadSettings();
+            resizeGame();
+            
+            // Set up event listeners
+            document.getElementById('playButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                showObjectives();
+            });
+
+            // Settings wheel event listeners
+            document.getElementById('settingsWheel').addEventListener('click', () => {
+                sounds.menuOpen.play();
+                showSettings();
+            });
+
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && gameState === STATE_PLAYING) {
+                    sounds.menuOpen.play();
+                    showSettings();
+                }
+            });
+            
+            document.getElementById('continueFromObjectives').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                startGame();
+            });
+            
+            document.getElementById('highscoreButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                showHighScores();
+            });
+            document.getElementById('settingsButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                showSettings();
+            });
+            document.getElementById('tutorialButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                showTutorial();
+            });
+            document.getElementById('continueButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                returnToMenu();
+            });
+            document.getElementById('winContinueButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                returnToMenu();
+            });
+            document.getElementById('backButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                returnToMenu();
+            });
+            document.getElementById('settingsBackButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                saveSettings();
+                returnToGame();
+            });
+            document.getElementById('tutorialBackButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                returnToMenu();
+            });
+            document.getElementById('submitScore').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                submitHighScore();
+            });
+            document.getElementById('submitScoreWin').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                submitHighScoreWin();
+            });
+            document.getElementById('startWaveButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                startWave();
+            });
+            
+            // Add hover sounds to menu buttons
+            const menuButtons = document.querySelectorAll('.menu-button');
+            menuButtons.forEach(button => {
+                button.addEventListener('mouseenter', () => {
+                    sounds.menuHover.play();
+                });
+            });
+            
+            // Settings controls
+            document.getElementById('musicDown').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                settings.musicVolume = Math.max(0, settings.musicVolume - 0.1);
+                updateSettingsUI();
+            });
+            document.getElementById('musicUp').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                settings.musicVolume = Math.min(1, settings.musicVolume + 0.1);
+                updateSettingsUI();
+            });
+            document.getElementById('toggleSound').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                settings.soundEffects = !settings.soundEffects;
+                updateSettingsUI();
+            });
+            document.getElementById('changeDifficulty').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                const difficulties = ['easy', 'normal', 'hard'];
+                const currentIndex = difficulties.indexOf(settings.difficulty);
+                settings.difficulty = difficulties[(currentIndex + 1) % difficulties.length];
+                updateSettingsUI();
+            });
+            
+            // Mobile controls
+            document.getElementById('leftBtn').addEventListener('touchstart', () => {
+                keys.ArrowLeft = true;
+            });
+            document.getElementById('leftBtn').addEventListener('touchend', () => {
+                keys.ArrowLeft = false;
+            });
+            document.getElementById('rightBtn').addEventListener('touchstart', () => {
+                keys.ArrowRight = true;
+            });
+            document.getElementById('rightBtn').addEventListener('touchend', () => {
+                keys.ArrowRight = false;
+            });
+            document.getElementById('shootBtn').addEventListener('touchstart', () => {
+                keys[' '] = true;
+            });
+            document.getElementById('shootBtn').addEventListener('touchend', () => {
+                keys[' '] = false;
+            });
+            document.getElementById('specialBtn').addEventListener('touchstart', () => {
+                keys['b'] = true;
+            });
+            document.getElementById('specialBtn').addEventListener('touchend', () => {
+                keys['b'] = false;
+            });
+            
+            // Ship selection buttons
+            document.getElementById('defaultShip').addEventListener('click', () => {
+                if (player.availableShips.default) {
+                    player.shipSkin = 'default';
+                    player.availableShips.default = false;
+                    sounds.shipChange.play();
+                    updateShipSelectionUI();
+                }
+            });
+            
+            document.getElementById('bangkaShip').addEventListener('click', () => {
+                if (player.availableShips.bangka) {
+                    player.shipSkin = 'bangka';
+                    player.availableShips.bangka = false;
+                    sounds.shipChange.play();
+                    updateShipSelectionUI();
+                }
+            });
+            
+            document.getElementById('jeepneyShip').addEventListener('click', () => {
+                if (player.availableShips.jeepney) {
+                    player.shipSkin = 'jeepney';
+                    player.availableShips.jeepney = false;
+                    sounds.shipChange.play();
+                    updateShipSelectionUI();
+                }
+            });
+            
+            // Remove click event listeners for trivia options
+            document.getElementById('triviaOptions').innerHTML = '';
+            
+            // Quiz option click handlers
+            document.getElementById('quizOptions').addEventListener('click', (e) => {
+                if (e.target.classList.contains('quiz-option')) {
+                    const index = Array.from(e.target.parentElement.children).indexOf(e.target);
+                    checkQuizAnswer(index);
+                }
+            });
+            
+            // Keyboard controls
+            window.addEventListener('keydown', (e) => {
+                if (e.key in keys) {
+                    keys[e.key] = true;
+                }
+                
+                // Ship transformation keys
+                if (gameState === STATE_PLAYING) {
+                    if (e.key.toLowerCase() === 'x' && player.availableShips.default) {
+                        player.shipSkin = 'default';
+                        player.availableShips.default = false;
+                        sounds.shipChange.play();
+                        updateShipSelectionUI();
+                    } else if (e.key.toLowerCase() === 'c' && player.availableShips.bangka) {
+                        player.shipSkin = 'bangka';
+                        player.availableShips.bangka = false;
+                        sounds.shipChange.play();
+                        updateShipSelectionUI();
+                    } else if (e.key.toLowerCase() === 'v' && player.availableShips.jeepney) {
+                        player.shipSkin = 'jeepney';
+                        player.availableShips.jeepney = false;
+                        sounds.shipChange.play();
+                        updateShipSelectionUI();
+                    } else if (e.key.toLowerCase() === 'z' && (bossActive || waveTransitionActive)) {
+                        // Select the option based on ship position
+                        selectOptionBasedOnPosition();
+                    } else if (e.key.toLowerCase() === 't' && player.triviaLaser >= TRIVIA_LASER_MAX) {
+                        // Fire trivia laser
+                        fireTriviaLaser();
+                    } else if (e.key.toLowerCase() === 'b') {
+                        // Special ability for current ship
+                        activateSpecialAbility();
+                    }
+                }
+                
+                // In game over screen, allow typing name
+                if ((gameState === STATE_GAME_OVER || gameState === STATE_WIN) && 
+                    (document.getElementById('nameInputContainer').style.display !== 'none' || 
+                     document.getElementById('nameInputContainerWin').style.display !== 'none')) {
+                    if (e.key === 'Enter') {
+                        if (gameState === STATE_GAME_OVER) {
+                            submitHighScore();
+                        } else {
+                            submitHighScoreWin();
+                        }
+                    }
+                }
+            });
+            
+            window.addEventListener('keyup', (e) => {
+                if (e.key in keys) {
+                    keys[e.key] = false;
+                }
+            });
+            
+            // Start game loop
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Track pressed keys
+        const keys = {
+            ArrowLeft: false,
+            ArrowRight: false,
+            ' ': false,
+            'z': false,
+            't': false,
+            'b': false
+        };
+        
+        // Activate special ability based on current ship
+        function activateSpecialAbility() {
+            const ability = player.specialAbilities[player.shipSkin];
+            
+            if (ability.cooldown <= 0) {
+                switch (player.shipSkin) {
+                    case 'default':
+                        // Activate temporary shield
+                        player.powerups.barongShield = true;
+                        powerupTimers.barongShield = 180; // 3 seconds
+                        ability.cooldown = ability.maxCooldown;
+                        updatePowerupStatus();
+                        updateSpecialKeyUI();
+                        sounds.shield.play();
+                        break;
+                    case 'bangka':
+                        // Heal 1 durability point for bangka ship if not at max
+                        if (player.durability.bangka < 3) {
+                            player.durability.bangka = Math.min(3, player.durability.bangka + 1);
+                            ability.cooldown = ability.maxCooldown;
+                            updateDurabilityDisplay();
+                            updateSpecialKeyUI();
+                            sounds.heal.play();
+                        }
+                        break;
+                    case 'jeepney':
+                        // Activate speed boost
+                        player.powerups.jeepneyBoost = true;
+                        powerupTimers.jeepneyBoost = 120; // 2 seconds
+                        ability.cooldown = ability.maxCooldown;
+                        updatePowerupStatus();
+                        updateSpecialKeyUI();
+                        sounds.powerup.play();
+                        break;
+                }
+            }
+        }
+        
+        // Update special key UI
+        function updateSpecialKeyUI() {
+            const specialKey = document.getElementById('specialKey');
+            const ability = player.specialAbilities[player.shipSkin];
+            
+            // Remove existing cooldown element if any
+            const existingCooldown = specialKey.querySelector('.cooldown');
+            if (existingCooldown) {
+                specialKey.removeChild(existingCooldown);
+            }
+            
+            if (ability.cooldown > 0) {
+                const cooldownElement = document.createElement('div');
+                cooldownElement.className = 'cooldown';
+                const cooldownPercent = (ability.cooldown / ability.maxCooldown) * 100;
+                cooldownElement.style.height = `${cooldownPercent}%`;
+                specialKey.appendChild(cooldownElement);
+            }
+        }
+        
+        // Update ship selection UI
+        function updateShipSelectionUI() {
+            const defaultShip = document.getElementById('defaultShip');
+            const bangkaShip = document.getElementById('bangkaShip');
+            const jeepneyShip = document.getElementById('jeepneyShip');
+            
+            defaultShip.classList.toggle('available', player.availableShips.default);
+            bangkaShip.classList.toggle('available', player.availableShips.bangka);
+            jeepneyShip.classList.toggle('available', player.availableShips.jeepney);
+            
+            // Update special key UI
+            updateSpecialKeyUI();
+        }
+        
+        // Update durability display with icons
+        function updateDurabilityDisplay() {
+            // Clear existing icons
+            document.getElementById('defaultDurabilityIcons').innerHTML = '';
+            document.getElementById('bangkaDurabilityIcons').innerHTML = '';
+            document.getElementById('jeepneyDurabilityIcons').innerHTML = '';
+            
+            // Add icons for default ship durability
+            for (let i = 0; i < player.durability.default; i++) {
+                const icon = document.createElement('div');
+                icon.className = 'durability-icon default';
+                document.getElementById('defaultDurabilityIcons').appendChild(icon);
+            }
+            
+            // Add icons for bangka ship durability
+            for (let i = 0; i < player.durability.bangka; i++) {
+                const icon = document.createElement('div');
+                icon.className = 'durability-icon bangka';
+                document.getElementById('bangkaDurabilityIcons').appendChild(icon);
+            }
+            
+            // Add icons for jeepney ship durability
+            for (let i = 0; i < player.durability.jeepney; i++) {
+                const icon = document.createElement('div');
+                icon.className = 'durability-icon jeepney';
+                document.getElementById('jeepneyDurabilityIcons').appendChild(icon);
+            }
+            
+            // Highlight active ship
+            const defaultRow = document.querySelector('.ship-durability-row:nth-child(2)');
+            const bangkaRow = document.querySelector('.ship-durability-row:nth-child(3)');
+            const jeepneyRow = document.querySelector('.ship-durability-row:nth-child(4)');
+            
+            defaultRow.style.color = player.shipSkin === 'default' ? '#FFD700' : 'white';
+            bangkaRow.style.color = player.shipSkin === 'bangka' ? '#FFD700' : 'white';
+            jeepneyRow.style.color = player.shipSkin === 'jeepney' ? '#FFD700' : 'white';
+        }
+        
+        // Update power-up status display
+        function updatePowerupStatus() {
+            let status = [];
+            if (player.powerups.barongShield) status.push("BARONG SHIELD");
+            if (player.powerups.jeepneyBoost) status.push("JEEPNEY BOOST");
+            if (player.powerups.tiniklingMode) status.push("TINIKLING MODE");
+            
+            document.getElementById('powerupStatus').textContent = 
+                status.length > 0 ? status.join(", ") : "NONE";
+        }
+        
+        // Update trivia laser display
+        function updateTriviaLaserDisplay() {
+            const percent = (player.triviaLaser / TRIVIA_LASER_MAX) * 100;
+            document.getElementById('triviaLaserFill').style.width = `${percent}%`;
+        }
+        
+        // Fire trivia laser
+        function fireTriviaLaser() {
+            if (player.triviaLaser < TRIVIA_LASER_MAX) return;
+            
+            sounds.laser.play();
+            player.triviaLaser = 0;
+            updateTriviaLaserDisplay();
+            
+            // Show laser beam effect
+            const laserBeam = document.getElementById('laserBeam');
+            laserBeam.style.opacity = '1';
+            setTimeout(() => {
+                laserBeam.style.opacity = '0';
+            }, 300);
+            
+            // Destroy all enemies on screen
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
+                let points = 0;
+                
+                if (enemy.type === 'kapre') {
+                    points = 100 * wave;
+                } else if (enemy.type === 'sarimanok') {
+                    points = 50 * wave;
+                } else {
+                    points = 30 * wave;
+                }
+                
+                player.score += points;
+                enemies.splice(i, 1);
+                sounds.explosion.play();
+            }
+            
+            // Also destroy enemy bullets
+            enemyBullets = [];
+            
+            updateHUD();
+        }
+        
+        // Return to menu from any screen
+        function returnToMenu() {
+            gameState = STATE_MENU;
+            document.getElementById('gameOverScreen').style.display = 'none';
+            document.getElementById('winScreen').style.display = 'none';
+            document.getElementById('highscoreScreen').style.display = 'none';
+            document.getElementById('settingsScreen').style.display = 'none';
+            document.getElementById('tutorialScreen').style.display = 'none';
+            document.getElementById('waveScreen').style.display = 'none';
+            document.getElementById('quizScreen').style.display = 'none';
+            document.getElementById('objectivesScreen').style.display = 'none';
+            document.getElementById('menuScreen').style.display = 'flex';
+            document.getElementById('gameOverCover').style.display = 'none';
+            document.getElementById('pauseOverlay').style.display = 'none';
+            
+            // Hide all game elements
+            document.getElementById('hud').style.display = 'none';
+            document.getElementById('durabilityHud').style.display = 'none';
+            document.getElementById('powerupHud').style.display = 'none';
+            document.getElementById('bossHealthBar').style.display = 'none';
+            document.getElementById('triviaContainer').style.display = 'none';
+            document.getElementById('shipSelection').style.display = 'none';
+            document.getElementById('comboCounter').style.display = 'none';
+            document.getElementById('waveIndicator').style.display = 'none';
+            document.getElementById('timerContainer').style.display = 'none';
+            document.getElementById('triviaLaserHud').style.display = 'none';
+            document.getElementById('waveTransitionMessage').style.display = 'none';
+            document.getElementById('waveTransitionTimer').style.display = 'none';
+            document.getElementById('specialKey').style.display = 'none';
+            document.getElementById('settingsWheel').style.display = 'none';
+            
+            // Stop background music
+            backgroundMusic.pause();
+        }
+        
+        // Return to game from settings
+        function returnToGame() {
+            gameState = STATE_PLAYING;
+            document.getElementById('settingsScreen').style.display = 'none';
+            document.getElementById('pauseOverlay').style.display = 'none';
+        }
+        
+        // Submit high score from game over screen
+        function submitHighScore() {
+            const nameInput = document.getElementById('nameInput');
+            const name = nameInput.value.trim();
+            if (name !== '') {
+                addHighScore(name, player.score);
+                nameInput.value = '';
+                document.getElementById('nameInputContainer').style.display = 'none';
+                document.getElementById('continueButton').style.display = 'block';
+                showHighScores();
+            }
+        }
+        
+        // Submit high score from win screen
+        function submitHighScoreWin() {
+            const nameInput = document.getElementById('nameInputWin');
+            const name = nameInput.value.trim();
+            if (name !== '') {
+                addHighScore(name, player.score);
+                nameInput.value = '';
+                document.getElementById('nameInputContainerWin').style.display = 'none';
+                document.getElementById('winContinueButton').style.display = 'block';
+                showHighScores();
+            }
+        }
+        
+        // Show tutorial
+        function showTutorial() {
+            gameState = STATE_TUTORIAL;
+            document.getElementById('menuScreen').style.display = 'none';
+            document.getElementById('tutorialScreen').style.display = 'flex';
+        }
+        
+        // Start a new game
+        function startGame() {
+            gameState = STATE_WAVE;
+            document.getElementById('menuScreen').style.display = 'none';
+            document.getElementById('objectivesScreen').style.display = 'none';
+            
+            // Reset player
+            player = {
+                x: CANVAS_WIDTH / 2 - 25,
+                y: CANVAS_HEIGHT - 90,
+                width: 50,
+                height: 30,
+                speed: 5,
+                durability: {
+                    default: 3,
+                    bangka: 3,
+                    jeepney: 3
+                },
+                score: 0,
+                powerups: {
+                    barongShield: false,
+                    jeepneyBoost: false,
+                    tiniklingMode: false
+                },
+                shipSkin: 'default',
+                availableShips: {
+                    default: true,
+                    bangka: false,
+                    jeepney: false
+                },
+                triviaLaser: 0,
+                specialAbilities: {
+                    default: {
+                        cooldown: 0,
+                        maxCooldown: 300 // 5 seconds at 60fps
+                    },
+                    bangka: {
+                        cooldown: 0,
+                        maxCooldown: 450 // 7.5 seconds
+                    },
+                    jeepney: {
+                        cooldown: 0,
+                        maxCooldown: 240 // 4 seconds
+                    }
+                }
+            };
+            
+            // Reset game variables
+            bullets = [];
+            enemies = [];
+            enemyBullets = [];
+            powerups = [];
+            bulletCooldown = 0;
+            enemySpawnRate = 60;
+            enemySpawnTimer = 0;
+            enemyShootTimer = 0;
+            boss = null;
+            bossActive = false;
+            selectedOption = null;
+            answerSelectionMode = false;
+            comboCount = 0;
+            comboTimeout = 0;
+            wave = 1;
+            enemiesInWave = 0;
+            enemiesDefeated = 0;
+            waveDifficultyModifier = 1.0;
+            quizCorrectAnswers = 0;
+            waveTransitionActive = false;
+            waveTransitionTimer = 0;
+            waveTransitionCountdown = 10;
+            
+            // Show wave screen
+            showWaveScreen();
+            
+            // Update HUD
+            updateHUD();
+            updateDurabilityDisplay();
+            updatePowerupStatus();
+            updateShipSelectionUI();
+            updateTriviaLaserDisplay();
+            
+            // Hide boss elements
+            document.getElementById('bossHealthBar').style.display = 'none';
+            document.getElementById('triviaContainer').style.display = 'none';
+            document.getElementById('timerContainer').style.display = 'none';
+            document.getElementById('waveTransitionMessage').style.display = 'none';
+            document.getElementById('waveTransitionTimer').style.display = 'none';
+            
+            // Start background music
+            backgroundMusic.currentTime = 0;
+            backgroundMusic.play().catch(e => console.log("Autoplay prevented:", e));
+        }
+        
+        // Show objectives screen
+        function showObjectives() {
+            gameState = STATE_OBJECTIVES;
+            document.getElementById('menuScreen').style.display = 'none';
+            document.getElementById('objectivesScreen').style.display = 'flex';
+        }
+        
+        // Show wave screen
+        function showWaveScreen() {
+            gameState = STATE_WAVE;
+            document.getElementById('waveDisplay').textContent = wave;
+            
+            // Special wave messages
+            let subtitle = "GET READY!";
+            if (wave === BOSS_WAVE) {
+                subtitle = "FINAL BOSS!";
+            } else if (wave > 1) {
+                subtitle = `WAVE ${wave}`;
+            }
+            
+            document.getElementById('waveSubtitle').textContent = subtitle;
+            document.getElementById('waveScreen').style.display = 'flex';
+        }
+        
+        // Start the current wave
+        function startWave() {
+            gameState = STATE_PLAYING;
+            document.getElementById('waveScreen').style.display = 'none';
+            
+            // Show game elements
+            document.getElementById('hud').style.display = 'block';
+            document.getElementById('durabilityHud').style.display = 'block';
+            document.getElementById('powerupHud').style.display = 'block';
+            document.getElementById('shipSelection').style.display = 'flex';
+            document.getElementById('specialKey').style.display = 'flex';
+            document.getElementById('comboCounter').style.display = 'none';
+            document.getElementById('waveIndicator').style.display = 'block';
+            document.getElementById('waveNumber').textContent = wave;
+            document.getElementById('triviaLaserHud').style.display = 'block';
+            document.getElementById('settingsWheel').style.display = 'block';
+            
+            // Reset wave counters
+            enemiesDefeated = 0;
+            
+            // Calculate enemies for this wave
+            enemiesInWave = 5 + Math.floor(wave * 1.5);
+            
+            // Adjust difficulty based on modifier
+            enemySpeed = 1.0 * waveDifficultyModifier;
+            enemyShootRate = Math.max(30, 120 - (wave * 5) * waveDifficultyModifier);
+            
+            // Check if boss wave
+            if (wave === BOSS_WAVE) {
+                spawnBoss();
+            }
+        }
+        
+        // Show high scores
+        function showHighScores() {
+            gameState = STATE_HIGHSCORE;
+            document.getElementById('menuScreen').style.display = 'none';
+            document.getElementById('highscoreScreen').style.display = 'flex';
+            
+            // Populate high score list
+            const highscoreList = document.getElementById('highscoreList');
+            highscoreList.innerHTML = '';
+            
+            highScores.forEach((score, index) => {
+                const scoreElement = document.createElement('div');
+                scoreElement.style.margin = '5px';
+                scoreElement.textContent = `${index + 1}. ${score.name} - ${score.score}`;
+                highscoreList.appendChild(scoreElement);
+            });
+        }
+        
+        // Show settings
+        function showSettings() {
+            if (gameState === STATE_PLAYING) {
+                // Pause the game
+                document.getElementById('pauseOverlay').style.display = 'flex';
+            }
+            gameState = STATE_SETTINGS;
+            document.getElementById('menuScreen').style.display = 'none';
+            document.getElementById('settingsScreen').style.display = 'flex';
+        }
+        
+        // Game over
+        function gameOver() {
+            gameState = STATE_GAME_OVER;
+            document.getElementById('gameOverScreen').style.display = 'flex';
+            document.getElementById('finalScore').textContent = `FINAL SCORE: ${player.score}`;
+            document.getElementById('gameOverCover').style.display = 'block';
+            
+            // Check if score qualifies for high score
+            const qualifiesForHighScore = highScores.length < MAX_HIGH_SCORES || 
+                                        player.score > highScores[highScores.length - 1].score;
+            
+            if (qualifiesForHighScore) {
+                document.getElementById('nameInputContainer').style.display = 'flex';
+                document.getElementById('continueButton').style.display = 'none';
+                document.getElementById('nameInput').focus();
+            } else {
+                document.getElementById('nameInputContainer').style.display = 'none';
+                document.getElementById('continueButton').style.display = 'block';
+            }
+        }
+        
+        // Player wins
+        function playerWins() {
+            gameState = STATE_WIN;
+            document.getElementById('winScreen').style.display = 'flex';
+            document.getElementById('winScore').textContent = `FINAL SCORE: ${player.score}`;
+            document.getElementById('gameOverCover').style.display = 'block';
+            sounds.win.play();
+            
+            // Check if score qualifies for high score
+            const qualifiesForHighScore = highScores.length < MAX_HIGH_SCORES || 
+                                        player.score > highScores[highScores.length - 1].score;
+            
+            if (qualifiesForHighScore) {
+                document.getElementById('nameInputContainerWin').style.display = 'flex';
+                document.getElementById('winContinueButton').style.display = 'none';
+                document.getElementById('nameInputWin').focus();
+            } else {
+                document.getElementById('nameInputContainerWin').style.display = 'none';
+                document.getElementById('winContinueButton').style.display = 'block';
+            }
+            
+            // Hide all game elements
+            document.getElementById('hud').style.display = 'none';
+            document.getElementById('durabilityHud').style.display = 'none';
+            document.getElementById('powerupHud').style.display = 'none';
+            document.getElementById('bossHealthBar').style.display = 'none';
+            document.getElementById('triviaContainer').style.display = 'none';
+            document.getElementById('shipSelection').style.display = 'none';
+            document.getElementById('comboCounter').style.display = 'none';
+            document.getElementById('waveIndicator').style.display = 'none';
+            document.getElementById('timerContainer').style.display = 'none';
+            document.getElementById('triviaLaserHud').style.display = 'none';
+            document.getElementById('waveTransitionMessage').style.display = 'none';
+            document.getElementById('waveTransitionTimer').style.display = 'none';
+            document.getElementById('specialKey').style.display = 'none';
+            document.getElementById('settingsWheel').style.display = 'none';
+        }
+        
+        // Spawn boss
+        function spawnBoss() {
+            bossActive = true;
+            answerSelectionMode = true;
+            boss = {
+                x: CANVAS_WIDTH / 2 - 75,
+                y: 50,
+                width: 150,
+                height: 120,
+                speed: 1,
+                health: 20 + (wave * 5)
+            };
+            bossMaxHealth = boss.health;
+            
+            // Show boss health bar
+            document.getElementById('bossHealthBar').style.display = 'block';
+            updateBossHealth();
+            
+            // Show trivia container with animation
+            const triviaContainer = document.getElementById('triviaContainer');
+            triviaContainer.style.display = 'block';
+            triviaContainer.style.opacity = '0';
+            triviaContainer.style.transform = 'translateX(-50%) translateY(20px)';
+            
+            // Animate appearance
+            setTimeout(() => {
+                triviaContainer.style.opacity = '1';
+                triviaContainer.style.transform = 'translateX(-50%) translateY(0)';
+                triviaContainer.style.transition = 'all 0.3s ease-out';
+            }, 100);
+            
+            showBossQuestion();
+            sounds.bossSpawn.play();
+        }
+        
+        // Update boss health display
+        function updateBossHealth() {
+            const healthPercent = (boss.health / bossMaxHealth) * 100;
+            document.getElementById('bossHealth').style.width = `${healthPercent}%`;
+        }
+        
+        // Show boss question
+        function showBossQuestion() {
+            currentQuestion = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
+            selectedOption = null;
+            
+            // Display question with larger font
+            const questionElement = document.getElementById('triviaQuestion');
+            questionElement.textContent = currentQuestion.question;
+
+            // Display options with better spacing
+            const optionsContainer = document.getElementById('triviaOptions');
+            optionsContainer.innerHTML = '';
+
+            currentQuestion.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'triviaOption';
+                optionElement.textContent = option;
+                optionElement.dataset.index = index;
+                optionsContainer.appendChild(optionElement);
+            });
+
+            updateOptionHighlight();
+        }
+        
+        // Show wave transition message and question
+        function showWaveTransition() {
+            waveTransitionActive = true;
+            answerSelectionMode = true;
+            
+            // Show message
+            const message = document.getElementById('waveTransitionMessage');
+            message.textContent = `APPROACHING WAVE ${wave + 1}!`;
+            message.style.display = 'block';
+            
+            // Show timer
+            document.getElementById('timerContainer').style.display = 'block';
+            document.getElementById('timerBar').style.width = '100%';
+            
+            // Show countdown timer
+            document.getElementById('waveTransitionTimer').textContent = waveTransitionCountdown;
+            document.getElementById('waveTransitionTimer').style.display = 'block';
+            
+            // Show trivia container
+            const triviaContainer = document.getElementById('triviaContainer');
+            triviaContainer.style.display = 'block';
+            
+            // Select a random question
+            currentQuestion = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
+            selectedOption = null;
+            
+            // Display question
+            document.getElementById('triviaQuestion').textContent = currentQuestion.question;
+            
+            // Display options
+            const optionsContainer = document.getElementById('triviaOptions');
+            optionsContainer.innerHTML = '';
+            
+            currentQuestion.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'triviaOption';
+                optionElement.textContent = option;
+                optionElement.dataset.index = index;
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            // Start timer
+            quizStartTime = Date.now();
+            quizTimer = quizTimeLimit;
+            
+            // Update timer every second
+            const timerInterval = setInterval(() => {
+                if (!waveTransitionActive) {
+                    clearInterval(timerInterval);
+                    return;
+                }
+                
+                const elapsed = Math.floor((Date.now() - quizStartTime) / 1000);
+                quizTimer = Math.max(0, quizTimeLimit - elapsed);
+                const percent = (quizTimer / quizTimeLimit) * 100;
+                document.getElementById('timerBar').style.width = `${percent}%`;
+                
+                // Update countdown timer
+                waveTransitionCountdown = Math.max(0, 10 - elapsed);
+                document.getElementById('waveTransitionTimer').textContent = waveTransitionCountdown;
+                
+                if (quizTimer <= 0) {
+                    clearInterval(timerInterval);
+                    // Time's up - wrong answer
+                    checkWaveTransitionAnswer(-1);
+                }
+            }, 200);
+        }
+        
+        // Update highlighted option based on player position
+        function updateOptionHighlight() {
+            if (!(bossActive || waveTransitionActive) || !currentQuestion) return;
+            
+            const options = document.querySelectorAll('#triviaOptions .triviaOption');
+            const triviaContainer = document.getElementById('triviaContainer');
+            const containerRect = triviaContainer.getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            // Calculate player position relative to trivia container
+            const playerCenterX = player.x + player.width/2;
+            const playerScreenX = canvasRect.left + playerCenterX;
+            const playerRelativeX = playerScreenX - containerRect.left;
+            
+            // Find which option the player is over
+            let selectedIndex = -1;
+            
+            options.forEach((opt, index) => {
+                const optRect = opt.getBoundingClientRect();
+                const optLeft = optRect.left - containerRect.left;
+                const optRight = optRect.right - containerRect.left;
+                
+                opt.classList.remove('highlighted');
+                
+                if (playerRelativeX >= optLeft && playerRelativeX <= optRight) {
+                    selectedIndex = index;
+                }
+            });
+            
+            // Highlight the option the player is over
+            if (selectedIndex >= 0) {
+                options[selectedIndex].classList.add('highlighted');
+            }
+        }
+        
+        // Select option based on player position
+        function selectOptionBasedOnPosition() {
+            if (selectedOption !== null) return; // Prevent multiple selections
+            
+            const options = document.querySelectorAll('#triviaOptions .triviaOption');
+            const triviaContainer = document.getElementById('triviaContainer');
+            const containerRect = triviaContainer.getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            // Calculate player position relative to trivia container
+            const playerCenterX = player.x + player.width/2;
+            const playerScreenX = canvasRect.left + playerCenterX;
+            const playerRelativeX = playerScreenX - containerRect.left;
+            
+            // Find which option the player is over
+            let selectedIndex = -1;
+            
+            options.forEach((opt, index) => {
+                const optRect = opt.getBoundingClientRect();
+                const optLeft = optRect.left - containerRect.left;
+                const optRight = optRect.right - containerRect.left;
+                
+                if (playerRelativeX >= optLeft && playerRelativeX <= optRight) {
+                    selectedIndex = index;
+                }
+            });
+            
+            if (selectedIndex >= 0) {
+                if (bossActive) {
+                    selectBossOption(selectedIndex);
+                } else if (waveTransitionActive) {
+                    checkWaveTransitionAnswer(selectedIndex);
+                }
+            }
+        }
+        
+        // Select boss option
+        function selectBossOption(index) {
+            if (selectedOption !== null) return; // Prevent multiple selections
+            
+            selectedOption = index;
+            const options = document.querySelectorAll('#triviaOptions .triviaOption');
+            
+            // Highlight selected option
+            options.forEach(opt => opt.classList.remove('highlighted'));
+            
+            if (index === currentQuestion.answer) {
+                // Correct answer
+                options[index].classList.add('selected');
+                showFeedback(true);
+                
+                // Damage boss
+                boss.health -= player.powerups.tiniklingMode ? 3 : 2;
+                updateBossHealth();
+                
+                if (boss.health <= 0) {
+                    // Boss defeated - player wins
+                    player.score += 1000 * wave;
+                    updateHUD();
+                    bossActive = false;
+                    answerSelectionMode = false;
+                    document.getElementById('bossHealthBar').style.display = 'none';
+                    document.getElementById('triviaContainer').style.display = 'none';
+                    
+                    // Play explosion sound
+                    sounds.explosion.play();
+                    
+                    // Clear any remaining enemies
+                    enemies = [];
+                    
+                    // Player wins
+                    setTimeout(playerWins, 1000);
+                } else {
+                    // Get next question after delay
+                    setTimeout(showBossQuestion, 1000);
+                }
+            } else {
+                // Wrong answer
+                options[index].classList.add('incorrect');
+                showFeedback(false);
+                
+                // Boss attacks
+                if (!player.powerups.barongShield) {
+                    // Reduce durability for current ship
+                    player.durability[player.shipSkin]--;
+                    updateDurabilityDisplay();
+                    
+                    // Check if player has any durability left
+                    if (player.durability.default <= 0 && player.durability.bangka <= 0 && player.durability.jeepney <= 0) {
+                        gameOver();
+                        return;
+                    }
+                    
+                    // If current ship has no durability left, switch to another available ship
+                    if (player.durability[player.shipSkin] <= 0) {
+                        if (player.durability.default > 0) {
+                            player.shipSkin = 'default';
+                        } else if (player.durability.bangka > 0) {
+                            player.shipSkin = 'bangka';
+                        } else if (player.durability.jeepney > 0) {
+                            player.shipSkin = 'jeepney';
+                        }
+                    }
+                }
+                
+                // Get next question after delay
+                setTimeout(showBossQuestion, 1000);
+            }
+        }
+        
+        // Show feedback for correct/incorrect answers
+        function showFeedback(isCorrect) {
+            const feedbackElement = isCorrect ? document.getElementById('correctFeedback') : document.getElementById('incorrectFeedback');
+            feedbackElement.style.display = 'block';
+            
+            // Play sound
+            sounds[isCorrect ? 'correct' : 'wrong'].play();
+            
+            // Hide after 1 second
+            setTimeout(() => {
+                feedbackElement.style.display = 'none';
+            }, 1000);
+        }
+        
+        // Check wave transition answer
+        function checkWaveTransitionAnswer(index) {
+            const isCorrect = index === currentQuestion.answer;
+            const answerTime = (Date.now() - quizStartTime) / 1000; // in seconds
+            
+            if (isCorrect) {
+                showFeedback(true);
+                quizCorrectAnswers++;
+                
+                // Calculate time bonus (faster answers give better bonuses)
+                const timeBonus = Math.max(1, quizTimeLimit - answerTime);
+                
+                // Add to trivia laser (33% per correct answer to reach 100% in 3 answers)
+                player.triviaLaser = Math.min(TRIVIA_LASER_MAX, player.triviaLaser + 33);
+                updateTriviaLaserDisplay();
+                
+                // Apply time bonus
+                if (timeBonus >= quizTimeLimit * 0.7) {
+                    // Slow-mo for very fast answers
+                    slowMoActive = true;
+                    slowMoTimer = timeBonusDuration;
+                    sounds.slowmo.play();
+                    document.body.style.backgroundColor = 'rgba(0, 0, 100, 0.5)';
+                } else if (timeBonus >= quizTimeLimit * 0.3) {
+                    // Temporary invincibility for fast answers
+                    timeBonusActive = true;
+                    timeBonusTimer = timeBonusDuration;
+                    player.powerups.barongShield = true;
+                    updatePowerupStatus();
+                }
+                
+                // Make next wave easier
+                waveDifficultyModifier = Math.max(0.5, waveDifficultyModifier * 0.9);
+            } else {
+                showFeedback(false);
+                
+                // Drain trivia laser
+                player.triviaLaser = Math.max(0, player.triviaLaser - 15);
+                updateTriviaLaserDisplay();
+                
+                // Make next wave harder
+                waveDifficultyModifier = Math.min(2.0, waveDifficultyModifier * 1.2);
+                
+                // Speed up enemies temporarily
+                enemySpeed *= 1.2;
+                enemyShootRate = Math.max(30, enemyShootRate * 0.8);
+            }
+            
+            // Hide trivia elements
+            document.getElementById('triviaContainer').style.display = 'none';
+            document.getElementById('timerContainer').style.display = 'none';
+            document.getElementById('waveTransitionMessage').style.display = 'none';
+            document.getElementById('waveTransitionTimer').style.display = 'none';
+            
+            // Reset countdown
+            waveTransitionCountdown = 10;
+            
+            // Move to next wave
+            wave++;
+            waveTransitionActive = false;
+            answerSelectionMode = false;
+            
+            // Start the next wave
+            startWave();
+        }
+        
+        // Update HUD
+        function updateHUD() {
+            document.getElementById('scoreDisplay').textContent = player.score;
+            document.getElementById('comboCount').textContent = `${comboCount}x`;
+            updateDurabilityDisplay();
+            updatePowerupStatus();
+        }
+        
+        // Show combo effect
+        function showCombo() {
+            if (comboCount > 3) {
+                const comboText = document.getElementById('comboCounter');
+                comboText.textContent = `${comboCount} KILL COMBO!`;
+                comboText.style.display = 'block';
+                
+                // Different colors for different combo levels
+                if (comboCount >= 10) {
+                    comboText.style.color = '#FF0000';
+                    comboText.style.fontSize = '28px';
+                } else if (comboCount >= 7) {
+                    comboText.style.color = '#FFA500';
+                    comboText.style.fontSize = '24px';
+                } else {
+                    comboText.style.color = '#FFFF00';
+                    comboText.style.fontSize = '20px';
+                }
+                
+                // Hide after 1.5 seconds
+                setTimeout(() => {
+                    comboText.style.display = 'none';
+                }, 1500);
+            }
+        }
+        
+        // Enemy class
+        class Enemy {
+            constructor() {
+                this.type = ['kapre', 'aswang', 'sarimanok'][Math.floor(Math.random() * 3)];
+                
+                if (this.type === 'kapre') {
+                    this.width = 60;
+                    this.height = 50;
+                    this.health = 3;
+                    this.speed = enemySpeed * 0.7;
+                    this.shootChance = 0.3;
+                } else if (this.type === 'aswang') {
+                    this.width = 30;
+                    this.height = 20;
+                    this.health = 1;
+                    this.speed = enemySpeed * 1.5;
+                    this.shootChance = 0.5;
+                } else { // sarimanok
+                    this.width = 45;
+                    this.height = 45;
+                    this.health = 2;
+                    this.speed = enemySpeed;
+                    this.shootChance = 0.4;
+                }
+                
+                this.x = Math.random() * (CANVAS_WIDTH - this.width);
+                this.y = -this.height;
+            }
+            
+            update() {
+                this.y += this.speed * (slowMoActive ? 0.5 : 1);
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.globalCompositeOperation = 'source-over';
+                
+                if (this.type === 'kapre') {
+                    // Draw kapre (big, dark enemy) - scarier version
+                    ctx.fillStyle = '#222';
+                    ctx.fillRect(Math.round(this.x), Math.round(this.y), Math.round(this.width), Math.round(this.height));
+                    
+                    // Face details - more menacing
+                    ctx.fillStyle = '#111';
+                    ctx.beginPath();
+                    ctx.arc(Math.round(this.x + this.width/2), Math.round(this.y + 20), 15, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Glowing red eyes
+                    ctx.fillStyle = 'red';
+                    ctx.beginPath();
+                    ctx.arc(Math.round(this.x + this.width/2 - 10), Math.round(this.y + 15), 5, 0, Math.PI * 2);
+                    ctx.arc(Math.round(this.x + this.width/2 + 10), Math.round(this.y + 15), 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Add glow effect to eyes
+                    ctx.shadowColor = 'red';
+                    ctx.shadowBlur = 10;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    
+                    // Sharp teeth
+                    ctx.fillStyle = 'white';
+                    for (let i = 0; i < 5; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(Math.round(this.x + this.width/2 - 12 + i*5), Math.round(this.y + 25));
+                        ctx.lineTo(Math.round(this.x + this.width/2 - 14 + i*5), Math.round(this.y + 35));
+                        ctx.lineTo(Math.round(this.x + this.width/2 - 10 + i*5), Math.round(this.y + 35));
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                    
+                    // Smoke from cigar
+                    ctx.fillStyle = 'rgba(200, 200, 200, 0.7)';
+                    for (let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.arc(Math.round(this.x + this.width/2 + 15 + i*5), 
+                               Math.round(this.y + 15 - i*3), 
+                               3 + i, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                } else if (this.type === 'aswang') {
+                    // Draw aswang (small, fast enemy) - scarier version
+                    ctx.fillStyle = '#400040';
+                    ctx.beginPath();
+                    ctx.moveTo(Math.round(this.x + this.width/2), Math.round(this.y));
+                    ctx.lineTo(Math.round(this.x), Math.round(this.y + this.height));
+                    ctx.lineTo(Math.round(this.x + this.width), Math.round(this.y + this.height));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Glowing white eyes
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(Math.round(this.x + this.width/3), Math.round(this.y + this.height/2), 4, 0, Math.PI * 2);
+                    ctx.arc(Math.round(this.x + this.width*2/3), Math.round(this.y + this.height/2), 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Blood dripping from mouth
+                    ctx.fillStyle = 'red';
+                    ctx.beginPath();
+                    ctx.moveTo(Math.round(this.x + this.width/2), Math.round(this.y + this.height - 5));
+                    ctx.lineTo(Math.round(this.x + this.width/2 - 5), Math.round(this.y + this.height + 5));
+                    ctx.lineTo(Math.round(this.x + this.width/2 + 5), Math.round(this.y + this.height + 5));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Add glow effect
+                    ctx.shadowColor = '#800080';
+                    ctx.shadowBlur = 10;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                } else { // sarimanok
+                    // Draw sarimanok (colorful bird-like enemy) - more menacing
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.moveTo(Math.round(this.x + this.width/2), Math.round(this.y));
+                    ctx.lineTo(Math.round(this.x), Math.round(this.y + this.height));
+                    ctx.lineTo(Math.round(this.x + this.width), Math.round(this.y + this.height));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Sharp beak
+                    ctx.fillStyle = '#FF4500';
+                    ctx.beginPath();
+                    ctx.moveTo(Math.round(this.x + this.width/2), Math.round(this.y + 10));
+                    ctx.lineTo(Math.round(this.x + this.width/2 - 5), Math.round(this.y + 20));
+                    ctx.lineTo(Math.round(this.x + this.width/2 + 5), Math.round(this.y + 20));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Angry eyes
+                    ctx.fillStyle = 'red';
+                    ctx.beginPath();
+                    ctx.arc(Math.round(this.x + this.width/3), Math.round(this.y + 15), 3, 0, Math.PI * 2);
+                    ctx.arc(Math.round(this.x + this.width*2/3), Math.round(this.y + 15), 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Sharp tail feathers
+                    ctx.fillStyle = '#FF0000';
+                    for (let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(Math.round(this.x + this.width/2), Math.round(this.y + this.height - 5));
+                        ctx.lineTo(Math.round(this.x + this.width/2 - 10 + i*10), Math.round(this.y + this.height + 15));
+                        ctx.lineTo(Math.round(this.x + this.width/2 - 5 + i*10), Math.round(this.y + this.height + 15));
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                }
+                
+                ctx.restore();
+            }
+            
+            isOffScreen() {
+                return this.y > CANVAS_HEIGHT;
+            }
+            
+            hit() {
+                this.health--;
+                return this.health <= 0;
+            }
+            
+            shoot() {
+                if (Math.random() < this.shootChance) {
+                    enemyBullets.push({
+                        x: this.x + this.width/2,
+                        y: this.y + this.height,
+                        width: 5,
+                        height: 10,
+                        speed: 3 * (slowMoActive ? 0.5 : 1)
+                    });
+                    sounds.enemyShoot.play();
+                }
+            }
+        }
+        
+        // Bullet class
+        class Bullet {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.radius = 5;
+                this.speed = 7 * (slowMoActive ? 1.5 : 1);
+                this.damage = player.powerups.tiniklingMode ? 2 : 1;
+            }
+            
+            update() {
+                this.y -= this.speed;
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.fillStyle = 'yellow';
+                ctx.beginPath();
+                ctx.arc(Math.round(this.x), Math.round(this.y), this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Add glow effect
+                ctx.shadowColor = 'yellow';
+                ctx.shadowBlur = 5;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.restore();
+            }
+            
+            isOffScreen() {
+                return this.y < 0;
+            }
+        }
+        
+        // Ship Power-up class (mini versions of ships)
+        class ShipPowerup {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.width = 40;
+                this.height = 40;
+                this.speed = 2 * (slowMoActive ? 0.5 : 1);
+                this.type = type;
+                this.rotation = 0;
+                this.rotationSpeed = Math.random() * 0.02 - 0.01;
+                this.pulse = 0;
+                this.pulseSpeed = Math.random() * 0.05 + 0.02;
+            }
+            
+            update() {
+                this.y += this.speed;
+                this.rotation += this.rotationSpeed;
+                this.pulse += this.pulseSpeed;
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.translate(Math.round(this.x + this.width/2), Math.round(this.y + this.height/2));
+                ctx.rotate(this.rotation);
+                
+                // Pulse effect
+                const pulseScale = 1 + Math.sin(this.pulse) * 0.1;
+                ctx.scale(pulseScale, pulseScale);
+                
+                if (this.type === 'default') {
+                    // Mini default ship - enhanced design
+                    ctx.fillStyle = '#4CAF50';
+                    ctx.beginPath();
+                    // Main body
+                    ctx.moveTo(0, Math.round(-this.height/2));
+                    ctx.lineTo(Math.round(-this.width/2), Math.round(this.height/4));
+                    ctx.lineTo(Math.round(-this.width/4), Math.round(this.height/2));
+                    ctx.lineTo(Math.round(this.width/4), Math.round(this.height/2));
+                    ctx.lineTo(Math.round(this.width/2), Math.round(this.height/4));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Cockpit
+                    ctx.fillStyle = '#87CEEB';
+                    ctx.beginPath();
+                    ctx.arc(0, Math.round(-this.height/4), 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Engine glow
+                    ctx.fillStyle = 'rgba(255, 255, 0, 0.7)';
+                    ctx.beginPath();
+                    ctx.moveTo(Math.round(-this.width/4), Math.round(this.height/2));
+                    ctx.lineTo(0, Math.round(this.height/2 + 5));
+                    ctx.lineTo(Math.round(this.width/4), Math.round(this.height/2));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Add glow effect
+                    ctx.shadowColor = '#4CAF50';
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                } else if (this.type === 'bangka') {
+                    // Enhanced bangka design with more details
+                    // Hull
+                    ctx.fillStyle = '#5D2906';
+                    ctx.beginPath();
+                    ctx.moveTo(0, Math.round(-this.height/4));
+                    ctx.lineTo(Math.round(-this.width/2), Math.round(this.height/4));
+                    ctx.lineTo(Math.round(this.width/2), Math.round(this.height/4));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Deck
+                    ctx.fillStyle = '#8B4513';
+                    ctx.beginPath();
+                    ctx.moveTo(Math.round(-this.width/3), Math.round(-this.height/8));
+                    ctx.lineTo(Math.round(this.width/3), Math.round(-this.height/8));
+                    ctx.lineTo(Math.round(this.width/4), Math.round(this.height/4));
+                    ctx.lineTo(Math.round(-this.width/4), Math.round(this.height/4));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Outriggers
+                    ctx.fillStyle = '#5D2906';
+                    ctx.fillRect(Math.round(-this.width/2 - 10), Math.round(-this.height/8), 10, 5);
+                    ctx.fillRect(Math.round(this.width/2), Math.round(-this.height/8), 10, 5);
+                    
+                    // Sail
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.moveTo(0, Math.round(-this.height/3));
+                    ctx.lineTo(Math.round(-this.width/4), Math.round(this.height/8));
+                    ctx.lineTo(Math.round(this.width/4), Math.round(this.height/8));
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Sail details (lines)
+                    ctx.strokeStyle = '#8B4513';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(0, Math.round(-this.height/3));
+                    ctx.lineTo(0, Math.round(this.height/8));
+                    ctx.stroke();
+                    
+                    // Add glow effect
+                    ctx.shadowColor = '#8B4513';
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                } else if (this.type === 'jeepney') {
+                    // Mini jeepney ship - enhanced design
+                    // Body
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillRect(
+                        Math.round(-this.width/2),
+                        Math.round(-this.height/2),
+                        Math.round(this.width),
+                        Math.round(this.height)
+                    );
+                    
+                    // Body details
+                    ctx.fillStyle = '#FF0000';
+                    ctx.fillRect(
+                        Math.round(-this.width/2 + 5),
+                        Math.round(-this.height/2 + 5),
+                        Math.round(this.width - 10),
+                        Math.round(this.height - 10)
+                    );
+                    
+                    // Windows
+                    ctx.fillStyle = '#87CEEB';
+                    ctx.fillRect(
+                        Math.round(-this.width/2 + 10),
+                        Math.round(-this.height/2 + 10),
+                        10, 10
+                    );
+                    ctx.fillRect(
+                        Math.round(this.width/2 - 20),
+                        Math.round(-this.height/2 + 10),
+                        10, 10
+                    );
+                    
+                    // Headlights
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(
+                        Math.round(-this.width/2 + 5),
+                        Math.round(-this.height/4),
+                        3, 0, Math.PI * 2
+                    );
+                    ctx.arc(
+                        Math.round(this.width/2 - 5),
+                        Math.round(-this.height/4),
+                        3, 0, Math.PI * 2
+                    );
+                    ctx.fill();
+                    
+                    // Decorative stripes
+                    ctx.fillStyle = '#FFD700';
+                    for (let i = 0; i < 3; i++) {
+                        ctx.fillRect(
+                            Math.round(-this.width/2 + 5),
+                            Math.round(-this.height/2 + 20 + i*8),
+                            Math.round(this.width - 10),
+                            3
+                        );
+                    }
+                    
+                    // Add glow effect
+                    ctx.shadowColor = '#FFD700';
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+                
+                ctx.restore();
+            }
+            
+            isOffScreen() {
+                return this.y > CANVAS_HEIGHT;
+            }
+        }
+        
+        // Power-up class
+        class PowerUp {
+            constructor(x, y, type = null) {
+                this.x = x;
+                this.y = y;
+                this.width = 30;
+                this.height = 30;
+                this.speed = 2 * (slowMoActive ? 0.5 : 1);
+                this.type = type || ['barongShield', 'jeepneyBoost', 'tiniklingMode'][Math.floor(Math.random() * 3)];
+                this.rotation = 0;
+                this.rotationSpeed = Math.random() * 0.02 - 0.01;
+                this.pulse = 0;
+                this.pulseSpeed = Math.random() * 0.05 + 0.02;
+            }
+            
+            update() {
+                this.y += this.speed;
+                this.rotation += this.rotationSpeed;
+                this.pulse += this.pulseSpeed;
+            }
+            
+            draw() {
+                ctx
