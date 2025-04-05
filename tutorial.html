@@ -13,14 +13,29 @@
             background-color: #000;
             color: white;
             font-family: 'Press Start 2P', cursive;
-            overflow: auto;
+            overflow: hidden;
             touch-action: manipulation;
         }
         
-        .container {
+        #starsCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .tutorial-container {
+            position: relative;
+            z-index: 2;
             max-width: 800px;
-            margin: 0 auto;
+            margin: 30px auto;
             padding: 20px;
+            background-color: rgba(0, 0, 20, 0.8);
+            border: 4px solid #FFD700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            border-radius: 5px;
         }
         
         .title {
@@ -34,7 +49,7 @@
         .menu-button {
             width: 200px;
             height: 50px;
-            margin: 10px;
+            margin: 20px auto;
             font-size: 16px;
             cursor: pointer;
             border: none;
@@ -44,42 +59,51 @@
             box-shadow: 4px 4px 0 #2196F3;
             font-family: 'Press Start 2P', cursive;
             text-shadow: 2px 2px 0 #000;
+            display: block;
         }
         
         .tutorial-content {
             background-color: rgba(0, 0, 0, 0.7);
             padding: 20px;
-            border: 2px solid #FFD700;
+            border: 2px solid #555;
             margin-bottom: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
         }
         
         .tutorial-section {
             margin-bottom: 30px;
+            padding: 15px;
+            background-color: rgba(0, 0, 40, 0.5);
+            border-left: 3px solid #FFD700;
         }
         
         .tutorial-title {
             color: #FFD700;
             font-size: 18px;
             margin-bottom: 15px;
-            border-bottom: 2px solid #FFD700;
-            padding-bottom: 5px;
+            text-shadow: 2px 2px 0 #8B4513;
         }
         
         .tutorial-row {
             display: flex;
             align-items: center;
             margin-bottom: 10px;
+            padding: 8px;
+            background-color: rgba(0, 0, 60, 0.3);
         }
         
         .tutorial-key {
             width: 60px;
-            height: 30px;
+            height: 40px;
             background-color: #333;
             display: flex;
             justify-content: center;
             align-items: center;
             margin-right: 15px;
             border: 2px solid #555;
+            box-shadow: 3px 3px 0 #222;
+            flex-shrink: 0;
         }
         
         .tutorial-ship {
@@ -87,6 +111,7 @@
             height: 30px;
             margin-right: 15px;
             border: 2px solid #555;
+            flex-shrink: 0;
         }
         
         .tutorial-ship-default {
@@ -105,18 +130,22 @@
             width: 40px;
             height: 30px;
             margin-right: 15px;
+            flex-shrink: 0;
         }
         
         .tutorial-enemy-kapre {
             background-color: #222;
+            border: 2px solid #444;
         }
         
         .tutorial-enemy-aswang {
             background-color: #400040;
+            border: 2px solid #800080;
         }
         
         .tutorial-enemy-sarimanok {
             background-color: #FFD700;
+            border: 2px solid #8B4513;
         }
         
         .tutorial-powerup {
@@ -124,21 +153,30 @@
             height: 30px;
             margin-right: 15px;
             border-radius: 50%;
+            flex-shrink: 0;
         }
         
         .tutorial-powerup-shield {
             background-color: blue;
+            border: 2px solid #00F;
         }
         
         .tutorial-powerup-boost {
             background-color: red;
+            border: 2px solid #F00;
         }
         
         .tutorial-powerup-tinikling {
             background-color: green;
+            border: 2px solid #0F0;
         }
         
         @media (max-width: 768px) {
+            .tutorial-container {
+                margin: 10px;
+                padding: 10px;
+            }
+            
             .title {
                 font-size: 24px;
             }
@@ -159,10 +197,26 @@
                 margin-right: 10px;
             }
         }
+
+        /* Scrollbar styling */
+        .tutorial-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .tutorial-content::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .tutorial-content::-webkit-scrollbar-thumb {
+            background: #FFD700;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <canvas id="starsCanvas"></canvas>
+    
+    <div class="tutorial-container">
         <div class="title">HOW TO PLAY</div>
         <div class="tutorial-content">
             <div class="tutorial-section">
@@ -253,6 +307,55 @@
     </div>
 
     <script>
+        // Shooting stars background
+        const canvas = document.getElementById('starsCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        // Stars array
+        const stars = [];
+        const starCount = 100;
+        
+        // Create stars
+        for (let i = 0; i < starCount; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 2 + 1,
+                speed: Math.random() * 0.5 + 0.1
+            });
+        }
+        
+        // Animation loop
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = 'white';
+            stars.forEach(star => {
+                star.y += star.speed;
+                if (star.y > canvas.height) {
+                    star.y = 0;
+                    star.x = Math.random() * canvas.width;
+                }
+                ctx.fillRect(star.x, star.y, star.size, star.size);
+            });
+            
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+        
+        // Back button
         document.getElementById('tutorialBackButton').addEventListener('click', () => {
             window.location.href = 'index.html';
         });
