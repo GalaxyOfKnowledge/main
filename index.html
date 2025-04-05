@@ -10,7 +10,7 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: #000;
+            -color: #000;
             color: white;
             font-family: 'Press Start 2P', cursive;
             overflow: hidden;
@@ -49,20 +49,34 @@
         
         /* Trivia container - now looks like part of the game */
         #triviaContainer {
-            position: fixed;
-            left: 50%;
-            bottom: 20px;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 800px;
-            z-index: 3; /* Increased z-index to be above the ship */
-            background-color: transparent;
-            padding: 15px;
-            display: none;
-            box-sizing: border-box;
-            text-align: center;
+             position: fixed;
+        left: 50%;
+        bottom: 20px;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 800px;
+        z-index: 1; /* Changed from 3 to appear behind gameplay */
+        background-color: rgba(0, 0, 20, 0.7);
+        padding: 15px;
+        display: none;
+        box-sizing: border-box;
+        text-align: center;
+        border: 2px solid #FFD700;
+        border-radius: 0;
         }
-        
+
+            .triviaOption.correct {
+        background-color: rgba(0, 255, 0, 0.5) !important;
+        border-color: #0F0 !important;
+        animation: correctPulse 0.5s;
+    }
+    
+    .triviaOption.incorrect {
+        background-color: rgba(255, 0, 0, 0.5) !important;
+        border-color: #F00 !important;
+        animation: shake 0.5s;
+    }
+
         #triviaQuestion {
             font-size: 16px;
             margin-bottom: 15px;
@@ -182,6 +196,11 @@
             z-index: 2;
             font-family: 'Press Start 2P', cursive;
             text-shadow: 2px 2px 0 #000;
+             background-color: rgba(0, 0, 0, 0.9) !important;
+            border: 2px solid #FFD700 !important;
+            font-size: 16px !important;
+            padding: 10px 15px !important;
+            
         }
         
         #durabilityHud {
@@ -198,6 +217,10 @@
             z-index: 2;
             font-family: 'Press Start 2P', cursive;
             text-shadow: 2px 2px 0 #000;
+            background-color: rgba(0, 0, 0, 0.9) !important;
+            border: 2px solid #FFD700 !important;
+            font-size: 14px !important;
+            padding: 10px 15px !important;
         }
         
         .durability-ships {
@@ -281,7 +304,11 @@
             z-index: 2;
             font-family: 'Press Start 2P', cursive;
             text-shadow: 2px 2px 0 #000;
-        }
+            background-color: rgba(0, 0, 0, 0.9) !important;
+            border: 2px solid #FFD700 !important;
+            font-size: 14px !important;
+            padding: 10px 15px !important;
+            }
         
         #bossHealthBar {
             position: fixed;
@@ -314,6 +341,9 @@
             gap: 8px;
             display: none;
             z-index: 2;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border: 2px solid #FFD700;
         }
         
         .ship-icon {
@@ -345,6 +375,17 @@
             50% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.9); }
             100% { box-shadow: 0 0 2px rgba(255, 215, 0, 0.7); }
         }
+        @keyframes correctPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
         
         #mobileControls {
             position: fixed;
@@ -710,6 +751,10 @@
             z-index: 2;
             font-family: 'Press Start 2P', cursive;
             text-shadow: 2px 2px 0 #000;
+            background-color: rgba(0, 0, 0, 0.9) !important;
+            border: 2px solid #FFD700 !important;
+            font-size: 14px !important;
+            padding: 10px 15px !important;
         }
         
         #triviaLaserBar {
@@ -1310,7 +1355,7 @@
         
         // Quiz variables
         let quizStartTime = 0;
-        let quizTimeLimit = 10; // seconds
+        let quizTimeLimit = 20; // seconds
         let quizTimer = 0;
         let quizCorrectAnswers = 0;
         
@@ -1325,7 +1370,7 @@
         let waveTransitionActive = false;
         let waveTransitionTimer = 0;
         let waveTransitionDuration = 600; // frames (10 seconds at 60fps)
-        let waveTransitionCountdown = 10; // seconds
+        let waveTransitionCountdown = 15; // seconds
         
         // High scores
         let highScores = [];
@@ -1934,6 +1979,7 @@
             document.getElementById('waveTransitionMessage').style.display = 'none';
             document.getElementById('waveTransitionTimer').style.display = 'none';
             document.getElementById('specialKey').style.display = 'none';
+             waveTransitionCountdown = 15;
             
             // Stop background music
             backgroundMusic.pause();
@@ -2327,9 +2373,10 @@
                 document.getElementById('timerBar').style.width = `${percent}%`;
                 
                 // Update countdown timer
-                waveTransitionCountdown = Math.max(0, 10 - elapsed);
+                waveTransitionCountdown = 15;
                 document.getElementById('waveTransitionTimer').textContent = waveTransitionCountdown;
-                
+                document.getElementById('waveTransitionTimer').style.display = 'block';
+
                 if (quizTimer <= 0) {
                     clearInterval(timerInterval);
                     // Time's up - wrong answer
@@ -2376,7 +2423,7 @@
         // Select option based on player position
         function selectOptionBasedOnPosition() {
             if (selectedOption !== null) return; // Prevent multiple selections
-            
+
             const options = document.querySelectorAll('#triviaOptions .triviaOption');
             const triviaContainer = document.getElementById('triviaContainer');
             const containerRect = triviaContainer.getBoundingClientRect();
@@ -2415,6 +2462,13 @@
             
             selectedOption = index;
             const options = document.querySelectorAll('#triviaOptions .triviaOption');
+            if (index >= 0) {
+            options[index].classList.add(isCorrect ? 'correct' : 'incorrect');
+        }
+        
+        if (isCorrect) {
+            sounds.correct.play();
+            quizCorrectAnswers++;
             
             // Highlight selected option
             options.forEach(opt => opt.classList.remove('highlighted'));
@@ -2484,15 +2538,28 @@
         
         // Check wave transition answer
         function checkWaveTransitionAnswer(index) {
-            const isCorrect = index === currentQuestion.answer;
-            const answerTime = (Date.now() - quizStartTime) / 1000; // in seconds
-            
-            if (isCorrect) {
+             const isCorrect = index === currentQuestion.answer;
+    const options = document.querySelectorAll('#triviaOptions .triviaOption');{
                 sounds.correct.play();
                 quizCorrectAnswers++;
-                
+                if (index >= 0) {
+        options[index].classList.add(isCorrect ? 'correct' : 'incorrect');
+    }
+                 if (isCorrect) {
+            sounds.correct.play();
+            quizCorrectAnswers++;
+                            if (index !== currentQuestion.answer && index >= 0) {
+                options[currentQuestion.answer].classList.add('correct');
+            }
+
+                } else {
+            sounds.wrong.play();
                 // Calculate time bonus (faster answers give better bonuses)
                 const timeBonus = Math.max(1, quizTimeLimit - answerTime);
+
+                      if (currentQuestion.answer >= 0) {
+                options[currentQuestion.answer].classList.add('correct');
+            }
                 
                 // Add to trivia laser (33% per correct answer to reach 100% in 3 answers)
                 player.triviaLaser = Math.min(TRIVIA_LASER_MAX, player.triviaLaser + 33);
@@ -2537,7 +2604,7 @@
             document.getElementById('waveTransitionTimer').style.display = 'none';
             
             // Reset countdown
-            waveTransitionCountdown = 10;
+            waveTransitionCountdown = 15;
             
             // Move to next wave
             wave++;
@@ -2545,8 +2612,9 @@
             answerSelectionMode = false;
             
             // Start the next wave
-            startWave();
-        }
+           startWave();
+        }, 1500); // Show feedback for 1.5 seconds
+    }
         
         // Update HUD
         function updateHUD() {
