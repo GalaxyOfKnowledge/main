@@ -13,8 +13,9 @@
             background-color: #000;
             color: white;
             font-family: 'Press Start 2P', cursive;
-            overflow: auto;
+            overflow: hidden; /* Changed from auto to hidden */
             touch-action: manipulation;
+            height: 100vh; /* Ensure body takes full viewport height */
         }
         
         #starsCanvas {
@@ -32,6 +33,10 @@
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
+            height: 100vh; /* Take full viewport height */
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Center content vertically */
         }
         
         .title {
@@ -75,8 +80,8 @@
         
         .tutorial-content {
             max-width: 800px;
-            max-height: 80vh;
-            overflow-y: auto;
+            max-height: 60vh; /* Reduced from 80vh to make room for title and button */
+            overflow-y: auto; /* Only this element will scroll */
             padding: 20px;
             background-color: rgba(0, 0, 0, 0.7);
             border: 2px solid #FFD700;
