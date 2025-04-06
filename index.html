@@ -2923,8 +2923,7 @@
                 );
                 ctx.closePath();
                 ctx.fill();
-
-                            // Sail (triangular shape)
+                                // Sail (triangular shape)
                 ctx.fillStyle = 'white';
                 ctx.beginPath();
                 ctx.moveTo(
@@ -3086,7 +3085,7 @@
             
             // Add glow effect to eyes
             ctx.shadowColor = 'red';
-            ctx.shadowBlur = 10;
+            ctx.shadowBlur = 15;
             ctx.fill();
             ctx.shadowBlur = 0;
             
@@ -3210,8 +3209,9 @@
                 
                 // Check if wave is complete (not in boss wave)
                 if (!bossActive && !waveTransitionActive && enemiesDefeated >= enemiesInWave) {
-                    // Show approaching wave message first
-                    showWaveTransitionMessage();
+                    // Show wave transition first
+                    showWaveTransition();
+                    waveTransitionTimer = waveTransitionDuration;
                 }
                 
                 // Shoot
@@ -3506,92 +3506,6 @@
             requestAnimationFrame(gameLoop);
         }
         
-        // Show approaching wave message
-        function showWaveTransitionMessage() {
-            waveTransitionActive = true;
-            
-            // Show message
-            const message = document.getElementById('waveTransitionMessage');
-            message.textContent = `APPROACHING WAVE ${wave + 1}!`;
-            message.style.display = 'block';
-            
-            // Show countdown timer
-            document.getElementById('waveTransitionTimer').textContent = waveTransitionCountdown;
-            document.getElementById('waveTransitionTimer').style.display = 'block';
-            
-            // Start countdown
-            const countdownInterval = setInterval(() => {
-                waveTransitionCountdown--;
-                document.getElementById('waveTransitionTimer').textContent = waveTransitionCountdown;
-                
-                if (waveTransitionCountdown <= 0) {
-                    clearInterval(countdownInterval);
-                    waveTransitionActive = false;
-                    document.getElementById('waveTransitionMessage').style.display = 'none';
-                    document.getElementById('waveTransitionTimer').style.display = 'none';
-                    
-                    // After showing the approaching wave message, show the question
-                    showWaveQuestion();
-                }
-            }, 1000);
-        }
-        
-        // Show wave question
-        function showWaveQuestion() {
-            waveTransitionActive = true;
-            answerSelectionMode = true;
-            
-            // Show trivia container
-            const triviaContainer = document.getElementById('triviaContainer');
-            triviaContainer.style.display = 'block';
-            
-            // Select a random question
-            currentQuestion = triviaQuestions[Math.floor(Math.random() * triviaQuestions.length)];
-            selectedOption = null;
-            
-            // Display question
-            document.getElementById('triviaQuestion').textContent = currentQuestion.question;
-            
-            // Display options
-            const optionsContainer = document.getElementById('triviaOptions');
-            optionsContainer.innerHTML = '';
-            
-            currentQuestion.options.forEach((option, index) => {
-                const optionElement = document.createElement('div');
-                optionElement.className = 'triviaOption';
-                optionElement.textContent = option;
-                optionElement.dataset.index = index;
-                optionsContainer.appendChild(optionElement);
-            });
-            
-            // Start timer
-            quizStartTime = Date.now();
-            quizTimer = quizTimeLimit;
-            
-            // Show timer
-            document.getElementById('timerContainer').style.display = 'block';
-            document.getElementById('timerBar').style.width = '100%';
-            
-            // Update timer every second
-            const timerInterval = setInterval(() => {
-                if (!waveTransitionActive) {
-                    clearInterval(timerInterval);
-                    return;
-                }
-                
-                const elapsed = Math.floor((Date.now() - quizStartTime) / 1000);
-                quizTimer = Math.max(0, quizTimeLimit - elapsed);
-                const percent = (quizTimer / quizTimeLimit) * 100;
-                document.getElementById('timerBar').style.width = `${percent}%`;
-                
-                if (quizTimer <= 0) {
-                    clearInterval(timerInterval);
-                    // Time's up - wrong answer
-                    checkWaveTransitionAnswer(-1);
-                }
-            }, 200);
-        }
-        
         // Track pressed keys
         const keys = {
             ArrowLeft: false,
@@ -3607,7 +3521,205 @@
             loadSettings();
             resizeGame();
             
-            // Set up event listeners (keep all existing ones, just remove special ability related ones)
+            // Set up event listeners
+            document.getElementById('playButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                showObjectives();
+            });
+            
+            document.getElementById('continueFromObjectives').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                startGame();
+            });
+            
+            document.getElementById('highscoreButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                showHighScores();
+            });
+            document.getElementById('settingsButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                showSettings();
+            });
+            document.getElementById('tutorialButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                showTutorial();
+            });
+            document.getElementById('continueButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                returnToMenu();
+            });
+            document.getElementById('winContinueButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                returnToMenu();
+            });
+            document.getElementById('backButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                returnToMenu();
+            });
+            document.getElementById('settingsBackButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                saveSettings();
+                returnToMenu();
+            });
+            document.getElementById('tutorialBackButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                returnToMenu();
+            });
+            document.getElementById('submitScore').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                submitHighScore();
+            });
+            document.getElementById('submitScoreWin').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                submitHighScoreWin();
+            });
+            document.getElementById('startWaveButton').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                startWave();
+            });
+            
+            // Add hover sounds to menu buttons
+            const menuButtons = document.querySelectorAll('.menu-button');
+            menuButtons.forEach(button => {
+                button.addEventListener('mouseenter', () => {
+                    sounds.menuHover.play();
+                });
+            });
+            
+            // Settings controls
+            document.getElementById('musicDown').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                settings.musicVolume = Math.max(0, settings.musicVolume - 0.1);
+                updateSettingsUI();
+            });
+            document.getElementById('musicUp').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                settings.musicVolume = Math.min(1, settings.musicVolume + 0.1);
+                updateSettingsUI();
+            });
+            document.getElementById('toggleSound').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                settings.soundEffects = !settings.soundEffects;
+                updateSettingsUI();
+            });
+            document.getElementById('changeDifficulty').addEventListener('click', () => {
+                sounds.menuSelect.play();
+                const difficulties = ['easy', 'normal', 'hard'];
+                const currentIndex = difficulties.indexOf(settings.difficulty);
+                settings.difficulty = difficulties[(currentIndex + 1) % difficulties.length];
+                updateSettingsUI();
+            });
+            
+            // Mobile controls
+            document.getElementById('leftBtn').addEventListener('touchstart', () => {
+                keys.ArrowLeft = true;
+            });
+            document.getElementById('leftBtn').addEventListener('touchend', () => {
+                keys.ArrowLeft = false;
+            });
+            document.getElementById('rightBtn').addEventListener('touchstart', () => {
+                keys.ArrowRight = true;
+            });
+            document.getElementById('rightBtn').addEventListener('touchend', () => {
+                keys.ArrowRight = false;
+            });
+            document.getElementById('shootBtn').addEventListener('touchstart', () => {
+                keys[' '] = true;
+            });
+            document.getElementById('shootBtn').addEventListener('touchend', () => {
+                keys[' '] = false;
+            });
+            
+            // Ship selection buttons
+            document.getElementById('defaultShip').addEventListener('click', () => {
+                if (player.availableShips.default) {
+                    player.shipSkin = 'default';
+                    player.availableShips.default = false;
+                    sounds.shipChange.play();
+                    updateShipSelectionUI();
+                }
+            });
+            
+            document.getElementById('bangkaShip').addEventListener('click', () => {
+                if (player.availableShips.bangka) {
+                    player.shipSkin = 'bangka';
+                    player.availableShips.bangka = false;
+                    sounds.shipChange.play();
+                    updateShipSelectionUI();
+                }
+            });
+            
+            document.getElementById('jeepneyShip').addEventListener('click', () => {
+                if (player.availableShips.jeepney) {
+                    player.shipSkin = 'jeepney';
+                    player.availableShips.jeepney = false;
+                    sounds.shipChange.play();
+                    updateShipSelectionUI();
+                }
+            });
+            
+            // Remove click event listeners for trivia options
+            document.getElementById('triviaOptions').innerHTML = '';
+            
+            // Quiz option click handlers
+            document.getElementById('quizOptions').addEventListener('click', (e) => {
+                if (e.target.classList.contains('quiz-option')) {
+                    const index = Array.from(e.target.parentElement.children).indexOf(e.target);
+                    checkQuizAnswer(index);
+                }
+            });
+            
+            // Keyboard controls
+            window.addEventListener('keydown', (e) => {
+                if (e.key in keys) {
+                    keys[e.key] = true;
+                }
+                
+                // Ship transformation keys
+                if (gameState === STATE_PLAYING) {
+                    if (e.key.toLowerCase() === 'x' && player.availableShips.default) {
+                        player.shipSkin = 'default';
+                        player.availableShips.default = false;
+                        sounds.shipChange.play();
+                        updateShipSelectionUI();
+                    } else if (e.key.toLowerCase() === 'c' && player.availableShips.bangka) {
+                        player.shipSkin = 'bangka';
+                        player.availableShips.bangka = false;
+                        sounds.shipChange.play();
+                        updateShipSelectionUI();
+                    } else if (e.key.toLowerCase() === 'v' && player.availableShips.jeepney) {
+                        player.shipSkin = 'jeepney';
+                        player.availableShips.jeepney = false;
+                        sounds.shipChange.play();
+                        updateShipSelectionUI();
+                    } else if (e.key.toLowerCase() === 'z' && (bossActive || waveTransitionActive)) {
+                        // Select the option based on ship position
+                        selectOptionBasedOnPosition();
+                    } else if (e.key.toLowerCase() === 't' && player.triviaLaser >= TRIVIA_LASER_MAX) {
+                        // Fire trivia laser
+                        fireTriviaLaser();
+                    }
+                }
+                
+                // In game over screen, allow typing name
+                if ((gameState === STATE_GAME_OVER || gameState === STATE_WIN) && 
+                    (document.getElementById('nameInputContainer').style.display !== 'none' || 
+                     document.getElementById('nameInputContainerWin').style.display !== 'none')) {
+                    if (e.key === 'Enter') {
+                        if (gameState === STATE_GAME_OVER) {
+                            submitHighScore();
+                        } else {
+                            submitHighScoreWin();
+                        }
+                    }
+                }
+            });
+            
+            window.addEventListener('keyup', (e) => {
+                if (e.key in keys) {
+                    keys[e.key] = false;
+                }
+            });
             
             // Start game loop
             requestAnimationFrame(gameLoop);
@@ -3621,3 +3733,4 @@
     </script>
 </body>
 </html>
+               
