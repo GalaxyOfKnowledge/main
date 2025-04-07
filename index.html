@@ -715,6 +715,17 @@
             z-index: 2;
             font-family: 'Press Start 2P', cursive;
             text-shadow: 2px 2px 0 #000;
+            transition: all 0.3s;
+        }
+        
+        #triviaLaserHud.fired {
+            animation: laserFired 0.5s;
+        }
+        
+        @keyframes laserFired {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); box-shadow: 0 0 20px gold; }
+            100% { transform: scale(1); }
         }
         
         #triviaLaserBar {
@@ -928,6 +939,7 @@
     
     <div id="triviaLaserHud">
         <div>TRIVIA LASER:</div>
+        <div id="triviaLaserKey" style="position: absolute; top: -25px; right: 0; background: rgba(0,0,0,0.7); padding: 2px 5px; border: 2px solid #444;">T</div>
         <div id="triviaLaserBar">
             <div id="triviaLaserFill"></div>
         </div>
@@ -1723,11 +1735,27 @@
         function updateTriviaLaserDisplay() {
             const percent = (player.triviaLaser / TRIVIA_LASER_MAX) * 100;
             document.getElementById('triviaLaserFill').style.width = `${percent}%`;
+            
+            // Show/hide the T key indicator based on charge level
+            const tKey = document.getElementById('triviaLaserKey');
+            if (percent >= 100) {
+                tKey.style.color = '#FFD700';
+                tKey.style.borderColor = '#FFD700';
+                tKey.style.boxShadow = '0 0 10px gold';
+            } else {
+                tKey.style.color = 'white';
+                tKey.style.borderColor = '#444';
+                tKey.style.boxShadow = 'none';
+            }
         }
         
         // Fire trivia laser
         function fireTriviaLaser() {
             if (player.triviaLaser < TRIVIA_LASER_MAX) return;
+            
+            const hud = document.getElementById('triviaLaserHud');
+            hud.classList.add('fired');
+            setTimeout(() => hud.classList.remove('fired'), 500);
             
             sounds.laser.play();
             player.triviaLaser = 0;
@@ -3022,8 +3050,8 @@
                 if (bossAttackTimer <= 0) {
                     bossAttackTimer = bossAttackRate;
                     
-                    // Boss can attack even if player hasn't answered wrong yet
-                    if (Math.random() < 0.3) { // 30% chance to attack randomly
+                    // Remove random boss attacks during trivia questions
+                    if (!answerSelectionMode && Math.random() < 0.3) { // 30% chance to attack randomly
                         bossAttackPlayer();
                     }
                 }
@@ -3035,27 +3063,8 @@
             ctx.save();
             ctx.globalCompositeOperation = 'source-over';
             
-            // Make player invincible during trivia questions
-            if (bossActive || waveTransitionActive) {
-                // Draw shield around player - fixed for all ship types
-                ctx.strokeStyle = 'rgba(0, 255, 255, 0.7)';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(
-                    Math.round(player.x + player.width/2),
-                    Math.round(player.y + player.height/2),
-                    Math.round((player.width + player.height)/2) + 8,
-                    0, Math.PI * 2
-                );
-                ctx.stroke();
-                
-                // Add shield glow
-                ctx.shadowColor = 'cyan';
-                ctx.shadowBlur = 15;
-                ctx.stroke();
-                ctx.shadowBlur = 0;
-            } else if (player.powerups.barongShield) {
-                // Draw shield around player - fixed for all ship types
+            // Only show shield if player has barongShield power-up
+            if (player.powerups.barongShield) {
                 ctx.strokeStyle = 'rgba(0, 0, 255, 0.7)';
                 ctx.lineWidth = 3;
                 ctx.beginPath();
