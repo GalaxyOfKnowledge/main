@@ -131,6 +131,34 @@
             background: #7D2E2E;
             border-color: #AF504C;
         }
+
+        /* New answer indicator styles */
+        .answer-feedback {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            z-index: 20;
+            text-shadow: 4px 4px 0 #000;
+            animation: feedbackFade 1.5s forwards;
+            display: none;
+        }
+        
+        @keyframes feedbackFade {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            80% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        }
+        
+        .correct-answer {
+            color: #4CAF50;
+        }
+        
+        .wrong-answer {
+            color: #F44336;
+        }
         
         /* Rest of your existing CSS... */
         .title {
@@ -896,6 +924,10 @@
     <div class="boss-attack" id="bossAttack"></div>
     <canvas id="gameCanvas"></canvas>
     
+    <!-- New answer feedback elements -->
+    <div id="correctAnswerFeedback" class="answer-feedback correct-answer">CORRECT!</div>
+    <div id="wrongAnswerFeedback" class="answer-feedback wrong-answer">WRONG!</div>
+    
     <div id="hud">
         <div>SCORE: <span id="scoreDisplay">0</span></div>
         <div>COMBO: <span id="comboCount">0x</span></div>
@@ -1299,7 +1331,7 @@
         backgroundMusic.volume = settings.musicVolume;
         backgroundMusic.loop = true;
         
-        // Trivia questions
+        // Trivia questions - Added more easy Tagalog questions
         const triviaQuestions = [
             {
                 question: "WHAT IS THE NATIONAL BIRD OF THE PHILIPPINES?",
@@ -1360,6 +1392,97 @@
                 options: ["SAMPAGUITA", "ROSE", "ORCHID", "GUMAMELA"],
                 answer: 0,
                 category: "NATIONAL SYMBOLS"
+            },
+            // Added more easy Tagalog questions
+            {
+                question: "WHAT DOES 'MABUHAY' MEAN IN ENGLISH?",
+                options: ["GOODBYE", "WELCOME", "LONG LIVE", "THANK YOU"],
+                answer: 2,
+                category: "LANGUAGE"
+            },
+            {
+                question: "WHAT IS 'SALAMAT' IN ENGLISH?",
+                options: ["HELLO", "GOODBYE", "THANK YOU", "PLEASE"],
+                answer: 2,
+                category: "LANGUAGE"
+            },
+            {
+                question: "WHAT IS THE TAGALOG WORD FOR 'FAMILY'?",
+                options: ["BARKADA", "PAMILYA", "KAIBIGAN", "KAPATID"],
+                answer: 1,
+                category: "LANGUAGE"
+            },
+            {
+                question: "WHAT IS 'MAGANDANG UMAGA' IN ENGLISH?",
+                options: ["GOOD AFTERNOON", "GOOD MORNING", "GOOD EVENING", "GOOD NIGHT"],
+                answer: 1,
+                category: "LANGUAGE"
+            },
+            {
+                question: "WHAT IS THE TAGALOG WORD FOR 'FRIEND'?",
+                options: ["KAIBIGAN", "KAPATID", "KAMAG-ANAK", "KASAMA"],
+                answer: 0,
+                category: "LANGUAGE"
+            },
+            {
+                question: "WHAT IS 'PAALAM' IN ENGLISH?",
+                options: ["HELLO", "GOODBYE", "THANK YOU", "PLEASE"],
+                answer: 1,
+                category: "LANGUAGE"
+            },
+            {
+                question: "WHAT IS THE TAGALOG WORD FOR 'LOVE'?",
+                options: ["SORRY", "PAG-IBIG", "GALIT", "TAWA"],
+                answer: 1,
+                category: "LANGUAGE"
+            },
+            {
+                question: "WHAT IS 'KUMUSTA' IN ENGLISH?",
+                options: ["HOW ARE YOU", "GOODBYE", "THANK YOU", "PLEASE"],
+                answer: 0,
+                category: "LANGUAGE"
+            },
+            {
+                question: "WHAT IS THE TAGALOG WORD FOR 'FOOD'?",
+                options: ["TUBIG", "PAGKAIN", "KAPE", "GATAS"],
+                answer: 1,
+                category: "LANGUAGE"
+            },
+            {
+                question: "WHAT IS 'OPO' IN ENGLISH?",
+                options: ["NO", "YES", "MAYBE", "SORRY"],
+                answer: 1,
+                category: "LANGUAGE"
+            },
+            {
+                question: "WHAT IS THE TAGALOG WORD FOR 'HOUSE'?",
+                options: ["BAHAY", "SASAKYAN", "PAARALAN", "TINDHAN"],
+                answer: 0,
+                category: "LANGUAGE"
+            },
+            {
+                question: "WHAT IS 'SINIGANG'?",
+                options: ["A DESSERT", "A SOUP DISH", "A FRIED DISH", "A GRILLED DISH"],
+                answer: 1,
+                category: "FOOD"
+            },
+            {
+                question: "WHAT IS THE MOST POPULAR FILIPINO STREET FOOD?",
+                options: ["BALUT", "HALO-HALO", "ISAW", "FISH BALLS"],
+                answer: 3,
+                category: "FOOD"
+            },
+            {
+                question: "WHAT IS 'ADOBONG MANOK' IN ENGLISH?",
+                options: ["FRIED CHICKEN", "CHICKEN CURRY", "CHICKEN ADOBO", "GRILLED CHICKEN"],
+                answer: 2,
+                category: "FOOD"
+            },
+            {
+                question: "WHAT IS THE MOST POPULAR FILIPINO DESSERT?",
+                options: ["LECHE FLAN", "HALO-HALO", "BIBINGKA", "PUTO"],
+                answer: 1,
+                category: "FOOD"
             }
         ];
         
@@ -1440,6 +1563,22 @@
             }
         }
         
+        // Show answer feedback
+        function showAnswerFeedback(isCorrect) {
+            const feedbackElement = isCorrect ? 
+                document.getElementById('correctAnswerFeedback') : 
+                document.getElementById('wrongAnswerFeedback');
+            
+            feedbackElement.style.display = 'block';
+            feedbackElement.style.animation = 'none';
+            void feedbackElement.offsetWidth; // Trigger reflow
+            feedbackElement.style.animation = 'feedbackFade 1.5s forwards';
+            
+            setTimeout(() => {
+                feedbackElement.style.display = 'none';
+            }, 1500);
+        }
+        
         // Initialize game
         function initGame() {
             loadHighScores();
@@ -1516,11 +1655,13 @@
                 sounds.menuSelect.play();
                 settings.musicVolume = Math.max(0, settings.musicVolume - 0.1);
                 updateSettingsUI();
+                backgroundMusic.volume = settings.musicVolume; // Update music volume immediately
             });
             document.getElementById('musicUp').addEventListener('click', () => {
                 sounds.menuSelect.play();
                 settings.musicVolume = Math.min(1, settings.musicVolume + 0.1);
                 updateSettingsUI();
+                backgroundMusic.volume = settings.musicVolume; // Update music volume immediately
             });
             document.getElementById('toggleSound').addEventListener('click', () => {
                 sounds.menuSelect.play();
@@ -2270,6 +2411,9 @@
                 boss.health -= player.powerups.tiniklingMode ? 3 : 2;
                 updateBossHealth();
                 
+                // Show feedback
+                showAnswerFeedback(true);
+                
                 // Play sound
                 sounds.correct.play();
                 
@@ -2297,6 +2441,9 @@
             } else {
                 // Wrong answer - mark wrong option
                 options[index].classList.add('wrong');
+                
+                // Show feedback
+                showAnswerFeedback(false);
                 
                 // Boss attacks player with unique effect
                 bossAttackPlayer();
@@ -2354,13 +2501,16 @@
         // Check wave transition answer
         function checkWaveTransitionAnswer(index) {
             const isCorrect = index === currentQuestion.answer;
-            const answerTime = (Date.now() - quizStartTime) / 1000; // in seconds
+            
+            // Show feedback
+            showAnswerFeedback(isCorrect);
             
             if (isCorrect) {
                 sounds.correct.play();
                 quizCorrectAnswers++;
                 
                 // Calculate time bonus (faster answers give better bonuses)
+                const answerTime = (Date.now() - quizStartTime) / 1000;
                 const timeBonus = Math.max(1, quizTimeLimit - answerTime);
                 
                 // Add to trivia laser (33% per correct answer to reach 100% in 3 answers)
@@ -3520,7 +3670,7 @@
                         bullets.splice(i, 1);
                         
                         if (boss.health <= 0) {
-                            // Boss defeated
+                            // Boss defeated - player wins
                             player.score += 1000 * wave;
                             updateHUD();
                             bossActive = false;
