@@ -166,7 +166,6 @@
             font-weight: normal;
             margin-bottom: 30px;
             color: #FFD700;
-            text-align: center;
             text-shadow: 4px 4px 0 #8B4513;
             line-height: 1.3;
         }
@@ -825,6 +824,20 @@
             transition: opacity 0.3s;
         }
         
+        /* Boss hurt effect */
+        .boss-hurt {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 0, 0, 0.5);
+            z-index: 4;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
         @media (max-width: 768px) {
             #mobileControls {
                 display: flex;
@@ -922,6 +935,7 @@
     <div id="gameOverCover"></div>
     <div class="laser-beam" id="laserBeam"></div>
     <div class="boss-attack" id="bossAttack"></div>
+    <div class="boss-hurt" id="bossHurt"></div>
     <canvas id="gameCanvas"></canvas>
     
     <!-- New answer feedback elements -->
@@ -1237,7 +1251,12 @@
                 bangka: false,
                 jeepney: false
             },
-            triviaLaser: 0
+            triviaLaser: 0,
+            shipStats: {
+                default: { speed: 5, fireRate: 15 },
+                bangka: { speed: 3, fireRate: 10 },
+                jeepney: { speed: 7, fireRate: 20 }
+            }
         };
         
         let bullets = [];
@@ -1270,7 +1289,7 @@
         
         // Quiz variables
         let quizStartTime = 0;
-        let quizTimeLimit = 10; // seconds
+        let quizTimeLimit = 15; // Increased to 15 seconds
         let quizTimer = 0;
         let quizCorrectAnswers = 0;
         
@@ -1318,7 +1337,8 @@
             slowmo: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3'),
             heal: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-beep-221.mp3'),
             shield: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-magic-spell-shimmer-2367.mp3'),
-            bossAttack: new Audio('mixkit-dramatic-dark-ambient-568.wav')
+            bossAttack: new Audio('mixkit-dramatic-dark-ambient-568.wav'),
+            bossHurt: new Audio('mixkit-short-roar-1993.wav')
         };
         
         // Set volume for all sounds
@@ -1331,158 +1351,137 @@
         backgroundMusic.volume = settings.musicVolume;
         backgroundMusic.loop = true;
         
-        // Trivia questions - Added more easy Tagalog questions
+        // Menu music
+        const menuMusic = new Audio('https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-668.mp3');
+        menuMusic.volume = settings.musicVolume;
+        menuMusic.loop = true;
+        
+        // Trivia questions - More interesting questions without categories
         const triviaQuestions = [
             {
-                question: "WHAT IS THE NATIONAL BIRD OF THE PHILIPPINES?",
-                options: ["MAYA", "PHILIPPINE EAGLE", "COCKATOO", "KINGFISHER"],
-                answer: 1,
-                category: "NATIONAL SYMBOLS"
+                question: "WHAT IS THE ONLY MAMMAL CAPABLE OF TRUE FLIGHT?",
+                options: ["BAT", "FLYING SQUIRREL", "PENGUIN", "OSTRICH"],
+                answer: 0
             },
             {
-                question: "WHICH PHILIPPINE HERO IS KNOWN AS THE 'SUBLIME PARALYTIC'?",
-                options: ["JOSE RIZAL", "ANDRES BONIFACIO", "APOLINARIO MABINI", "EMILIO AGUINALDO"],
-                answer: 2,
-                category: "HISTORY"
+                question: "WHICH PLANET HAS THE MOST MOONS IN OUR SOLAR SYSTEM?",
+                options: ["EARTH", "MARS", "JUPITER", "SATURN"],
+                answer: 3
             },
             {
-                question: "WHAT IS THE TRADITIONAL FILIPINO LEAF-WRAPPED RICE CAKE?",
-                options: ["BIBINGKA", "PUTO", "SUMAN", "KUTSINTA"],
-                answer: 2,
-                category: "FOOD"
+                question: "WHAT IS THE LARGEST ORGAN IN THE HUMAN BODY?",
+                options: ["HEART", "LIVER", "SKIN", "BRAIN"],
+                answer: 2
             },
             {
-                question: "WHICH PROVINCE IS KNOWN AS THE 'RICE GRANARY OF THE PHILIPPINES'?",
-                options: ["BULACAN", "NUEVA ECIJA", "PAMPANGA", "TARLAC"],
-                answer: 1,
-                category: "GEOGRAPHY"
+                question: "WHICH ELEMENT MAKES UP ABOUT 78% OF EARTH'S ATMOSPHERE?",
+                options: ["OXYGEN", "CARBON DIOXIDE", "NITROGEN", "HYDROGEN"],
+                answer: 2
             },
             {
-                question: "WHAT FESTIVAL IS CELEBRATED IN CEBU EVERY THIRD SUNDAY OF JANUARY?",
-                options: ["SINULOG", "ATI-ATIHAN", "DINAGYANG", "PAHIYAS"],
-                answer: 0,
-                category: "CULTURE"
+                question: "WHAT IS THE FASTEST LAND ANIMAL?",
+                options: ["LION", "CHEETAH", "GAZELLE", "OSTRICH"],
+                answer: 1
             },
             {
-                question: "WHAT IS THE CAPITAL OF THE PHILIPPINES?",
-                options: ["CEBU", "DAVAO", "MANILA", "QUEZON CITY"],
-                answer: 2,
-                category: "GEOGRAPHY"
+                question: "WHICH COUNTRY INVENTED PAPER?",
+                options: ["EGYPT", "GREECE", "CHINA", "INDIA"],
+                answer: 2
             },
             {
-                question: "WHICH PHILIPPINE VOLCANO ERUPTED IN 1991?",
-                options: ["MAYON", "TAAL", "PINATUBO", "KANLAON"],
-                answer: 2,
-                category: "GEOGRAPHY"
+                question: "HOW MANY BONES ARE IN THE HUMAN BODY?",
+                options: ["106", "206", "306", "406"],
+                answer: 1
             },
             {
-                question: "WHAT IS THE TRADITIONAL FILIPINO MARTIAL ART?",
-                options: ["KARATE", "TAEKWONDO", "ARNIS", "KUNG FU"],
-                answer: 2,
-                category: "CULTURE"
+                question: "WHAT IS THE ONLY FOOD THAT NEVER SPOILS?",
+                options: ["HONEY", "SALT", "SUGAR", "RICE"],
+                answer: 0
             },
             {
-                question: "WHICH FILIPINO BOXER BECAME AN EIGHT-DIVISION WORLD CHAMPION?",
-                options: ["MANNY PACQUIAO", "NONITO DONAIRE", "FLASH ELORDE", "PANCHO VILLA"],
-                answer: 0,
-                category: "SPORTS"
+                question: "WHICH ANIMAL CAN'T JUMP?",
+                options: ["KANGAROO", "FROG", "ELEPHANT", "RABBIT"],
+                answer: 2
             },
             {
-                question: "WHAT IS THE NATIONAL FLOWER OF THE PHILIPPINES?",
-                options: ["SAMPAGUITA", "ROSE", "ORCHID", "GUMAMELA"],
-                answer: 0,
-                category: "NATIONAL SYMBOLS"
-            },
-            // Added more easy Tagalog questions
-            {
-                question: "WHAT DOES 'MABUHAY' MEAN IN ENGLISH?",
-                options: ["GOODBYE", "WELCOME", "LONG LIVE", "THANK YOU"],
-                answer: 2,
-                category: "LANGUAGE"
+                question: "WHAT IS THE MOST COMMON ELEMENT IN THE UNIVERSE?",
+                options: ["OXYGEN", "CARBON", "HYDROGEN", "HELIUM"],
+                answer: 2
             },
             {
-                question: "WHAT IS 'SALAMAT' IN ENGLISH?",
-                options: ["HELLO", "GOODBYE", "THANK YOU", "PLEASE"],
-                answer: 2,
-                category: "LANGUAGE"
+                question: "WHICH PLANET IS KNOWN AS THE RED PLANET?",
+                options: ["VENUS", "MARS", "JUPITER", "SATURN"],
+                answer: 1
             },
             {
-                question: "WHAT IS THE TAGALOG WORD FOR 'FAMILY'?",
-                options: ["BARKADA", "PAMILYA", "KAIBIGAN", "KAPATID"],
-                answer: 1,
-                category: "LANGUAGE"
+                question: "WHAT IS THE ONLY BIRD THAT CAN FLY BACKWARDS?",
+                options: ["EAGLE", "HUMMINGBIRD", "PENGUIN", "OSTRICH"],
+                answer: 1
             },
             {
-                question: "WHAT IS 'MAGANDANG UMAGA' IN ENGLISH?",
-                options: ["GOOD AFTERNOON", "GOOD MORNING", "GOOD EVENING", "GOOD NIGHT"],
-                answer: 1,
-                category: "LANGUAGE"
+                question: "WHAT IS THE ONLY CONTINENT WITHOUT BEES?",
+                options: ["AFRICA", "AUSTRALIA", "ANTARCTICA", "ASIA"],
+                answer: 2
             },
             {
-                question: "WHAT IS THE TAGALOG WORD FOR 'FRIEND'?",
-                options: ["KAIBIGAN", "KAPATID", "KAMAG-ANAK", "KASAMA"],
-                answer: 0,
-                category: "LANGUAGE"
+                question: "WHICH COUNTRY HAS THE MOST TIME ZONES?",
+                options: ["USA", "RUSSIA", "CHINA", "FRANCE"],
+                answer: 3
             },
             {
-                question: "WHAT IS 'PAALAM' IN ENGLISH?",
-                options: ["HELLO", "GOODBYE", "THANK YOU", "PLEASE"],
-                answer: 1,
-                category: "LANGUAGE"
+                question: "WHAT IS THE ONLY METAL THAT IS LIQUID AT ROOM TEMPERATURE?",
+                options: ["GOLD", "SILVER", "MERCURY", "COPPER"],
+                answer: 2
             },
             {
-                question: "WHAT IS THE TAGALOG WORD FOR 'LOVE'?",
-                options: ["SORRY", "PAG-IBIG", "GALIT", "TAWA"],
-                answer: 1,
-                category: "LANGUAGE"
+                question: "WHICH ANIMAL HAS THE LONGEST LIFESPAN?",
+                options: ["ELEPHANT", "GALAPAGOS TORTOISE", "BOWHEAD WHALE", "GREENLAND SHARK"],
+                answer: 3
             },
             {
-                question: "WHAT IS 'KUMUSTA' IN ENGLISH?",
-                options: ["HOW ARE YOU", "GOODBYE", "THANK YOU", "PLEASE"],
-                answer: 0,
-                category: "LANGUAGE"
+                question: "WHAT IS THE ONLY BONE IN THE HUMAN BODY NOT CONNECTED TO ANOTHER BONE?",
+                options: ["FEMUR", "HYOID", "SKULL", "PELVIS"],
+                answer: 1
             },
             {
-                question: "WHAT IS THE TAGALOG WORD FOR 'FOOD'?",
-                options: ["TUBIG", "PAGKAIN", "KAPE", "GATAS"],
-                answer: 1,
-                category: "LANGUAGE"
+                question: "WHICH PLANET HAS THE MOST VOLCANOES?",
+                options: ["EARTH", "MARS", "VENUS", "JUPITER"],
+                answer: 2
             },
             {
-                question: "WHAT IS 'OPO' IN ENGLISH?",
-                options: ["NO", "YES", "MAYBE", "SORRY"],
-                answer: 1,
-                category: "LANGUAGE"
+                question: "WHAT IS THE ONLY BIRD THAT CAN SWIM BUT CAN'T FLY?",
+                options: ["DUCK", "PENGUIN", "OSTRICH", "KIWI"],
+                answer: 1
             },
             {
-                question: "WHAT IS THE TAGALOG WORD FOR 'HOUSE'?",
-                options: ["BAHAY", "SASAKYAN", "PAARALAN", "TINDHAN"],
-                answer: 0,
-                category: "LANGUAGE"
+                question: "WHICH COUNTRY HAS THE MOST ISLANDS?",
+                options: ["INDONESIA", "PHILIPPINES", "SWEDEN", "JAPAN"],
+                answer: 2
             },
             {
-                question: "WHAT IS 'SINIGANG'?",
-                options: ["A DESSERT", "A SOUP DISH", "A FRIED DISH", "A GRILLED DISH"],
-                answer: 1,
-                category: "FOOD"
+                question: "WHAT IS THE ONLY FRUIT THAT HAS SEEDS ON THE OUTSIDE?",
+                options: ["STRAWBERRY", "PINEAPPLE", "WATERMELON", "BANANA"],
+                answer: 0
             },
             {
-                question: "WHAT IS THE MOST POPULAR FILIPINO STREET FOOD?",
-                options: ["BALUT", "HALO-HALO", "ISAW", "FISH BALLS"],
-                answer: 3,
-                category: "FOOD"
+                question: "WHICH ANIMAL HAS THE STRONGEST BITE FORCE?",
+                options: ["LION", "CROCODILE", "GREAT WHITE SHARK", "HIPPOPOTAMUS"],
+                answer: 1
             },
             {
-                question: "WHAT IS 'ADOBONG MANOK' IN ENGLISH?",
-                options: ["FRIED CHICKEN", "CHICKEN CURRY", "CHICKEN ADOBO", "GRILLED CHICKEN"],
-                answer: 2,
-                category: "FOOD"
+                question: "WHAT IS THE ONLY METAL THAT IS EDIBLE?",
+                options: ["GOLD", "SILVER", "IRON", "ALUMINUM"],
+                answer: 0
             },
             {
-                question: "WHAT IS THE MOST POPULAR FILIPINO DESSERT?",
-                options: ["LECHE FLAN", "HALO-HALO", "BIBINGKA", "PUTO"],
-                answer: 1,
-                category: "FOOD"
+                question: "WHICH PLANET HAS THE MOST POWERFUL WINDS IN THE SOLAR SYSTEM?",
+                options: ["EARTH", "MARS", "JUPITER", "NEPTUNE"],
+                answer: 3
+            },
+            {
+                question: "WHAT IS THE ONLY MAMMAL THAT CAN'T JUMP?",
+                options: ["ELEPHANT", "RHINOCEROS", "HIPPOPOTAMUS", "ALL OF THE ABOVE"],
+                answer: 3
             }
         ];
         
@@ -1539,6 +1538,7 @@
             
             // Update sound volumes
             backgroundMusic.volume = settings.musicVolume;
+            menuMusic.volume = settings.musicVolume;
             Object.values(sounds).forEach(sound => {
                 sound.volume = settings.soundEffects ? 0.5 : 0;
             });
@@ -1577,6 +1577,16 @@
             setTimeout(() => {
                 feedbackElement.style.display = 'none';
             }, 1500);
+        }
+        
+        // Show boss hurt effect
+        function showBossHurt() {
+            const bossHurt = document.getElementById('bossHurt');
+            bossHurt.style.opacity = '0.7';
+            setTimeout(() => {
+                bossHurt.style.opacity = '0';
+            }, 300);
+            sounds.bossHurt.play();
         }
         
         // Initialize game
@@ -1656,12 +1666,14 @@
                 settings.musicVolume = Math.max(0, settings.musicVolume - 0.1);
                 updateSettingsUI();
                 backgroundMusic.volume = settings.musicVolume; // Update music volume immediately
+                menuMusic.volume = settings.musicVolume;
             });
             document.getElementById('musicUp').addEventListener('click', () => {
                 sounds.menuSelect.play();
                 settings.musicVolume = Math.min(1, settings.musicVolume + 0.1);
                 updateSettingsUI();
                 backgroundMusic.volume = settings.musicVolume; // Update music volume immediately
+                menuMusic.volume = settings.musicVolume;
             });
             document.getElementById('toggleSound').addEventListener('click', () => {
                 sounds.menuSelect.play();
@@ -1933,8 +1945,10 @@
             document.getElementById('waveTransitionMessage').style.display = 'none';
             document.getElementById('waveTransitionTimer').style.display = 'none';
             
-            // Stop background music
+            // Stop background music and play menu music
             backgroundMusic.pause();
+            menuMusic.currentTime = 0;
+            menuMusic.play().catch(e => console.log("Autoplay prevented:", e));
         }
         
         // Submit high score from game over screen
@@ -2000,7 +2014,12 @@
                     bangka: false,
                     jeepney: false
                 },
-                triviaLaser: 0
+                triviaLaser: 0,
+                shipStats: {
+                    default: { speed: 5, fireRate: 15 },
+                    bangka: { speed: 3, fireRate: 10 },
+                    jeepney: { speed: 7, fireRate: 20 }
+                }
             };
             
             // Reset game variables
@@ -2044,7 +2063,8 @@
             document.getElementById('waveTransitionMessage').style.display = 'none';
             document.getElementById('waveTransitionTimer').style.display = 'none';
             
-            // Start background music
+            // Start background music and stop menu music
+            menuMusic.pause();
             backgroundMusic.currentTime = 0;
             backgroundMusic.play().catch(e => console.log("Autoplay prevented:", e));
         }
@@ -2411,8 +2431,9 @@
                 boss.health -= player.powerups.tiniklingMode ? 3 : 2;
                 updateBossHealth();
                 
-                // Show feedback
+                // Show feedback and hurt effect
                 showAnswerFeedback(true);
+                showBossHurt();
                 
                 // Play sound
                 sounds.correct.play();
@@ -2909,7 +2930,7 @@
                     ctx.fillRect(Math.round(-this.width/2 - 8), Math.round(-this.height/6), 8, 4);
                     ctx.fillRect(Math.round(this.width/2), Math.round(-this.height/6), 8, 4);
                     
-                    // Add glow effect
+                    // Add ship glow
                     ctx.shadowColor = '#8B4513';
                     ctx.shadowBlur = 15;
                     ctx.fill();
@@ -2973,7 +2994,7 @@
                         );
                     }
                     
-                    // Add glow effect
+                    // Add ship glow
                     ctx.shadowColor = '#FFD700';
                     ctx.shadowBlur = 15;
                     ctx.fill();
@@ -3573,13 +3594,17 @@
                     }
                 }
                 
-                // Move player
+                // Move player with ship-specific speed
+                const currentSpeed = player.shipStats[player.shipSkin].speed * 
+                                    (player.powerups.jeepneyBoost ? 1.5 : 1) * 
+                                    (slowMoActive ? 1.5 : 1);
+                
                 if (keys.ArrowLeft) {
-                    player.x -= player.speed * (player.powerups.jeepneyBoost ? 1.5 : 1) * (slowMoActive ? 1.5 : 1);
+                    player.x -= currentSpeed;
                     if (player.x < 0) player.x = 0;
                 }
                 if (keys.ArrowRight) {
-                    player.x += player.speed * (player.powerups.jeepneyBoost ? 1.5 : 1) * (slowMoActive ? 1.5 : 1);
+                    player.x += currentSpeed;
                     if (player.x > CANVAS_WIDTH - player.width) player.x = CANVAS_WIDTH - player.width;
                 }
                 
@@ -3595,12 +3620,13 @@
                     waveTransitionTimer = waveTransitionDuration;
                 }
                 
-                // Shoot
+                // Shoot with ship-specific fire rate
                 if (keys[' '] && bulletCooldown <= 0 && !waveTransitionActive) {
                     bullets.push(new Bullet(player.x + player.width/2, player.y));
                     sounds.shoot.currentTime = 0; // Reset sound to start
                     sounds.shoot.play();
-                    bulletCooldown = 15 / (player.powerups.tiniklingMode ? 2 : 1);
+                    bulletCooldown = player.shipStats[player.shipSkin].fireRate / 
+                                     (player.powerups.tiniklingMode ? 2 : 1);
                 }
                 
                 if (bulletCooldown > 0) {
@@ -3891,6 +3917,8 @@
         window.onload = function() {
             initGame();
             resizeGame();
+            // Start menu music
+            menuMusic.play().catch(e => console.log("Autoplay prevented:", e));
         };
     </script>
 </body>
